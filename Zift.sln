@@ -1,0 +1,52 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.35906.104
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zift", "src\Zift\Zift.csproj", "{11F76BCB-EAA1-4A25-8DF0-7EE8C2CBDD39}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zift.EntityFrameworkCore", "src\Zift.EntityFrameworkCore\Zift.EntityFrameworkCore.csproj", "{3BDDD1D3-2235-4EDE-B334-3E323E54D5AE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{EB965500-7362-4CC2-A171-5311B353D743}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zift.Tests", "test\Zift.Tests\Zift.Tests.csproj", "{2185112B-E31C-4992-ACC7-ECAF907DDE12}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zift.EntityFrameworkCore.Tests", "test\Zift.EntityFrameworkCore.Tests\Zift.EntityFrameworkCore.Tests.csproj", "{4BB8327C-A762-4F56-ABF0-D40181ADFD7B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{11F76BCB-EAA1-4A25-8DF0-7EE8C2CBDD39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11F76BCB-EAA1-4A25-8DF0-7EE8C2CBDD39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11F76BCB-EAA1-4A25-8DF0-7EE8C2CBDD39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11F76BCB-EAA1-4A25-8DF0-7EE8C2CBDD39}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3BDDD1D3-2235-4EDE-B334-3E323E54D5AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3BDDD1D3-2235-4EDE-B334-3E323E54D5AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3BDDD1D3-2235-4EDE-B334-3E323E54D5AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3BDDD1D3-2235-4EDE-B334-3E323E54D5AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2185112B-E31C-4992-ACC7-ECAF907DDE12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2185112B-E31C-4992-ACC7-ECAF907DDE12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2185112B-E31C-4992-ACC7-ECAF907DDE12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2185112B-E31C-4992-ACC7-ECAF907DDE12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4BB8327C-A762-4F56-ABF0-D40181ADFD7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4BB8327C-A762-4F56-ABF0-D40181ADFD7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4BB8327C-A762-4F56-ABF0-D40181ADFD7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4BB8327C-A762-4F56-ABF0-D40181ADFD7B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{11F76BCB-EAA1-4A25-8DF0-7EE8C2CBDD39} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{3BDDD1D3-2235-4EDE-B334-3E323E54D5AE} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{2185112B-E31C-4992-ACC7-ECAF907DDE12} = {EB965500-7362-4CC2-A171-5311B353D743}
+		{4BB8327C-A762-4F56-ABF0-D40181ADFD7B} = {EB965500-7362-4CC2-A171-5311B353D743}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2ECC4BD0-1F97-4C68-BBC0-94603D2D9F95}
+	EndGlobalSection
+EndGlobal
