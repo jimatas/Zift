@@ -4,8 +4,15 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <IsPackable>true</IsPackable>
+    <IncludeSymbols>true</IncludeSymbols>
+    <Version>0.1.0</Version>
+    <Authors>Jim Atas</Authors>
+    <Description>Entity Framework Core integration for Zift. Adds async query execution and pagination for IQueryable&lt;T&gt; using Zift's filtering, sorting, and pagination criteria.</Description>
+    <RepositoryUrl>https://github.com/jimatas/Zift</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.15" />
   </ItemGroup>
