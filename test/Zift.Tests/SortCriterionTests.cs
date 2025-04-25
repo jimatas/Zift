@@ -136,4 +136,28 @@ public class SortCriterionTests
 
         Assert.Equal(expected, actual);
     }
+
+    [Fact]
+    public void ApplyTo_ChainedDescendingSort_SortsUsingSecondaryCriterion()
+    {
+        var products = Catalog.Categories.SelectMany(c => c.Products).ToList();
+
+        var primary = new SortCriterion<Product>("Price", SortDirection.Ascending);
+        var secondary = new SortCriterion<Product>("Name", SortDirection.Descending);
+
+        var sorted = primary.ApplyTo(products.AsQueryable());
+        var result = secondary.ApplyTo(sorted).ToList();
+
+        var expected = products
+            .OrderBy(p => p.Price)
+            .ThenByDescending(p => p.Name)
+            .Select(p => (p.Price, p.Name))
+            .ToList();
+
+        var actual = result
+            .Select(p => (p.Price, p.Name))
+            .ToList();
+
+        Assert.Equal(expected, actual);
+    }
 }

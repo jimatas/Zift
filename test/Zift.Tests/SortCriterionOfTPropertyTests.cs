@@ -42,6 +42,15 @@ public class SortCriterionOfTPropertyTests
     }
 
     [Fact]
+    public void Constructor_WhenPropertyPathCannotBeResolved_SetsPropertyToNone()
+    {
+        Expression<Func<Product, string>> expr = p => p.Name + "!";
+        var criterion = new SortCriterion<Product, string>(expr, SortDirection.Ascending);
+
+        Assert.Equal("[None]", ((ISortCriterion)criterion).Property);
+    }
+
+    [Fact]
     public void ApplyTo_NullQueryable_ThrowsArgumentNullException()
     {
         var criterion = new SortCriterion<Product, string>(p => p.Name!, SortDirection.Ascending);
@@ -121,6 +130,30 @@ public class SortCriterionOfTPropertyTests
         var expected = products
             .OrderBy(p => p.Price)
             .ThenBy(p => p.Name)
+            .Select(p => (p.Price, p.Name))
+            .ToList();
+
+        var actual = result
+            .Select(p => (p.Price, p.Name))
+            .ToList();
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void ApplyTo_ChainedDescendingSort_SortsUsingSecondaryCriterion()
+    {
+        var products = Catalog.Categories.SelectMany(c => c.Products).ToList();
+
+        var primary = new SortCriterion<Product, decimal>(p => p.Price, SortDirection.Ascending);
+        var secondary = new SortCriterion<Product, string>(p => p.Name!, SortDirection.Descending);
+
+        var sorted = primary.ApplyTo(products.AsQueryable());
+        var result = secondary.ApplyTo(sorted).ToList();
+
+        var expected = products
+            .OrderBy(p => p.Price)
+            .ThenByDescending(p => p.Name)
             .Select(p => (p.Price, p.Name))
             .ToList();
 
