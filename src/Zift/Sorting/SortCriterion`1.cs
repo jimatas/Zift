@@ -3,6 +3,7 @@
 public class SortCriterion<T> : SortCriterion, ISortCriterion<T>
 {
     private const string NoPropertyName = "[None]";
+    private static readonly ConcurrentDictionary<string, MethodInfo> _sortMethodCache = new();
 
     public SortCriterion(string property, SortDirection direction)
         : base(property, direction)
@@ -20,40 +21,50 @@ public class SortCriterion<T> : SortCriterion, ISortCriterion<T>
 
     public virtual IOrderedQueryable<T> ApplyTo(IQueryable<T> query)
     {
-        var method = GetSortMethod(initial: true);
+        query.ThrowIfNull();
 
-        return (IOrderedQueryable<T>)method.Invoke(
+        var sortMethod = GetSortMethod(initial: true);
+
+        return (IOrderedQueryable<T>)sortMethod.Invoke(
             obj: null,
             parameters: [query, Property])!;
     }
 
     public virtual IOrderedQueryable<T> ApplyTo(IOrderedQueryable<T> sortedQuery)
     {
-        var method = GetSortMethod(initial: false);
+        sortedQuery.ThrowIfNull();
 
-        return (IOrderedQueryable<T>)method.Invoke(
+        var sortMethod = GetSortMethod(initial: false);
+
+        return (IOrderedQueryable<T>)sortMethod.Invoke(
             obj: null,
             parameters: [sortedQuery, Property])!;
     }
 
     private MethodInfo GetSortMethod(bool initial)
     {
-        var methodName = GetSortMethodName(initial);
+        var sortMethod = _sortMethodCache.GetOrAdd(GetSortMethodName(initial), ResolveSortMethod);
 
-        return typeof(Queryable)
-            .GetMethods()
-            .Single(method => method.Name == methodName && method.GetParameters().Length == 2)
-            .MakeGenericMethod(typeof(T), Property.ReturnType);
+        return sortMethod.MakeGenericMethod(typeof(T), Property.ReturnType);
     }
 
     private string GetSortMethodName(bool initial)
     {
+        var ascending = Direction is SortDirection.Ascending;
+
         return initial
-            ? Direction is SortDirection.Ascending
+            ? ascending
                 ? nameof(Queryable.OrderBy)
                 : nameof(Queryable.OrderByDescending)
-            : Direction is SortDirection.Ascending
+            : ascending
                 ? nameof(Queryable.ThenBy)
                 : nameof(Queryable.ThenByDescending);
+    }
+
+    private static MethodInfo ResolveSortMethod(string name)
+    {
+        return typeof(Queryable)
+            .GetMethods()
+            .Single(method => method.Name == name && method.GetParameters().Length == 2);
     }
 }

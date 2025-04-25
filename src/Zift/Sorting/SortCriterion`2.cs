@@ -7,6 +7,8 @@ public sealed class SortCriterion<T, TProperty>(Expression<Func<T, TProperty>> p
 
     public override IOrderedQueryable<T> ApplyTo(IQueryable<T> query)
     {
+        query.ThrowIfNull();
+
         return Direction is SortDirection.Ascending
             ? query.OrderBy(Property)
             : query.OrderByDescending(Property);
@@ -14,6 +16,8 @@ public sealed class SortCriterion<T, TProperty>(Expression<Func<T, TProperty>> p
 
     public override IOrderedQueryable<T> ApplyTo(IOrderedQueryable<T> sortedQuery)
     {
+        sortedQuery.ThrowIfNull();
+
         return Direction is SortDirection.Ascending
             ? sortedQuery.ThenBy(Property)
             : sortedQuery.ThenByDescending(Property);

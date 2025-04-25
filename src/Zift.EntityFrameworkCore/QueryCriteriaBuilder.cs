@@ -32,11 +32,4 @@ public class QueryCriteriaBuilder<T>(QueryCriteria<T> queryCriteria)
 
         return this;
     }
-
-    public virtual QueryCriteriaBuilder<T> SortBy<TProperty>(Sorting.SortCriterion<T, TProperty> criterion)
-    {
-        QueryCriteria.SortCriteria.Add(criterion);
-
-        return this;
-    }
 }

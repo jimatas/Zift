@@ -29,28 +29,11 @@ internal static class PropertyAccessExtensions
 
     private static string? BuildPropertyPath(Expression? expression)
     {
-        var path = new Stack<string>();
-
-        while (expression is not null)
+        return expression switch
         {
-            switch (expression)
-            {
-                case MemberExpression member:
-                    path.Push(member.Member.Name);
-                    expression = member.Expression;
-                    break;
-
-                case UnaryExpression { NodeType: ExpressionType.Convert } unary:
-                    expression = unary.Operand;
-                    break;
-
-                default:
-                    return null;
-            }
-        }
-
-        return path.Count > 0
-            ? string.Join('.', path)
-            : null;
+            MemberExpression member => $"{BuildPropertyPath(member.Expression)}.{member.Member.Name}".TrimStart('.'),
+            UnaryExpression { NodeType: ExpressionType.Convert } unary => BuildPropertyPath(unary.Operand),
+            _ => null
+        };
     }
 }

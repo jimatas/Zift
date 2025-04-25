@@ -2,5 +2,5 @@
 
 public interface ISortDirectiveParser<T>
 {
-    IEnumerable<ISortCriterion<T>> Parse(string directives);
+    IEnumerable<ISortCriterion<T>> Parse(string sortString);
 }

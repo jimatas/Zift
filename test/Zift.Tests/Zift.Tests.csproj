@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Zift\Zift.csproj" />
+    <ProjectReference Include="..\Zift.SharedFixture\Zift.SharedFixture.csproj" />
   </ItemGroup>
 
 </Project>

@@ -13,13 +13,10 @@ public class TypeExtensionsTests
         string expectedPropertyName,
         string propertyName)
     {
-        // Arrange
         var type = typeof(TestClass);
 
-        // Act
         var propertyInfo = type.GetPropertyIgnoreCase(propertyName);
 
-        // Assert
         Assert.NotNull(propertyInfo);
         Assert.Equal(expectedPropertyName, propertyInfo.Name);
     }
@@ -30,26 +27,20 @@ public class TypeExtensionsTests
     [InlineData("NonExistentProperty")]
     public void GetPropertyIgnoreCase_UnmatchedOrInvalidPropertyName_ReturnsNull(string propertyName)
     {
-        // Arrange
         var type = typeof(TestClass);
 
-        // Act
         var propertyInfo = type.GetPropertyIgnoreCase(propertyName);
 
-        // Assert
         Assert.Null(propertyInfo);
     }
 
     [Fact]
     public void GetPropertyIgnoreCase_NullType_ThrowsNullReferenceException()
     {
-        // Arrange
         Type type = null!;
 
-        // Act
         void action() => type.GetPropertyIgnoreCase("PublicProperty");
 
-        // Assert
         Assert.Throws<NullReferenceException>(action);
     }
 
@@ -60,12 +51,8 @@ public class TypeExtensionsTests
     [InlineData(typeof(IList<TestClass>), "i")]
     public void GenerateParameterName_TypeNameStartsWithAsciiLetter_ReturnsLowercaseLetter(Type type, string expectedName)
     {
-        // Arrange
-
-        // Act
         var result = type.GenerateParameterName();
 
-        // Assert
         Assert.Equal(expectedName, result);
     }
 
@@ -74,12 +61,8 @@ public class TypeExtensionsTests
     [InlineData(typeof(Çĺâşş))]
     public void GenerateParameterName_TypeNameWithoutAsciiLetters_ReturnsDefaultName(Type type)
     {
-        // Arrange
-
-        // Act
         var result = type.GenerateParameterName();
 
-        // Assert
         Assert.Equal("x", result);
     }
 

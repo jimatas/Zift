@@ -2,17 +2,17 @@
 
 public class SortDirectiveParser<T> : ISortDirectiveParser<T>
 {
-    public IEnumerable<ISortCriterion<T>> Parse(string directives)
+    public IEnumerable<ISortCriterion<T>> Parse(string sortString)
     {
-        directives.ThrowIfNullOrEmpty();
+        sortString.ThrowIfNullOrEmpty();
 
-        var parts = directives.Split(',', StringSplitOptions.TrimEntries);
-        if (parts.Any(string.IsNullOrEmpty))
+        var directives = sortString.Split(',', StringSplitOptions.TrimEntries);
+        if (directives.Any(string.IsNullOrEmpty))
         {
             throw new FormatException("Invalid sorting string format: The string contains an empty sorting directive.");
         }
 
-        return parts.Select(ParseDirective);
+        return directives.Select(ParseDirective);
     }
 
     private static ISortCriterion<T> ParseDirective(string directive)
