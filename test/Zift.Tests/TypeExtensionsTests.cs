@@ -67,7 +67,7 @@ public class TypeExtensionsTests
     }
 
     #region Fixture
-    public class TestClass
+    private class TestClass
     {
         public string PublicProperty { get; set; } = "Public";
         private string PrivateProperty { get; set; } = "Private";
@@ -75,7 +75,7 @@ public class TypeExtensionsTests
         public int DiffersOnlyByCase { get; set; }
         public int DiffersOnlyByCASE { get; set; }
     }
-    public class _123;
-    public class Çĺâşş;
+    private class _123;
+    private class Çĺâşş;
     #endregion
 }

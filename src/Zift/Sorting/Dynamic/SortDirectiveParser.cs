@@ -27,7 +27,16 @@ public class SortDirectiveParser<T> : ISortDirectiveParser<T>
             _ => throw new FormatException($"Invalid format for sorting directive: '{directive}'. Expected format is 'Property [ASC|DESC]'.")
         };
 
-        return new SortCriterion<T>(property, direction);
+        try
+        {
+            return new SortCriterion<T>(property, direction);
+        }
+        catch (ArgumentException exception)
+        {
+            throw new FormatException(
+                "Failed to parse a sorting directive from the input string. See the inner exception for details.",
+                innerException: exception);
+        }
     }
 
     private static SortDirection ParseDirection(string direction)

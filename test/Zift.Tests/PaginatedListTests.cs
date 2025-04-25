@@ -20,7 +20,7 @@ public class PaginatedListTests
     [Fact]
     public void Constructor_ValidParameters_SetsExpectedValues()
     {
-        var items = new[] { new Product { Name = "Product1" }, new Product { Name = "Product2" } };
+        var items = new[] { new Product { Name = "Product 1" }, new Product { Name = "Product 2" } };
 
         var paginatedList = new PaginatedList<Product>(pageNumber: 1, pageSize: 2, items, totalCount: 2);
 
@@ -34,7 +34,7 @@ public class PaginatedListTests
     [Fact]
     public void Constructor_InvalidPageNumber_ThrowsArgumentOutOfRangeException()
     {
-        var items = new[] { new Product { Name = "Product1" } };
+        var items = new[] { new Product { Name = "Product 1" } };
 
         Assert.Throws<ArgumentOutOfRangeException>("pageNumber", () => new PaginatedList<Product>(pageNumber: 0, pageSize: 1, items, totalCount: 1));
     }
@@ -42,7 +42,7 @@ public class PaginatedListTests
     [Fact]
     public void Constructor_InvalidPageSize_ThrowsArgumentOutOfRangeException()
     {
-        var items = new[] { new Product { Name = "Product1" } };
+        var items = new[] { new Product { Name = "Product 1" } };
 
         Assert.Throws<ArgumentOutOfRangeException>("pageSize", () => new PaginatedList<Product>(pageNumber: 1, pageSize: 0, items, totalCount: 1));
     }
@@ -50,7 +50,7 @@ public class PaginatedListTests
     [Fact]
     public void Constructor_InvalidTotalCount_ThrowsArgumentOutOfRangeException()
     {
-        var items = new[] { new Product { Name = "Product1" } };
+        var items = new[] { new Product { Name = "Product 1" } };
 
         Assert.Throws<ArgumentOutOfRangeException>("totalCount", () => new PaginatedList<Product>(pageNumber: 1, pageSize: 1, items, totalCount: -1));
     }
@@ -58,7 +58,7 @@ public class PaginatedListTests
     [Fact]
     public void Constructor_TotalCountLessThanItemsCount_ThrowsArgumentOutOfRangeException()
     {
-        var items = new[] { new Product { Name = "Product1" }, new Product { Name = "Product2" } };
+        var items = new[] { new Product { Name = "Product 1" }, new Product { Name = "Product 2" } };
 
         Assert.Throws<ArgumentOutOfRangeException>("totalCount", () => new PaginatedList<Product>(pageNumber: 1, pageSize: 2, items, totalCount: 1));
     }
@@ -88,14 +88,14 @@ public class PaginatedListTests
     {
         var items = new[]
         {
-            new Product { Name = "Product1" },
-            new Product { Name = "Product2" },
+            new Product { Name = "Product 1" },
+            new Product { Name = "Product 2" },
         };
 
         var paginatedList = new PaginatedList<Product>(pageNumber: 1, pageSize: 2, items, totalCount: 2);
 
-        Assert.Equal("Product1", paginatedList[0].Name);
-        Assert.Equal("Product2", paginatedList[1].Name);
+        Assert.Equal("Product 1", paginatedList[0].Name);
+        Assert.Equal("Product 2", paginatedList[1].Name);
     }
 
     [Fact]
@@ -103,8 +103,8 @@ public class PaginatedListTests
     {
         var items = new[]
         {
-            new Product { Name = "Product1" },
-            new Product { Name = "Product2" },
+            new Product { Name = "Product 1" },
+            new Product { Name = "Product 2" },
         };
 
         var paginatedList = new PaginatedList<Product>(pageNumber: 1, pageSize: 2, items, totalCount: 2);
@@ -113,9 +113,26 @@ public class PaginatedListTests
         var enumerator = enumerable.GetEnumerator();
         
         Assert.True(enumerator.MoveNext());
-        Assert.Equal("Product1", (enumerator.Current as Product)?.Name);
+        Assert.Equal("Product 1", (enumerator.Current as Product)?.Name);
 
         Assert.True(enumerator.MoveNext());
-        Assert.Equal("Product2", (enumerator.Current as Product)?.Name);
+        Assert.Equal("Product 2", (enumerator.Current as Product)?.Name);
+    }
+
+    [Fact]
+    public void PaginatedList_CreatedFromPaginationCriteria_AppliesCorrectPage()
+    {
+        var allItems = Enumerable.Range(1, 50)
+            .Select(i => new Product { Name = $"Product {i}" })
+            .ToList();
+
+        var criteria = new PaginationCriteria<Product> { PageNumber = 2, PageSize = 10 };
+        var pagedItems = criteria.ApplyTo(allItems.AsQueryable()).ToList();
+
+        var list = new PaginatedList<Product>(criteria.PageNumber, criteria.PageSize, pagedItems, allItems.Count);
+
+        Assert.Equal(10, list.Count);
+        Assert.Equal("Product 11", list[0].Name);
+        Assert.Equal(5, list.PageCount);
     }
 }
