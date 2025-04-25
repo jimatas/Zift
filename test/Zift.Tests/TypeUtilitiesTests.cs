@@ -1,6 +1,6 @@
 ﻿namespace Zift.Tests;
 
-public class TypeExtensionsTests
+public class TypeUtilitiesTests
 {
     [Theory]
     [InlineData("PublicProperty", "publicproperty")]

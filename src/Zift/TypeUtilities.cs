@@ -1,6 +1,6 @@
 ﻿namespace Zift;
 
-internal static class TypeExtensions
+internal static class TypeUtilities
 {
     public static string GenerateParameterName(this Type type)
     {
