@@ -5,7 +5,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>true</IsPackable>
-    <IncludeSymbols>true</IncludeSymbols>
     <Version>0.1.0</Version>
     <Authors>Jim Atas</Authors>
     <Description>Lightweight and composable library for shaping IQueryable&lt;T&gt; with filtering, sorting, and pagination. Supports both expression- and string-based criteria.</Description>
