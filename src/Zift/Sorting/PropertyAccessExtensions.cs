@@ -5,7 +5,7 @@ internal static class PropertyAccessExtensions
     public static LambdaExpression ToPropertySelector<T>(this string property)
     {
         var type = typeof(T);
-        var parameter = Expression.Parameter(type, type.GenerateParameterName());
+        var parameter = Expression.Parameter(type, ParameterNameGenerator.FromType(type));
         Expression expression = parameter;
 
         foreach (var nestedProperty in property.Split('.'))
