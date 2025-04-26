@@ -237,11 +237,11 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
             switch (token.Type)
             {
                 case SyntaxTokenType.QuantifierMode:
-                    _quantifier = Enum.Parse<QuantifierMode>(token.Value);
+                    _quantifier = Enum.Parse<QuantifierMode>(token.Value, ignoreCase: true);
                     break;
 
                 case SyntaxTokenType.CollectionProjection:
-                    _projection = Enum.Parse<CollectionProjection>(token.Value);
+                    _projection = Enum.Parse<CollectionProjection>(token.Value, ignoreCase: true);
                     break;
 
                 default:

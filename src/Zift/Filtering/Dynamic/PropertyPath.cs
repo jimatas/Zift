@@ -6,7 +6,7 @@ public class PropertyPath
 
     public PropertyPath(IEnumerable<PropertyPathSegment> segments)
     {
-        _segments = segments.ThrowIfNull().ToArray();
+        _segments = segments.ThrowIfNullOrEmpty().ToArray();
         ValidateSegments(nameof(segments));
     }
 
