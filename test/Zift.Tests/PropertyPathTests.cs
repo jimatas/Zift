@@ -6,13 +6,13 @@ using Fixture;
 public class PropertyPathTests
 {
     [Fact]
-    public void Initialize_WithNullSegments_ThrowsArgumentNullException()
+    public void Constructor_NullSegments_ThrowsArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>("segments", () => _ = new PropertyPath(null!));
     }
 
     [Fact]
-    public void Initialize_WithEmptySegments_ThrowsArgumentException()
+    public void Constructor_EmptySegments_ThrowsArgumentException()
     {
         Assert.Throws<ArgumentException>("segments", () => _ = new PropertyPath([]));
     }
@@ -33,7 +33,7 @@ public class PropertyPathTests
     [InlineData("Products.Reviews:all.Author", 3)]
     [InlineData("Products.Reviews.Author.Name", 4)]
     [InlineData("Products:all.Reviews:count", 2)]
-    public void Initialize_WithValidPathSegments_ParsesAndNormalizesCorrectly(string rawPropertyPath, int expectedSegmentCount, string? normalizedPropertyPath = null)
+    public void Constructor_ValidPathSegments_ParsesAndNormalizesCorrectly(string rawPropertyPath, int expectedSegmentCount, string? normalizedPropertyPath = null)
     {
         var propertyPath = PropertyPathFactory.Create(rawPropertyPath);
 
@@ -42,7 +42,7 @@ public class PropertyPathTests
     }
 
     [Fact]
-    public void Initialize_WithInvalidModifierCombination_ThrowsArgumentException()
+    public void Constructor_InvalidModifierCombination_ThrowsArgumentException()
     {
         var segments = new[]
         {
@@ -58,7 +58,7 @@ public class PropertyPathTests
     }
 
     [Fact]
-    public void Initialize_WithTerminalSegmentNotAtEnd_ThrowsArgumentException()
+    public void Constructor_TerminalSegmentNotAtEnd_ThrowsArgumentException()
     {
         var segments = new[]
         {
