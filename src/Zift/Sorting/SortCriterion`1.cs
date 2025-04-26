@@ -50,7 +50,7 @@ public class SortCriterion<T> : SortCriterion, ISortCriterion<T>
 
     private string GetSortMethodName(bool initial)
     {
-        var ascending = Direction is SortDirection.Ascending;
+        var ascending = Direction == SortDirection.Ascending;
 
         return initial
             ? ascending

@@ -15,8 +15,8 @@ public static class QuantifierModeExtensions
     {
         return typeof(Enumerable)
             .GetMethods()
-            .Single(method
-                => method.Name == signature.MethodName
+            .Single(method =>
+                method.Name == signature.MethodName
                 && method.GetParameters().Length == signature.ParameterCount);
     }
 }

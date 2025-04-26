@@ -40,8 +40,8 @@ public static class ComparisonOperatorExtensions
     {
         return typeof(string)
             .GetMethods()
-            .Single(method
-                => method.Name == name
+            .Single(method =>
+                method.Name == name
                 && method.GetParameters().Length == 1
                 && method.GetParameters().Single().ParameterType == typeof(string));
     }

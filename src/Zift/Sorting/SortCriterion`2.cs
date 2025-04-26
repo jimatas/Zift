@@ -9,7 +9,7 @@ public sealed class SortCriterion<T, TProperty>(Expression<Func<T, TProperty>> p
     {
         query.ThrowIfNull();
 
-        return Direction is SortDirection.Ascending
+        return Direction == SortDirection.Ascending
             ? query.OrderBy(Property)
             : query.OrderByDescending(Property);
     }
@@ -18,7 +18,7 @@ public sealed class SortCriterion<T, TProperty>(Expression<Func<T, TProperty>> p
     {
         sortedQuery.ThrowIfNull();
 
-        return Direction is SortDirection.Ascending
+        return Direction == SortDirection.Ascending
             ? sortedQuery.ThenBy(Property)
             : sortedQuery.ThenByDescending(Property);
     }

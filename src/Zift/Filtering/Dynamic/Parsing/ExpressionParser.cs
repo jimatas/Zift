@@ -64,7 +64,8 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
 
     private static void ValidateTokenExpectation(bool expectLogicalOperator, SyntaxToken token)
     {
-        if (expectLogicalOperator && token.Type is not SyntaxTokenType.LogicalOperator and not SyntaxTokenType.ParenthesisClose)
+        if (expectLogicalOperator
+            && token.Type is not SyntaxTokenType.LogicalOperator and not SyntaxTokenType.ParenthesisClose)
         {
             throw new SyntaxErrorException("Expected a logical operator between terms.", token);
         }

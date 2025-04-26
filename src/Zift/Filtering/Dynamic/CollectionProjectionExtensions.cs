@@ -18,7 +18,9 @@ public static class CollectionProjectionExtensions
     {
         return typeof(Enumerable)
             .GetMethods()
-            .Single(method => method.Name == name && method.GetParameters().Length == 1);
+            .Single(method =>
+                method.Name == name
+                && method.GetParameters().Length == 1);
     }
 }
     
