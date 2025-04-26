@@ -6,7 +6,7 @@ internal class GroupedFilterExpressionBuilder<T>(FilterGroup group)
 
     public Expression<Func<T, bool>> BuildExpression()
     {
-        var parameter = Expression.Parameter(typeof(T), typeof(T).GenerateParameterName());
+        var parameter = Expression.Parameter(typeof(T), ParameterNameGenerator.FromType<T>());
         var lambdaBody = BuildBodyExpression(parameter);
 
         var expression = lambdaBody is null

@@ -44,28 +44,6 @@ public class TypeUtilitiesTests
         Assert.Throws<NullReferenceException>(action);
     }
 
-    [Theory]
-    [InlineData(typeof(TestClass), "t")]
-    [InlineData(typeof(string), "s")]
-    [InlineData(typeof(int), "i")]
-    [InlineData(typeof(IList<TestClass>), "i")]
-    public void GenerateParameterName_TypeNameStartsWithAsciiLetter_ReturnsLowercaseLetter(Type type, string expectedName)
-    {
-        var result = type.GenerateParameterName();
-
-        Assert.Equal(expectedName, result);
-    }
-
-    [Theory]
-    [InlineData(typeof(_123))]
-    [InlineData(typeof(Çĺâşş))]
-    public void GenerateParameterName_TypeNameWithoutAsciiLetters_ReturnsDefaultName(Type type)
-    {
-        var result = type.GenerateParameterName();
-
-        Assert.Equal("x", result);
-    }
-
     #region Fixture
     private class TestClass
     {
@@ -75,7 +53,5 @@ public class TypeUtilitiesTests
         public int DiffersOnlyByCase { get; set; }
         public int DiffersOnlyByCASE { get; set; }
     }
-    private class _123;
-    private class Çĺâşş;
     #endregion
 }

@@ -6,7 +6,7 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
 
     public Expression<Func<T, bool>> BuildExpression()
     {
-        var parameter = Expression.Parameter(typeof(T), typeof(T).GenerateParameterName());
+        var parameter = Expression.Parameter(typeof(T), ParameterNameGenerator.FromType<T>());
         var lambdaBody = BuildSegmentExpression(parameter, _condition.Property, segmentIndex: 0);
 
         return Expression.Lambda<Func<T, bool>>(lambdaBody, parameter);
@@ -51,7 +51,7 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
             return Expression.Call(method, collection);
         }
 
-        var parameter = Expression.Parameter(elementType, elementType.GenerateParameterName());
+        var parameter = Expression.Parameter(elementType, ParameterNameGenerator.FromType(elementType));
         var lambdaBody = BuildSegmentExpression(parameter, propertyPath, segmentIndex + 1);
         var lambda = Expression.Lambda(lambdaBody, parameter);
 

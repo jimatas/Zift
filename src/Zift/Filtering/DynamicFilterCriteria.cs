@@ -1,9 +1,6 @@
 ﻿namespace Zift.Filtering;
 
-using Dynamic;
-using Dynamic.Parsing;
-
-public class DynamicFilterCriteria<T>(FilterTerm term)
+public class DynamicFilterCriteria<T>(Dynamic.FilterTerm term)
     : PredicateFilterCriteria<T>(term.ThrowIfNull().ToExpression<T>())
 {
     public DynamicFilterCriteria(string expression)
@@ -11,8 +8,8 @@ public class DynamicFilterCriteria<T>(FilterTerm term)
     {
     }
 
-    private static FilterGroup ParseFilterTerm(string expression)
+    private static Dynamic.FilterGroup ParseFilterTerm(string expression)
     {
-        return new ExpressionParser(new(expression)).Parse();
+        return new Dynamic.Parsing.ExpressionParser(new(expression)).Parse();
     }
 }
