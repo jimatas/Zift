@@ -86,7 +86,7 @@ Example:
 "!(Name == 'Obsolete' || IsArchived == true)"
 ```
 
-Note: The `!` operator must precede a parenthesized expression. Standalone negations like `!IsArchived` are not supported.
+*Note:* The `!` operator must precede a parenthesized expression. Standalone negations like `!IsArchived` are not supported.
 
 ---
 
@@ -134,7 +134,7 @@ Examples:
 "DeletedAt == null"
 ```
 
-Note: Boolean comparisons must be explicit, as shown above. An expression like this will not work:
+*Note:* Boolean comparisons must be explicit, as shown above. An expression like this will not work:
 
 ```text
 "IsPublished"
