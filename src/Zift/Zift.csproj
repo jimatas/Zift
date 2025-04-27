@@ -8,7 +8,7 @@
     <Version>0.1.0</Version>
     <Authors>Jim Atas</Authors>
     <Description>Lightweight, composable .NET library for filtering, sorting, and paginating IQueryable&lt;T&gt; using expression- or string-based criteria.</Description>
-    <PackageTags>filtering sorting pagination queryable expressions linq dotnet</PackageTags>
+    <PackageTags>filtering sorting pagination queryable expressions linq</PackageTags>
     <RepositoryUrl>https://github.com/jimatas/Zift</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
