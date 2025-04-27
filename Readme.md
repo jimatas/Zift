@@ -31,7 +31,7 @@ Install the main Zift package:
 dotnet add package Zift
 ```
 
-If you're using Entity Framework Core and want async pagination support, also install:
+If you're using Entity Framework Core and want async pagination support, install the EF Core package (which includes Zift automatically):
 
 ```bash
 dotnet add package Zift.EntityFrameworkCore
