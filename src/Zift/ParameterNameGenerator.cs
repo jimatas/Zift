@@ -10,4 +10,6 @@ internal static class ParameterNameGenerator
             ? char.ToLowerInvariant(firstLetter).ToString()
             : "x";
     }
+
+    public static string FromType<T>() => FromType(typeof(T));
 }

@@ -2,7 +2,7 @@
 
 internal static class ArgumentValidator
 {
-    public static T ThrowIfNull<T>(this T? value,
+    public static T ThrowIfNull<T>([NotNull] this T? value,
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         ArgumentNullException.ThrowIfNull(value, paramName);
@@ -10,10 +10,23 @@ internal static class ArgumentValidator
         return value;
     }
 
-    public static string ThrowIfNullOrEmpty(this string? value,
+    public static string ThrowIfNullOrEmpty([NotNull] this string? value,
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(value, paramName);
+
+        return value;
+    }
+
+    public static IEnumerable<T> ThrowIfNullOrEmpty<T>([NotNull] this IEnumerable<T>? value,
+        [CallerArgumentExpression(nameof(value))] string? paramName = null)
+    {
+        value.ThrowIfNull(paramName);
+
+        if (!value.Any())
+        {
+            throw new ArgumentException("Collection must contain at least one element.", paramName);
+        }
 
         return value;
     }
