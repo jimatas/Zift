@@ -123,7 +123,9 @@ public class PreferredCustomerFilter : IFilterCriteria<User>
 {
     public IQueryable<User> ApplyTo(IQueryable<User> query)
     {
-        return query.Where(u => u.Name.StartsWith("Preferred"));
+        var preferredSince = DateTime.UtcNow.AddYears(-2); // Registered at least 2 years ago
+
+        return query.Where(u => u.RegistrationDate <= preferredSince);
     }
 }
 ```
