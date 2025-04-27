@@ -159,29 +159,14 @@ Supports:
 
 Example:
 
-```text
-"Products.Reviews:all.Rating >= 4"
+```csharp
+// Find products where (price > 1000 OR name contains "Pro") AND at least one review has rating >= 4
+var products = dbContext.Products
+    .FilterBy(new DynamicFilterCriteria<Product>(
+        "(Price > 1000 || Name %= 'Pro') && Reviews.Rating >= 4"));
 ```
 
-### Supported Operators
-
-| Operator | Description |
-| :--- | :--- |
-| `==` | Equal |
-| `!=` | Not equal |
-| `>` | Greater than |
-| `<` | Less than |
-| `>=` | Greater than or equal |
-| `<=` | Less than or equal |
-| `%=` | String contains |
-| `^=` | String starts with |
-| `$=` | String ends with |
-| `&&` | Logical AND |
-| `\|\|` | Logical OR |
-| `!()` | Logical NOT |
-
-
-For advanced usage of dynamic filtering expressions, see the [Dynamic Filtering Documentation](docs/Filtering.Dynamic.md).
+For a more comprehensive reference on dynamic filtering expressions, see the [Dynamic Filtering Documentation](docs/Filtering.Dynamic.md).
 
 ---
 
@@ -343,13 +328,12 @@ public class ActiveReviewFilter : IFilterCriteria<Review>
 
 # Roadmap
 
-Currently stable.
+Zift is under active development and not yet considered stable.
+
 Potential future enhancements:
 
 - **Extensibility for Dynamic Filtering:** Improve parser extensibility.
-- **Case-Insensitive Filtering:** Explore case-insensitivity options.
-
-String comparisons currently respect database collation settings.
+- **Case-Insensitive Filtering:** Explore case-insensitivity options (string comparisons currently respect database collation settings.)
 
 ---
 

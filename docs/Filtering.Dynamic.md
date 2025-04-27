@@ -35,21 +35,21 @@ var categories = await dbContext.Categories
 
 #### Scalar filtering
 
-```csharp
+```text
 "Name == 'Electronics'"
 "Price > 1000"
 ```
 
 #### Nested properties
 
-```csharp
+```text
 "Products.Manufacturer == 'Logitech'"
 "Products.Reviews.Author.Name == 'Alice'"
 ```
 
 #### Collection properties
 
-```csharp
+```text
 // Projected count of related items
 "Products:count > 5"
 "Products.Reviews:count >= 10"
@@ -82,7 +82,7 @@ var categories = await dbContext.Categories
 
 Example:
 
-```csharp
+```text
 "!(Name == 'Obsolete' || IsArchived == true)"
 ```
 
@@ -94,9 +94,9 @@ Note: The `!` operator must precede a parenthesized expression. Standalone negat
 
 #### Strings
 
-Single or double-quoted, with optional escaping of embedded quotes.
+Single or double-quoted, allows escaping embedded quotes.
 
-```csharp
+```text
 "Name == 'Gaming Mouse'"
 "Manufacturer == 'O\'Reilly'"
 ```
@@ -104,7 +104,7 @@ Single or double-quoted, with optional escaping of embedded quotes.
 Complex types like `DateTime`, `TimeSpan`, and `Guid` can be expressed as strings using their standard .NET formats.
 They will be converted automatically during query translation.
 
-```csharp
+```text
 "CreatedOn > '2024-02-13'"
 "UserId == 'd9b25756-62d4-4c59-b1f5-9e1048385c63'"
 ```
@@ -113,7 +113,7 @@ They will be converted automatically during query translation.
 
 Supports integers, decimals, and scientific notation:
 
-```csharp
+```text
 "Rating > 4"
 "Price <= 49.99"
 "Discount > 1.5e2"
@@ -129,14 +129,14 @@ The following keywords are supported (case-sensitive):
 
 Examples:
 
-```csharp
+```text
 "IsPublished == true"
 "DeletedAt == null"
 ```
 
 Note: Boolean comparisons must be explicit, as shown above. An expression like this will not work:
 
-```csharp
+```text
 "IsPublished"
 ```
 
@@ -151,13 +151,13 @@ Use quantifiers to control how conditions apply to collection elements:
 - `:any` — at least one element must match *(default if omitted)*
 - `:all` — all elements must match
 
-```csharp
+```text
 "Products:any.Reviews:all.Rating >= 3"
 ```
 
 The following two expressions are equivalent, since `:any` is the default:
 
-```csharp
+```text
 "Products.Reviews.Rating >= 4"
 "Products:any.Reviews:any.Rating >= 4"
 ```
@@ -166,7 +166,7 @@ The following two expressions are equivalent, since `:any` is the default:
 
 Use projections to operate on collection metadata (e.g., count):
 
-```csharp
+```text
 "Products.Reviews:count >= 5"
 ```
 
