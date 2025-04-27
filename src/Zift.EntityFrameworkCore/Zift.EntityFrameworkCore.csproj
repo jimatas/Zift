@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>true</IsPackable>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>Jim Atas</Authors>
     <Description>Entity Framework Core integration for Zift. Enables async query execution and pagination for IQueryable&lt;T&gt; using Zift's filtering, sorting, and pagination criteria.</Description>
     <PackageTags>efcore entityframeworkcore filtering sorting pagination async queryable linq</PackageTags>
