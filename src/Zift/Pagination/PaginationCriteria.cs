@@ -25,35 +25,12 @@ public class PaginationCriteria<T> : IPaginationCriteria<T>
         set => _pageSize = value.ThrowIfLessThan(1, nameof(PageSize));
     }
 
-    public IList<Sorting.ISortCriterion<T>> SortCriteria { get; } = [];
-    IReadOnlyList<Sorting.ISortCriterion<T>> IPaginationCriteria<T>.SortCriteria => SortCriteria.ToArray();
-
     public IQueryable<T> ApplyTo(IQueryable<T> query)
     {
         query.ThrowIfNull();
 
-        query = ApplySorting(query);
-        query = ApplyPagination(query);
+        query = query.Skip((PageNumber - 1) * PageSize).Take(PageSize);
 
         return query;
-    }
-
-    private IQueryable<T> ApplySorting(IQueryable<T> query)
-    {
-        IOrderedQueryable<T>? sortedQuery = null;
-
-        foreach (var criterion in SortCriteria)
-        {
-            sortedQuery = sortedQuery is null
-                ? criterion.ApplyTo(query)
-                : criterion.ApplyTo(sortedQuery);
-        }
-
-        return sortedQuery ?? query;
-    }
-
-    private IQueryable<T> ApplyPagination(IQueryable<T> query)
-    {
-        return query.Skip((PageNumber - 1) * PageSize).Take(PageSize);
     }
 }

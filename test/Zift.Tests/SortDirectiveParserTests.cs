@@ -42,7 +42,7 @@ public class SortDirectiveParserTests
     {
         var ex = Assert.ThrowsAny<ArgumentException>(() => _parser.Parse(input!).ToList());
 
-        Assert.Equal("sortString", ex.ParamName);
+        Assert.Equal("directives", ex.ParamName);
     }
 
     [Theory]

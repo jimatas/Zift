@@ -6,15 +6,15 @@ using SharedFixture.Models;
 public class QueryableFilteringExtensionsTests
 {
     [Fact]
-    public void Filter_NullFilter_ThrowsArgumentNullException()
+    public void FilterBy_NullFilter_ThrowsArgumentNullException()
     {
         var query = new[] { new Product() }.AsQueryable();
 
-        Assert.Throws<ArgumentNullException>("filter", () => query.Filter(null!));
+        Assert.Throws<ArgumentNullException>("filterCriteria", () => query.FilterBy(null!));
     }
 
     [Fact]
-    public void Filter_ValidCriteria_ReturnsFilteredQuery()
+    public void FilterBy_ValidCriteria_ReturnsFilteredQuery()
     {
         var products = new[]
         {
@@ -24,26 +24,26 @@ public class QueryableFilteringExtensionsTests
 
         var filter = new PredicateFilterCriteria<Product>(p => p.Name == "Product 1");
 
-        var result = products.Filter(filter).ToList();
+        var result = products.FilterBy(filter).ToList();
 
         var product = Assert.Single(result);
         Assert.Equal("Product 1", product.Name);
     }
 
     [Fact]
-    public void Filter_EmptyQuery_ReturnsEmptyResult()
+    public void FilterBy_EmptyQuery_ReturnsEmptyResult()
     {
         var products = Enumerable.Empty<Product>().AsQueryable();
         
         var filter = new PredicateFilterCriteria<Product>(p => p.Name == "Product 1");
         
-        var result = products.Filter(filter).ToList();
+        var result = products.FilterBy(filter).ToList();
         
         Assert.Empty(result);
     }
 
     [Fact]
-    public void Filter_CanBeChainedWithOtherLinqCalls()
+    public void FilterBy_CanBeChainedWithOtherLinqCalls()
     {
         var products = new[]
         {
@@ -56,7 +56,7 @@ public class QueryableFilteringExtensionsTests
         var filter = new PredicateFilterCriteria<Product>(p => p.Name!.StartsWith('A'));
 
         var result = products
-            .Filter(filter)
+            .FilterBy(filter)
             .OrderBy(p => p.Name)
             .Select(p => p.Name)
             .ToList();
