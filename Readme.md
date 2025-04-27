@@ -240,7 +240,16 @@ var sortedProducts = dbContext.Products
     .SortBy(sort => sort.Clause("Price DESC, Name ASC"));
 ```
 
-Default sort direction is ascending if omitted.
+> Default sort direction is ascending if omitted.
+
+You can also specify a custom `ISortDirectiveParser<T>` implementation if you need different parsing behavior:
+
+```csharp
+var parser = new CustomSortDirectiveParser<Product>();
+
+var sortedProducts = dbContext.Products
+    .SortBy(sort => sort.Clause("Price DESC, Name ASC", parser));
+```
 
 ---
 
