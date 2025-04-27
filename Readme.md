@@ -23,6 +23,15 @@ Designed to work seamlessly with Entity Framework Core and any LINQ-compatible d
 
 ---
 
+## Requirements
+
+- **Target Framework:** .NET 8
+- **Dependencies:**
+    - Zift has no external dependencies.
+    - Zift.EntityFrameworkCore depends on Entity Framework Core 8.x.
+
+---
+
 ## Getting Started
 
 *Note:* Zift is not yet published as a NuGet package.
