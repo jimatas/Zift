@@ -7,9 +7,7 @@ It provides dynamic filtering, sorting, and pagination capabilities, while remai
 
 Designed to work seamlessly with Entity Framework Core and any LINQ-compatible data source, Zift enables both runtime-defined querying (e.g., from API parameters) and compile-time query construction through fluent builders.
 
----
-
-## Features
+## 1. Features
 
 - **Dynamic Filtering** — Parse string-based filter expressions into safe LINQ queries.
 - **Predicate-Based Filtering** — Define custom filter criteria using expressions.
@@ -21,18 +19,14 @@ Designed to work seamlessly with Entity Framework Core and any LINQ-compatible d
 - **Entity Framework Core Support** — Async pagination extensions with cancellation support.
 - **Extensible Design** — Implement custom filter, sort, and pagination criteria types when needed.
 
----
-
-## Requirements
+## 2. Requirements
 
 - **Target Framework:** .NET 8
 - **Dependencies:**
     - Zift has no external dependencies.
     - Zift.EntityFrameworkCore depends on Entity Framework Core 8.x.
 
----
-
-## Getting Started
+## 3. Getting Started
 
 *Note:* Zift is not yet published as a NuGet package.
 
@@ -43,9 +37,7 @@ If you want to try it today, you can:
 
 Package publishing will be available once the project reaches a stable release.
 
----
-
-### Basic Example
+### 3.1. Basic Example
 
 ```csharp
 var products = await dbContext.Products
@@ -58,9 +50,7 @@ var products = await dbContext.Products
 - **Sort** descending by price.
 - **Paginate** to return 20 items starting from page 1.
 
----
-
-# Architecture Overview
+## 4. Architecture Overview
 
 At the core of Zift is the `ICriteria<T>` interface, which defines a simple contract for applying transformations over `IQueryable<T>` sources:
 
@@ -73,9 +63,7 @@ public interface ICriteria<T>
 
 All Zift functionality — filtering, sorting, and pagination — builds upon this common foundation.
 
----
-
-## Specialized Criteria Interfaces
+### 4.1. Specialized Criteria Interfaces
 
 | Interface | Purpose |
 | :--- | :--- |
@@ -85,9 +73,7 @@ All Zift functionality — filtering, sorting, and pagination — builds upon th
 
 Each criteria type offers default implementations, fluent builders, and dynamic variants for runtime-defined queries.
 
----
-
-## Query Composition
+### 4.2. Query Composition
 
 Zift provides a set of IQueryable extensions (`FilterBy`, `SortBy`, `ToPaginatedList`) that allow queries to be composed fluently for filtering, sorting, and pagination:
 
@@ -100,18 +86,22 @@ var query = dbContext.Products
 
 Queries are composed using standard LINQ patterns and executed only when enumerated.
 
----
+### 4.3. Design Principles
 
-# Filtering
+- Unified `ICriteria<T>` abstraction.
+- Deferred query execution.
+- Null-safe API validation.
+- Lightweight, extensible core.
+- Architecture-agnostic — no repository or unit-of-work assumptions.
 
-## Overview
+## 5. Filtering
+
+### 5.1. Overview
 
 Filtering in Zift is based on the `IFilterCriteria<T>` interface.
 An `IFilterCriteria<T>` applies a filtering operation over an `IQueryable<T>`, typically by adding a `.Where()` clause.
 
----
-
-## Predicate-Based Filtering
+### 5.2. Predicate-Based Filtering
 
 Use `PredicateFilterCriteria<T>` to filter using regular LINQ expressions:
 
@@ -120,7 +110,7 @@ var expensiveProducts = dbContext.Products
     .FilterBy(new PredicateFilterCriteria<Product>(p => p.Price > 1000));
 ```
 
-### Custom Filter Criteria
+#### 5.2.1. Custom Filter Criteria
 
 You can implement `IFilterCriteria<T>` to create reusable, strongly-typed filters:
 
@@ -143,9 +133,7 @@ var preferredCustomers = dbContext.Users
     .FilterBy(new PreferredCustomerFilter());
 ```
 
----
-
-## Dynamic String-Based Filtering
+### 5.3. Dynamic String-Based Filtering
 
 Use `DynamicFilterCriteria<T>` for runtime-defined string expressions:
 
@@ -154,7 +142,7 @@ var filteredCategories = dbContext.Categories
     .FilterBy(new DynamicFilterCriteria<Category>("Name ^= 'Gaming' && Products:count > 0"));
 ```
 
-### Expression Syntax Overview
+### 5.4. Expression Syntax Overview
 
 Supports:
 
@@ -174,21 +162,17 @@ var products = dbContext.Products
 
 For a more comprehensive reference on dynamic filtering expressions, see the [Dynamic Filtering Documentation](docs/Filtering.Dynamic.md).
 
----
+## 6. Sorting
 
-# Sorting
-
-## Overview
+### 6.1. Overview
 
 Sorting in Zift is based on the `ISortCriteria<T>` interface, supporting multiple sort operations applied in order.
 
----
-
-## Fluent Sorting
+### 6.2. Fluent Sorting
 
 Sort using the fluent `SortCriteriaBuilder<T>`:
 
-### Expression-Based
+#### 6.2.1. Expression-Based
 
 ```csharp
 var sortedProducts = dbContext.Products
@@ -197,7 +181,7 @@ var sortedProducts = dbContext.Products
         .Ascending(p => p.Name));
 ```
 
-### String-Based
+#### 6.2.2. String-Based
 
 ```csharp
 var sortedProducts = dbContext.Products
@@ -206,9 +190,7 @@ var sortedProducts = dbContext.Products
         .Descending("Price"));
 ```
 
----
-
-## Manual Sort Criteria
+### 6.3. Manual Sort Criteria
 
 ```csharp
 var sortCriteria = new SortCriteria<Product>();
@@ -220,9 +202,7 @@ var sortedProducts = dbContext.Products
     .SortBy(sortCriteria);
 ```
 
----
-
-## Dynamic String-Based Sorting
+### 6.4. Dynamic String-Based Sorting
 
 Sort using a SQL-style ORDER BY string:
 
@@ -242,17 +222,13 @@ var sortedProducts = dbContext.Products
     .SortBy(sort => sort.Clause("Price DESC, Name ASC", parser));
 ```
 
----
+## 7. Pagination
 
-# Pagination
-
-## Overview
+### 7.1. Overview
 
 Pagination in Zift is based on `IPaginationCriteria<T>`, applying `.Skip()` and `.Take()` operations.
 
----
-
-## Fluent Pagination
+### 7.2. Fluent Pagination
 
 ```csharp
 var paginatedProducts = await dbContext.Products
@@ -270,7 +246,7 @@ var paginatedProducts = await dbContext.Products
     .ToPaginatedListAsync(paginationCriteria);
 ```
 
-## Paginated List Result
+### 7.3. Paginated List Result
 
 Paginated results implement `IPaginatedList<T>`, exposing:
 
@@ -288,9 +264,7 @@ if (paginatedProducts.HasNextPage())
 }
 ```
 
----
-
-# IQueryable Extensions
+## 8. IQueryable Extensions
 
 Zift extends `IQueryable<T>` with:
 
@@ -302,11 +276,9 @@ Zift extends `IQueryable<T>` with:
 | `ToPaginatedList(IPaginationCriteria<T>)` | Apply pagination (sync) |
 | `ToPaginatedListAsync(IPaginationCriteria<T>)` | Apply pagination (async, EF Core) |
 
----
+## 9. Advanced Topics
 
-# Advanced Topics
-
-## Extending Zift
+### 9.1. Extending Zift
 
 Create custom filtering, sorting, or pagination criteria by implementing the respective interfaces.
 
@@ -322,17 +294,7 @@ public class ActiveReviewFilter : IFilterCriteria<Review>
 }
 ```
 
-## Design Notes
-
-- Unified `ICriteria<T>` abstraction.
-- Deferred query execution.
-- Null-safe API validation.
-- Lightweight, extensible core.
-- Architecture-agnostic — no repository or unit-of-work assumptions.
-
----
-
-# Roadmap
+## 10. Roadmap
 
 Zift is under active development and not yet considered stable.
 
@@ -341,8 +303,6 @@ Potential future enhancements:
 - **Extensibility for Dynamic Filtering:** Improve parser extensibility.
 - **Case-Insensitive Filtering:** Explore case-insensitivity options (string comparisons currently respect database collation settings.)
 
----
-
-# License
+## 11. License
 
 Zift is licensed under the [MIT License](https://opensource.org/licenses/MIT).
