@@ -1,19 +1,19 @@
 ﻿namespace Zift.Pagination;
 
-public class PaginationCriteriaBuilder<T>(PaginationCriteria<T> paginationCriteria)
+public class PaginationCriteriaBuilder<T>(PaginationCriteria<T> criteria)
 {
-    private readonly PaginationCriteria<T> _paginationCriteria = paginationCriteria.ThrowIfNull();
+    private readonly PaginationCriteria<T> _criteria = criteria.ThrowIfNull();
 
     public PaginationCriteriaBuilder<T> StartAt(int pageNumber)
     {
-        _paginationCriteria.PageNumber = pageNumber;
+        _criteria.PageNumber = pageNumber;
 
         return this;
     }
 
     public PaginationCriteriaBuilder<T> WithPageSize(int pageSize)
     {
-        _paginationCriteria.PageSize = pageSize;
+        _criteria.PageSize = pageSize;
 
         return this;
     }

@@ -19,7 +19,7 @@ public class QueryablePaginationExtensionsTests
     {
         var query = new[] { new Product() }.AsQueryable();
 
-        Assert.Throws<ArgumentNullException>("paginationCriteria",
+        Assert.Throws<ArgumentNullException>("pagination",
             () => query.ToPaginatedList((IPaginationCriteria<Product>)null!));
     }
 

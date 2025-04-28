@@ -2,8 +2,8 @@
 
 public static class QueryableFilteringExtensions
 {
-    public static IQueryable<T> FilterBy<T>(this IQueryable<T> query, Filtering.IFilterCriteria<T> filterCriteria)
+    public static IQueryable<T> FilterBy<T>(this IQueryable<T> query, Filtering.IFilterCriteria<T> filter)
     {
-        return filterCriteria.ThrowIfNull().ApplyTo(query);
+        return filter.ThrowIfNull().ApplyTo(query);
     }
 }

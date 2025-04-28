@@ -2,19 +2,6 @@
 
 public static class QueryablePaginationExtensions
 {
-    public static Task<Pagination.IPaginatedList<T>> ToPaginatedListAsync<T>(
-        this IQueryable<T> query,
-        Action<Pagination.PaginationCriteriaBuilder<T>> configurePagination,
-        CancellationToken cancellationToken = default)
-    {
-        configurePagination.ThrowIfNull();
-
-        var paginationCriteria = new Pagination.PaginationCriteria<T>();
-        configurePagination(new Pagination.PaginationCriteriaBuilder<T>(paginationCriteria));
-
-        return query.ToPaginatedListAsync(paginationCriteria, cancellationToken);
-    }
-
     public static async Task<Pagination.IPaginatedList<T>> ToPaginatedListAsync<T>(
         this IQueryable<T> query,
         Pagination.IPaginationCriteria<T> paginationCriteria,
@@ -33,5 +20,18 @@ public static class QueryablePaginationExtensions
             paginationCriteria.PageSize,
             list,
             totalCount);
+    }
+
+    public static Task<Pagination.IPaginatedList<T>> ToPaginatedListAsync<T>(
+        this IQueryable<T> query,
+        Action<Pagination.PaginationCriteriaBuilder<T>> configurePagination,
+        CancellationToken cancellationToken = default)
+    {
+        configurePagination.ThrowIfNull();
+
+        var paginationCriteria = new Pagination.PaginationCriteria<T>();
+        configurePagination(new Pagination.PaginationCriteriaBuilder<T>(paginationCriteria));
+
+        return query.ToPaginatedListAsync(paginationCriteria, cancellationToken);
     }
 }

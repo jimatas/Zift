@@ -3,14 +3,14 @@
 using SharedFixture.Models;
 using Sorting;
 
-public class QueryableSortingExtensionsTests
+public class QueryableSortExtensionsTests
 {
     [Fact]
     public void SortBy_NullSortCriteria_ThrowsArgumentNullException()
     {
         var query = new[] { new Product() }.AsQueryable();
 
-        Assert.Throws<ArgumentNullException>("sortCriteria", () => query.SortBy((ISortCriteria<Product>)null!));
+        Assert.Throws<ArgumentNullException>("sort", () => query.SortBy((ISortCriteria<Product>)null!));
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public class QueryableSortingExtensionsTests
     {
         var query = new[] { new Product() }.AsQueryable();
 
-        Assert.Throws<ArgumentNullException>("configureSorting", () => query.SortBy((Action<SortCriteriaBuilder<Product>>)null!));
+        Assert.Throws<ArgumentNullException>("configureSort", () => query.SortBy((Action<SortCriteriaBuilder<Product>>)null!));
     }
 
     [Fact]

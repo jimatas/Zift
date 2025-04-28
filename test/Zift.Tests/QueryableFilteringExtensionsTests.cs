@@ -10,7 +10,7 @@ public class QueryableFilteringExtensionsTests
     {
         var query = new[] { new Product() }.AsQueryable();
 
-        Assert.Throws<ArgumentNullException>("filterCriteria", () => query.FilterBy(null!));
+        Assert.Throws<ArgumentNullException>("filter", () => query.FilterBy(null!));
     }
 
     [Fact]
