@@ -2,21 +2,17 @@
 
 Zift provides dynamic filtering via string-based filter expressions using the `DynamicFilterCriteria<T>` class.
 
-This allows filters to be defined at runtime — for example, based on API query parameters, user selections, or configuration files — and translated into safe LINQ queries.
+This allows filters to be defined at runtime â€” for example, based on API query parameters, user selections, or configuration files â€” and translated into type-safe LINQ queries.
 
 The primary use case is external configuration of filtering conditions, such as via API query parameters or admin tools.
 
----
-
-### Overview
+## 1. Overview
 
 Filter expressions are parsed into a logical model (`FilterTerm`, `FilterCondition`, `FilterGroup`), then translated into expression trees using standard LINQ operators.
 
 This allows validated, type-safe querying over nested object graphs, including collections.
 
----
-
-### Usage
+## 2. Usage
 
 To apply a dynamic filter:
 
@@ -29,25 +25,23 @@ var categories = await dbContext.Categories
     .ToListAsync(cancellationToken);
 ```
 
----
+## 3. Expression Examples
 
-### Expression Examples
-
-#### Scalar filtering
+### 3.1. Scalar filtering
 
 ```text
 "Name == 'Electronics'"
 "Price > 1000"
 ```
 
-#### Nested properties
+### 3.2. Nested properties
 
 ```text
 "Products.Manufacturer == 'Logitech'"
 "Products.Reviews.Author.Name == 'Alice'"
 ```
 
-#### Collection properties
+### 3.3. Collection properties
 
 ```text
 // Projected count of related items
@@ -61,9 +55,7 @@ var categories = await dbContext.Categories
 "Products.Reviews:all.Rating >= 4"
 ```
 
----
-
-### Supported Operators
+## 4. Supported Operators
 
 | Operator | Description |
 | :--- | :--- |
@@ -88,11 +80,9 @@ Example:
 
 *Note:* The `!` operator must precede a parenthesized expression. Standalone negations like `!IsArchived` are not supported.
 
----
+## 5. Supported Literals
 
-### Supported Literals
-
-#### Strings
+### 5.1. Strings
 
 Single or double-quoted, allows escaping embedded quotes.
 
@@ -109,7 +99,7 @@ They will be converted automatically during query translation.
 "UserId == 'd9b25756-62d4-4c59-b1f5-9e1048385c63'"
 ```
 
-#### Numbers
+### 5.2. Numbers
 
 Supports integers, decimals, and scientific notation:
 
@@ -119,7 +109,7 @@ Supports integers, decimals, and scientific notation:
 "Discount > 1.5e2"
 ```
 
-#### Keywords
+### 5.3. Keywords
 
 The following keywords are supported (case-sensitive):
 
@@ -140,16 +130,14 @@ Examples:
 "IsPublished"
 ```
 
----
+## 6. Collections
 
-### Collections
-
-#### Quantifiers
+### 6.1. Quantifiers
 
 Use quantifiers to control how conditions apply to collection elements:
 
-- `:any` — at least one element must match *(default if omitted)*
-- `:all` — all elements must match
+- `:any` â€” at least one element must match *(default if omitted)*
+- `:all` â€” all elements must match
 
 ```text
 "Products:any.Reviews:all.Rating >= 3"
@@ -162,7 +150,7 @@ The following two expressions are equivalent, since `:any` is the default:
 "Products:any.Reviews:any.Rating >= 4"
 ```
 
-#### Projections
+### 6.2. Projections
 
 Use projections to operate on collection metadata (e.g., count):
 
@@ -172,9 +160,7 @@ Use projections to operate on collection metadata (e.g., count):
 
 Projections must appear at the end of the path.
 
----
-
-### Expression Structure
+## 7. Expression Structure
 
 Internally, expressions are parsed into:
 
