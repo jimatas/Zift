@@ -25,9 +25,9 @@ public static class QueryablePaginationExtensions
     {
         configurePagination.ThrowIfNull();
 
-        var paginationCriteria = new Pagination.PaginationCriteria<T>();
-        configurePagination(new Pagination.PaginationCriteriaBuilder<T>(paginationCriteria));
+        var pagination = new Pagination.PaginationCriteria<T>();
+        configurePagination(new Pagination.PaginationCriteriaBuilder<T>(pagination));
 
-        return query.ToPaginatedList(paginationCriteria);
+        return query.ToPaginatedList(pagination);
     }
 }

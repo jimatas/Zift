@@ -11,9 +11,9 @@ public static class QueryableSortExtensions
     {
         configureSort.ThrowIfNull();
         
-        var sortCriteria = new Sorting.SortCriteria<T>();
-        configureSort(new Sorting.SortCriteriaBuilder<T>(sortCriteria));
+        var sort = new Sorting.SortCriteria<T>();
+        configureSort(new Sorting.SortCriteriaBuilder<T>(sort));
 
-        return query.SortBy(sortCriteria);
+        return query.SortBy(sort);
     }
 }
