@@ -173,4 +173,63 @@ public class DynamicFilterCriteriaNullSafetyTests
 
         Assert.Empty(result);
     }
+
+    [Fact]
+    public void Filter_ByCollectionQuantifierOnNullCollection_DoesNotThrowAndReturnsEmpty()
+    {
+        var categories = new[]
+        {
+            new Category
+            {
+                Name = "Empty",
+                Products = null! // entire collection is null
+            }
+        };
+
+        var filter = new DynamicFilterCriteria<Category>("Products:any.Price > 10");
+
+        var result = categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void Filter_ExplicitAllWithEmptyCollection_EvaluatesCorrectly()
+    {
+        var categories = new[]
+        {
+            new Category
+            {
+                Name = "NoProducts",
+                Products = [] // empty list
+            }
+        };
+
+        var filter = new DynamicFilterCriteria<Category>("Products:all.Price > 0");
+
+        var result = categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result); // If vacuous truth: all() is true on empty
+        Assert.Equal("NoProducts", result[0].Name);
+    }
+
+    [Fact]
+    public void Filter_AnyWithNullItemInCollection_DoesNotThrow()
+    {
+        var categories = new[]
+        {
+            new Category
+            {
+                Name = "Mixed",
+                Products = [null!, new Product { Price = 999 }]
+            }
+        };
+
+        var filter = new DynamicFilterCriteria<Category>("Products:any.Price > 500");
+
+        var result = categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Mixed", result[0].Name);
+    }
 }

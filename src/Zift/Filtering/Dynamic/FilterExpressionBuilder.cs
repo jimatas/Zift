@@ -33,7 +33,6 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         else
         {
             var isLastSegment = segmentIndex == propertyPath.Count - 1;
-
             if (isLastSegment)
             {
                 segmentExpression = BuildComparison(member);
@@ -44,9 +43,7 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
             }
         }
 
-        return target.NodeType == ExpressionType.Parameter
-            ? segmentExpression
-            : Expression.AndAlso(IsNonNull(target), segmentExpression);
+        return NullGuarded(target, segmentExpression);
     }
 
     private Expression BuildQuantifierExpression(Expression collection, QuantifierMode quantifier, PropertyPath propertyPath, int segmentIndex)
@@ -70,7 +67,7 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
             methodCall = Expression.Call(method, collection, lambda);
         }
 
-        return Expression.AndAlso(IsNonNull(collection), methodCall);
+        return NullGuarded(collection, methodCall);
     }
 
     private Expression BuildProjectionExpression(Expression collection, PropertyPath propertyPath, int segmentIndex)
@@ -82,7 +79,7 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         var methodCall = Expression.Call(method, collection);
         var comparison = BuildComparison(methodCall);
 
-        return Expression.AndAlso(IsNonNull(collection), comparison);
+        return NullGuarded(collection, comparison);
     }
 
     private Expression BuildComparison(Expression leftOperand)
@@ -110,8 +107,8 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
     private Expression ApplyNullSafeComparison(Expression leftOperand, Expression rightOperand)
     {
         var comparison = _condition.Operator.ToComparisonExpression(leftOperand, rightOperand);
-        var isDirectComparison = !_condition.Operator.IsImplementedAsMethodCall();
 
+        var isDirectComparison = !_condition.Operator.IsImplementedAsMethodCall();
         if (isDirectComparison)
         {
             return comparison;
@@ -152,6 +149,11 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         }
 
         return value;
+    }
+
+    private static Expression NullGuarded(Expression subject, Expression innerExpression)
+    {
+        return Expression.AndAlso(IsNonNull(subject), innerExpression);
     }
 
     private static Expression IsNonNull(Expression expression)
