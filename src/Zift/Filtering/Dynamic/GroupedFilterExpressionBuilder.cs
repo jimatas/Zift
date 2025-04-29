@@ -30,16 +30,16 @@ internal class GroupedFilterExpressionBuilder<T>(FilterGroup group)
         return lambdaBody;
     }
 
-    private Expression CombineWithLogicalOperator(Expression? left, Expression right)
+    private Expression CombineWithLogicalOperator(Expression? leftOperand, Expression rightOperand)
     {
-        if (left is null)
+        if (leftOperand is null)
         {
-            return right;
+            return rightOperand;
         }
 
         return _group.Operator == LogicalOperator.And
-            ? Expression.AndAlso(left, right)
-            : Expression.OrElse(left, right);
+            ? Expression.AndAlso(leftOperand, rightOperand)
+            : Expression.OrElse(leftOperand, rightOperand);
     }
 
     private Expression<Func<T, bool>> BuildDefaultExpression(ParameterExpression parameter)
