@@ -6,32 +6,44 @@ using SharedFixture.Models;
 
 public class FilterGroupTests
 {
-    [Theory]
-    [InlineData(LogicalOperator.And, "AndAlso")]
-    [InlineData(LogicalOperator.Or, "OrElse")]
-    public void ToExpression_TwoTerms_ReturnsExpectedExpression(LogicalOperator logicalOperator, string expectedLinqCombinator)
+    [Fact]
+    public void ToExpression_WithAndOperator_ReturnsConjunctionExpression()
     {
-        var group = new FilterGroup(logicalOperator);
+        var group = new FilterGroup(LogicalOperator.And);
         group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Equal, "Smartphone"));
         group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Price"), ComparisonOperator.GreaterThan, 500));
 
         var result = group.ToExpression<Product>().ToString();
 
         Assert.Contains("p.Name == ", result);
-        Assert.Contains(expectedLinqCombinator, result);
         Assert.Contains("p.Price > ", result);
+        Assert.DoesNotContain("OrElse", result);
+    }
+
+    [Fact]
+    public void ToExpression_WithOrOperator_ReturnsDisjunctionExpression()
+    {
+        var group = new FilterGroup(LogicalOperator.Or);
+        group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Equal, "Smartphone"));
+        group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Price"), ComparisonOperator.GreaterThan, 500));
+
+        var result = group.ToExpression<Product>().ToString();
+
+        Assert.Contains("p.Name == ", result);
+        Assert.Contains("p.Price > ", result);
+        Assert.Contains("OrElse", result);
     }
 
     [Fact]
     public void ToExpression_SingleTerm_ReturnsExpectedExpression()
     {
-        var group = new FilterGroup(LogicalOperator.And);
+        var group = new FilterGroup(LogicalOperator.Or);
         group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Equal, "Smartphone"));
 
         var result = group.ToExpression<Product>().ToString();
 
         Assert.Contains("p.Name == ", result);
-        Assert.DoesNotContain("AndAlso", result);
+        Assert.DoesNotContain("OrElse", result);
     }
 
     [Theory]
