@@ -111,7 +111,7 @@ Supports integers, decimals, and scientific notation:
 
 ### 5.3. Keywords
 
-The following keywords are supported (case-sensitive):
+The following keywords are supported (case-insensitive):
 
 - `true`
 - `false`
