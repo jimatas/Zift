@@ -21,7 +21,7 @@ var expression = "Name ^= 'Gaming' && Products:count > 0";
 var criteria = new DynamicFilterCriteria<Category>(expression);
 
 var categories = await dbContext.Categories
-    .FilterBy(criteria)
+    .Filter(criteria)
     .ToListAsync(cancellationToken);
 ```
 
