@@ -30,7 +30,7 @@ public class QueryablePaginationExtensionsTests
             .Select(i => new Product { Name = $"Product {i}" })
             .AsQueryable();
 
-        var result = query.ToPaginatedList(c => c.StartAt(2).WithPageSize(3));
+        var result = query.ToPaginatedList(c => c.AtPage(2).WithSize(3));
 
         Assert.Equal(3, result.Count);
         Assert.Equal("Product 4", result[0].Name);
@@ -59,7 +59,7 @@ public class QueryablePaginationExtensionsTests
             .Select(i => new Product { Name = $"Product {i}" })
             .AsQueryable();
 
-        var result = query.ToPaginatedList(c => c.StartAt(1).WithPageSize(5));
+        var result = query.ToPaginatedList(c => c.AtPage(1).WithSize(5));
 
         Assert.Equal(2, result.Count);
         Assert.Equal("Product 1", result[0].Name);
@@ -71,7 +71,7 @@ public class QueryablePaginationExtensionsTests
     {
         var query = Enumerable.Empty<Product>().AsQueryable();
         
-        var result = query.ToPaginatedList(c => c.StartAt(1).WithPageSize(5));
+        var result = query.ToPaginatedList(c => c.AtPage(1).WithSize(5));
 
         Assert.Empty(result);
     }

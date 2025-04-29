@@ -4,14 +4,14 @@ public class PaginationCriteriaBuilder<T>(PaginationCriteria<T> criteria)
 {
     private readonly PaginationCriteria<T> _criteria = criteria.ThrowIfNull();
 
-    public PaginationCriteriaBuilder<T> StartAt(int pageNumber)
+    public PaginationCriteriaBuilder<T> AtPage(int pageNumber)
     {
         _criteria.PageNumber = pageNumber;
 
         return this;
     }
 
-    public PaginationCriteriaBuilder<T> WithPageSize(int pageSize)
+    public PaginationCriteriaBuilder<T> WithSize(int pageSize)
     {
         _criteria.PageSize = pageSize;
 

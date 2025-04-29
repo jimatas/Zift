@@ -6,33 +6,33 @@ using SharedFixture.Models;
 public class DynamicFilterCriteriaTests
 {
     [Fact]
-    public void FilterBy_ExactProductName_ReturnsMatchingCategory()
+    public void Filter_ByExactProductName_ReturnsMatchingCategory()
     {
         var filterCriteria = new DynamicFilterCriteria<Category>("Products.Name == 'Smartphone'");
 
-        var result = Catalog.Categories.AsQueryable().FilterBy(filterCriteria).ToList();
+        var result = Catalog.Categories.AsQueryable().Filter(filterCriteria).ToList();
 
         Assert.Single(result);
         Assert.Equal("Electronics", result[0].Name);
     }
 
     [Fact]
-    public void FilterBy_ProductNamePrefix_ReturnsMatchingCategory()
+    public void Filter_ByProductNamePrefix_ReturnsMatchingCategory()
     {
         var filterCriteria = new DynamicFilterCriteria<Category>("Products.Name ^= 'S'");
 
-        var result = Catalog.Categories.AsQueryable().FilterBy(filterCriteria).ToList();
+        var result = Catalog.Categories.AsQueryable().Filter(filterCriteria).ToList();
 
         Assert.Single(result);
         Assert.Equal("Electronics", result[0].Name);
     }
 
     [Fact]
-    public void FilterBy_ReviewAuthorSubstring_ReturnsMatchingCategories()
+    public void Filter_ByReviewAuthorSubstring_ReturnsMatchingCategories()
     {
         var filterCriteria = new DynamicFilterCriteria<Category>("Products.Reviews.Author.Name %= 'ee'");
 
-        var result = Catalog.Categories.AsQueryable().FilterBy(filterCriteria).ToList();
+        var result = Catalog.Categories.AsQueryable().Filter(filterCriteria).ToList();
 
         Assert.Equal(2, result.Count);
         Assert.Contains(result, c => c.Name == "Clothing");
@@ -40,11 +40,11 @@ public class DynamicFilterCriteriaTests
     }
 
     [Fact]
-    public void FilterBy_ProductPriceRange_ReturnsMatchingCategories()
+    public void Filter_ByProductPriceRange_ReturnsMatchingCategories()
     {
         var filterCriteria = new DynamicFilterCriteria<Category>("Products.Price >= 500 && Products.Price <= 1300");
 
-        var result = Catalog.Categories.AsQueryable().FilterBy(filterCriteria).ToList();
+        var result = Catalog.Categories.AsQueryable().Filter(filterCriteria).ToList();
 
         Assert.Equal(2, result.Count);
         Assert.Contains("Electronics", result.Select(c => c.Name));
@@ -52,11 +52,11 @@ public class DynamicFilterCriteriaTests
     }
 
     [Fact]
-    public void FilterBy_ProductPriceRangeWithMixedTypes_ReturnsMatchingCategories()
+    public void Filter_ByProductPriceRangeWithMixedTypes_ReturnsMatchingCategories()
     {
         var filterCriteria = new DynamicFilterCriteria<Category>("Products.Price >= 500.0 && Products.Price <= '1300'");
 
-        var result = Catalog.Categories.AsQueryable().FilterBy(filterCriteria).ToList();
+        var result = Catalog.Categories.AsQueryable().Filter(filterCriteria).ToList();
 
         Assert.Equal(2, result.Count);
         Assert.Contains("Electronics", result.Select(c => c.Name));
@@ -64,18 +64,18 @@ public class DynamicFilterCriteriaTests
     }
 
     [Fact]
-    public void FilterBy_ReviewAuthor_ReturnsMatchingCategory()
+    public void Filter_ByReviewAuthor_ReturnsMatchingCategory()
     {
         var filterCriteria = new DynamicFilterCriteria<Category>("Products.Reviews.Author.Name == 'John Doe'");
 
-        var result = Catalog.Categories.AsQueryable().FilterBy(filterCriteria).ToList();
+        var result = Catalog.Categories.AsQueryable().Filter(filterCriteria).ToList();
 
         Assert.Single(result);
         Assert.Equal("Electronics", result[0].Name);
     }
 
     [Fact]
-    public void FilterBy_ExactProductId_ReturnsMatchingCategory()
+    public void Filter_ByExactProductId_ReturnsMatchingCategory()
     {
         var categories = Catalog.Categories.ToList();
         var productId = categories
@@ -84,26 +84,26 @@ public class DynamicFilterCriteriaTests
 
         var filterCriteria = new DynamicFilterCriteria<Category>($"Products.Id == '{productId}'");
 
-        var result = categories.AsQueryable().FilterBy(filterCriteria).ToList();
+        var result = categories.AsQueryable().Filter(filterCriteria).ToList();
 
         Assert.Single(result);
         Assert.Equal("Electronics", result[0].Name);
     }
 
     [Fact]
-    public void FilterBy_ProductIdExclusion_ReturnsAllCategories()
+    public void Filter_ByProductIdExclusion_ReturnsAllCategories()
     {
         var categories = Catalog.Categories.ToList();
         var unrelatedId = Guid.NewGuid();
         var filterCriteria = new DynamicFilterCriteria<Category>($"Products.Id != '{unrelatedId}'");
 
-        var result = categories.AsQueryable().FilterBy(filterCriteria).ToList();
+        var result = categories.AsQueryable().Filter(filterCriteria).ToList();
 
         Assert.Equal(categories.Count, result.Count);
     }
 
     [Fact]
-    public void FilterBy_PostReviewDate_ReturnsMatchingReview()
+    public void Filter_ByPostReviewDate_ReturnsMatchingReview()
     {
         var reviews = new[]
         {
@@ -112,14 +112,14 @@ public class DynamicFilterCriteriaTests
 
         var filterCriteria = new DynamicFilterCriteria<Review>("DatePosted > '2024-01-01'");
 
-        var result = reviews.AsQueryable().FilterBy(filterCriteria).ToList();
+        var result = reviews.AsQueryable().Filter(filterCriteria).ToList();
 
         Assert.Single(result);
         Assert.Equal(new DateTime(2024, 2, 2), result[0].DatePosted);
     }
 
     [Fact]
-    public void FilterBy_WithinReviewDateRange_ReturnsMatchingReview()
+    public void Filter_WithinReviewDateRange_ReturnsMatchingReview()
     {
         var reviews = new[]
         {
@@ -128,14 +128,14 @@ public class DynamicFilterCriteriaTests
 
         var filterCriteria = new DynamicFilterCriteria<Review>("DatePosted >= '2024-01-01' && DatePosted <= '2024-12-31'");
 
-        var result = reviews.AsQueryable().FilterBy(filterCriteria).ToList();
+        var result = reviews.AsQueryable().Filter(filterCriteria).ToList();
 
         Assert.Single(result);
         Assert.Equal(new DateTime(2024, 2, 2), result[0].DatePosted);
     }
 
     [Fact]
-    public void FilterBy_NonNullReviewDates_ReturnsMatchingReview()
+    public void Filter_ByNonNullReviewDates_ReturnsMatchingReview()
     {
         var reviews = new[]
         {
@@ -144,14 +144,14 @@ public class DynamicFilterCriteriaTests
 
         var filterCriteria = new DynamicFilterCriteria<Review>("DatePosted != null");
 
-        var result = reviews.AsQueryable().FilterBy(filterCriteria).ToList();
+        var result = reviews.AsQueryable().Filter(filterCriteria).ToList();
 
         Assert.Single(result);
         Assert.Equal(new DateTime(2024, 2, 2), result[0].DatePosted);
     }
 
     [Fact]
-    public void FilterBy_PreReviewDate_ReturnsNoReviews()
+    public void Filter_ByPreReviewDate_ReturnsNoReviews()
     {
         var reviews = new[]
         {
@@ -160,7 +160,7 @@ public class DynamicFilterCriteriaTests
 
         var filterCriteria = new DynamicFilterCriteria<Review>("DatePosted < '2024-01-01'");
 
-        var result = reviews.AsQueryable().FilterBy(filterCriteria).ToList();
+        var result = reviews.AsQueryable().Filter(filterCriteria).ToList();
 
         Assert.Empty(result);
     }

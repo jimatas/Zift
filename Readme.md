@@ -41,9 +41,9 @@ Package publishing will be available once the project reaches a stable release.
 
 ```csharp
 var products = await dbContext.Products
-    .FilterBy(new DynamicFilterCriteria<Product>("Price > 1000 && Manufacturer == 'Logitech'"))
+    .Filter(new DynamicFilterCriteria<Product>("Price > 1000 && Manufacturer == 'Logitech'"))
     .SortBy(sort => sort.Descending(p => p.Price))
-    .ToPaginatedListAsync(pagination => pagination.StartAt(1).WithPageSize(20));
+    .ToPaginatedListAsync(pagination => pagination.AtPage(1).WithSize(20));
 ```
 
 - **Filter** products where price is greater than 1000 and manufacturer is "Logitech".
@@ -75,13 +75,13 @@ Each criteria type offers default implementations, fluent builders, and dynamic 
 
 ### 4.2. Query Composition
 
-Zift provides a set of IQueryable extensions (`FilterBy`, `SortBy`, `ToPaginatedList`) that allow queries to be composed fluently for filtering, sorting, and pagination:
+Zift provides a set of IQueryable extensions (`Filter`, `SortBy`, `ToPaginatedList`) that allow queries to be composed fluently for filtering, sorting, and pagination:
 
 ```csharp
 var query = dbContext.Products
-    .FilterBy(new DynamicFilterCriteria<Product>("Rating >= 4"))
+    .Filter(new DynamicFilterCriteria<Product>("Rating >= 4"))
     .SortBy(sort => sort.Ascending(p => p.Name))
-    .ToPaginatedList(pagination => pagination.WithPageSize(25));
+    .ToPaginatedList(pagination => pagination.WithSize(25));
 ```
 
 Queries are composed using standard LINQ patterns and executed only when enumerated.
@@ -101,13 +101,23 @@ Queries are composed using standard LINQ patterns and executed only when enumera
 Filtering in Zift is based on the `IFilterCriteria<T>` interface.
 An `IFilterCriteria<T>` applies a filtering operation over an `IQueryable<T>`, typically by adding a `.Where()` clause.
 
+You can filter using:
+
+- A custom criteria object
+- A LINQ predicate
+- A dynamic string expression
+
 ### 5.2. Predicate-Based Filtering
 
-Use `PredicateFilterCriteria<T>` to filter using regular LINQ expressions:
+Use `PredicateFilterCriteria<T>` or a direct predicate to apply LINQ-style filters:
 
 ```csharp
 var expensiveProducts = dbContext.Products
-    .FilterBy(new PredicateFilterCriteria<Product>(p => p.Price > 1000));
+    .Filter(new PredicateFilterCriteria<Product>(p => p.Price > 1000));
+
+// Or directly with a lambda expression
+var expensiveProducts = dbContext.Products
+    .Filter(p => p.Price > 1000);
 ```
 
 #### 5.2.1. Custom Filter Criteria
@@ -130,16 +140,20 @@ Usage:
 
 ```csharp
 var preferredCustomers = dbContext.Users
-    .FilterBy(new PreferredCustomerFilter());
+    .Filter(new PreferredCustomerFilter());
 ```
 
 ### 5.3. Dynamic String-Based Filtering
 
-Use `DynamicFilterCriteria<T>` for runtime-defined string expressions:
+Use `DynamicFilterCriteria<T>` or a plain string to apply dynamic filters:
 
 ```csharp
 var filteredCategories = dbContext.Categories
-    .FilterBy(new DynamicFilterCriteria<Category>("Name ^= 'Gaming' && Products:count > 0"));
+    .Filter(new DynamicFilterCriteria<Category>("Name ^= 'Gaming' && Products:count > 0"));
+
+// Or directly with a string expression
+var filteredCategories = dbContext.Categories
+    .Filter("Name ^= 'Gaming' && Products:count > 0");
 ```
 
 ### 5.4. Expression Syntax Overview
@@ -156,7 +170,7 @@ Example:
 ```csharp
 // Find products where (price > 1000 OR name contains "Pro") AND at least one review has rating >= 4
 var products = dbContext.Products
-    .FilterBy(new DynamicFilterCriteria<Product>(
+    .Filter(new DynamicFilterCriteria<Product>(
         "(Price > 1000 || Name %= 'Pro') && Reviews.Rating >= 4"));
 ```
 
@@ -233,8 +247,8 @@ Pagination in Zift is based on `IPaginationCriteria<T>`, applying `.Skip()` and 
 ```csharp
 var paginatedProducts = await dbContext.Products
     .ToPaginatedListAsync(pagination => pagination
-        .StartAt(1)
-        .WithPageSize(20));
+        .AtPage(1)
+        .WithSize(20));
 ```
 
 Or manually:
@@ -270,11 +284,15 @@ Zift extends `IQueryable<T>` with:
 
 | Method | Purpose |
 |:---|:---|
-| `FilterBy(IFilterCriteria<T>)` | Apply filtering |
-| `SortBy(ISortCriteria<T>)` | Apply sorting |
-| `SortBy(Action<SortCriteriaBuilder<T>>)` | Fluent sorting |
-| `ToPaginatedList(IPaginationCriteria<T>)` | Apply pagination (sync) |
-| `ToPaginatedListAsync(IPaginationCriteria<T>)` | Apply pagination (async, EF Core) |
+| `Filter(IFilterCriteria<T>)` | Apply filtering using a criteria object |
+| `Filter(Expression<Func<T, bool>>)` | Apply filtering using a predicate |
+| `Filter(string)` | Apply filtering using a dynamic expression |
+| `SortBy(ISortCriteria<T>)` | Apply sorting using a criteria object |
+| `SortBy(Action<SortCriteriaBuilder<T>>)` | Apply sorting using a fluent builder |
+| `ToPaginatedList(IPaginationCriteria<T>)` | Apply pagination using a criteria object |
+| `ToPaginatedList(Action<PaginationCriteriaBuilder<T>>)` | Apply pagination using a fluent builder |
+| `ToPaginatedListAsync(IPaginationCriteria<T>)` | Apply pagination using a criteria object (EF Core) |
+| `ToPaginatedListAsync(Action<PaginationCriteriaBuilder<T>>)` | Apply pagination using a fluent builder (EF Core) |
 
 ## 9. Advanced Topics
 

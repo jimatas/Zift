@@ -6,23 +6,23 @@ using SharedFixture.Models;
 public class PaginationCriteriaBuilderTests
 {
     [Fact]
-    public void StartAt_SetsPageNumber()
+    public void AtPage_SetsPageNumber()
     {
         var criteria = new PaginationCriteria<Product>();
         var builder = new PaginationCriteriaBuilder<Product>(criteria);
 
-        builder.StartAt(3);
+        builder.AtPage(3);
 
         Assert.Equal(3, criteria.PageNumber);
     }
 
     [Fact]
-    public void WithPageSize_SetsPageSize()
+    public void WithSize_SetsPageSize()
     {
         var criteria = new PaginationCriteria<Product>();
         var builder = new PaginationCriteriaBuilder<Product>(criteria);
 
-        builder.WithPageSize(50);
+        builder.WithSize(50);
 
         Assert.Equal(50, criteria.PageSize);
     }
