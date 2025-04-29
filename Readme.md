@@ -109,7 +109,7 @@ You can filter using:
 
 ### 5.2. Predicate-Based Filtering
 
-Use `PredicateFilterCriteria<T>` or a direct predicate to apply LINQ-style filters:
+Use `PredicateFilterCriteria<T>` (or a direct predicate) to apply LINQ-style filters:
 
 ```csharp
 var expensiveProducts = dbContext.Products
@@ -145,7 +145,7 @@ var preferredCustomers = dbContext.Users
 
 ### 5.3. Dynamic String-Based Filtering
 
-Use `DynamicFilterCriteria<T>` or a plain string to apply dynamic filters:
+Use `DynamicFilterCriteria<T>` (or a plain string) to apply dynamic filters:
 
 ```csharp
 var filteredCategories = dbContext.Categories
