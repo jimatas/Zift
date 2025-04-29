@@ -9,7 +9,7 @@ Designed to work seamlessly with Entity Framework Core and any LINQ-compatible d
 
 ## 1. Features
 
-- **Dynamic Filtering** — Parse string-based filter expressions into safe LINQ queries.
+- **Dynamic Filtering** — Parse string-based filter expressions into type-safe LINQ queries.
 - **Predicate-Based Filtering** — Define custom filter criteria using expressions.
 - **Fluent Sorting** — Compose multi-level sorts dynamically or fluently in code.
 - **Dynamic Sorting** — Parse string-based sort clauses like `"Name desc, Price asc"`.
