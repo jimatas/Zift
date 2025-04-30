@@ -1,0 +1,31 @@
+name: Publish NuGet Packages
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on tags (e.g., v1.2.3)
+      
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build solution
+      run: dotnet build Zift.sln --configuration Release --no-restore
+      
+    - name: Pack solution projects
+      run: dotnet pack Zift.sln --configuration Release --no-build --output ./nupkg
+      
+    - name: Push packages to NuGet
+      run: dotnet nuget push "nupkg/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
