@@ -28,14 +28,23 @@ Designed to work seamlessly with Entity Framework Core and any LINQ-compatible d
 
 ## 3. Getting Started
 
-*Note:* Zift is not yet published as a NuGet package.
+Install the core Zift package:
 
-If you want to try it today, you can:
+```bash
+dotnet add package Zift
+```
+
+If you're using Entity Framework Core and want async pagination support, install the EF Core integration package instead:
+
+```bash
+dotnet add package Zift.EntityFrameworkCore
+```
+> The integration package includes the core package as a dependency — no need to install both.
+
+Alternatively, if you prefer to work with the source:
 
 - Clone the repository locally
 - Reference the project(s) directly from your solution
-
-Package publishing will be available once the project reaches a stable release.
 
 ### 3.1. Basic Example
 
