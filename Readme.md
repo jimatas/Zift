@@ -1,9 +1,13 @@
 <img src="docs/Zift_Logo.png" alt="Zift Logo" width="240px" />
 
+[![NuGet](https://img.shields.io/nuget/v/Zift.svg?label=Zift)](https://www.nuget.org/packages/Zift)
+[![NuGet](https://img.shields.io/nuget/v/Zift.EntityFrameworkCore.svg?label=Zift.EntityFrameworkCore)](https://www.nuget.org/packages/Zift.EntityFrameworkCore)
+[![Build & Publish](https://github.com/jimatas/Zift/actions/workflows/nuget-publish.yml/badge.svg)](https://github.com/jimatas/Zift/actions/workflows/nuget-publish.yml)
+
 # Zift
 
-Zift is a lightweight and extensible library for query composition over `IQueryable` sources.  
-It provides dynamic filtering, sorting, and pagination capabilities, while remaining flexible enough to support custom criteria implementations as needed.
+Zift is a lightweight and extensible library for query composition over `IQueryable` sources.
+It supports dynamic filtering, sorting, and pagination, and is designed to be easily extended with custom query criteria.
 
 Designed to work seamlessly with Entity Framework Core and any LINQ-compatible data source, Zift enables both runtime-defined querying (e.g., from API parameters) and compile-time query construction through fluent builders.
 
