@@ -1,4 +1,4 @@
-<img src="docs/Zift_Logo.png" alt="Zift Logo" width="240px" />
+![Zift Logo](https://raw.githubusercontent.com/jimatas/Zift/master/docs/assets/Zift_Logo_300x300.png)
 
 [![NuGet](https://img.shields.io/nuget/v/Zift.svg?label=Zift)](https://www.nuget.org/packages/Zift)
 [![NuGet](https://img.shields.io/nuget/v/Zift.EntityFrameworkCore.svg?label=Zift.EntityFrameworkCore)](https://www.nuget.org/packages/Zift.EntityFrameworkCore)
@@ -187,7 +187,7 @@ var products = dbContext.Products
         "(Price > 1000 || Name %= 'Pro') && Reviews.Rating >= 4"));
 ```
 
-For a more comprehensive reference on dynamic filtering expressions, see the [Dynamic Filtering Documentation](docs/Filtering.Dynamic.md).
+For a more comprehensive reference on dynamic filtering expressions, see the [Dynamic Filtering Documentation](https://github.com/jimatas/Zift/blob/master/docs/Filtering.Dynamic.md).
 
 ## 6. Sorting
 
