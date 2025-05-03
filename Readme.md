@@ -174,6 +174,7 @@ var filteredCategories = dbContext.Categories
 Supports:
 
 - Scalar comparisons (`==`, `>`, `<`, etc.)
+- Case-insensitive string matching with `:i` (e.g., `Name == 'laptop':i`)
 - Nested properties (e.g., `Products.Manufacturer`)
 - Collection quantifiers (`:any`, `:all`) and projections (`:count`)
 - Logical operators (`&&`, `||`, `!()`)
@@ -332,7 +333,7 @@ Zift is under active development and not yet considered stable.
 Potential future enhancements:
 
 - **Extensibility for Dynamic Filtering:** Improve parser extensibility.
-- **Case-Insensitive Filtering:** Explore case-insensitivity options (string comparisons currently respect database collation settings.)
+- **Expanded Modifier Support:** Extend string modifiers (currently only `:i`) and collection projections (currently only `:count`).
 
 ## 11. License
 
