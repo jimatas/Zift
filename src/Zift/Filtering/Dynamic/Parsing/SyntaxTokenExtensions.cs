@@ -29,7 +29,23 @@ public static class SyntaxTokenExtensions
         };
     }
 
-    public static object? ToTypedValue(this SyntaxToken token)
+    public static LiteralValue ToLiteralValue(this SyntaxToken valueToken, SyntaxToken? modifierToken = null)
+    {
+        if (modifierToken is not null)
+        {
+            ValidateModifierSupport(valueToken, modifierToken.Value);
+        }
+
+        var rawValue = valueToken.ToTypedValue();
+        var modifier = modifierToken?.Value;
+
+        return new LiteralValue(rawValue)
+        {
+            Modifier = modifier
+        };
+    }
+
+    private static object? ToTypedValue(this SyntaxToken token)
     {
         return token.Type switch
         {
@@ -41,7 +57,7 @@ public static class SyntaxTokenExtensions
         };
     }
 
-    public static object? ToKeywordValue(this SyntaxToken token)
+    private static object? ToKeywordValue(this SyntaxToken token)
     {
         return token.Value.ToLowerInvariant() switch
         {
@@ -52,7 +68,7 @@ public static class SyntaxTokenExtensions
         };
     }
 
-    public static object? ToNumericValue(this SyntaxToken token)
+    private static object? ToNumericValue(this SyntaxToken token)
     {
         if (double.TryParse(token.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var number))
         {
@@ -67,14 +83,7 @@ public static class SyntaxTokenExtensions
         throw new SyntaxErrorException($"Invalid numeric format: {token.Value}", token);
     }
 
-    private static bool IsIntegralWithoutScientificNotation(string literal, double number)
-    {
-        return Math.Floor(number) == number
-            && !literal.Contains('.')
-            && !literal.Contains('E', StringComparison.OrdinalIgnoreCase);
-    }
-
-    public static object? ToStringValue(this SyntaxToken token)
+    private static object? ToStringValue(this SyntaxToken token)
     {
         var literal = token.Value;
         if (IsProperlyQuoted(literal))
@@ -83,6 +92,26 @@ public static class SyntaxTokenExtensions
         }
 
         return literal;
+    }
+
+    private static void ValidateModifierSupport(SyntaxToken valueToken, SyntaxToken modifierToken)
+    {
+        if (valueToken.Type != SyntaxTokenType.StringLiteral)
+        {
+            throw new SyntaxErrorException("Modifiers are only supported on string literals.", modifierToken);
+        }
+
+        if (!modifierToken.Value.Equals("i", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new SyntaxErrorException($"Unsupported modifier: {modifierToken.Value}", modifierToken);
+        }
+    }
+
+    private static bool IsIntegralWithoutScientificNotation(string literal, double number)
+    {
+        return Math.Floor(number) == number
+            && !literal.Contains('.')
+            && !literal.Contains('E', StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsProperlyQuoted(string literal)

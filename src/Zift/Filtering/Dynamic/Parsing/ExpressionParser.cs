@@ -100,7 +100,7 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
     {
         var property = ParsePropertyPath(token);
         var @operator = _tokenizer.NextNonWhitespaceToken().ToComparisonOperator();
-        var value = _tokenizer.NextNonWhitespaceToken().ToTypedValue();
+        var value = ParseLiteralValue();
 
         return new(property, @operator, value);
     }
@@ -137,6 +137,25 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
                     return new(segments);
             }
         }
+    }
+
+    private LiteralValue ParseLiteralValue()
+    {
+        var valueToken = _tokenizer.NextNonWhitespaceToken();
+        SyntaxToken? modifierToken = null;
+
+        if (_tokenizer.PeekNonWhitespaceToken().Type == SyntaxTokenType.Colon)
+        {
+            _tokenizer.NextNonWhitespaceToken();
+
+            modifierToken = _tokenizer.NextNonWhitespaceToken();
+            if (modifierToken.Value.Type != SyntaxTokenType.Identifier)
+            {
+                throw new SyntaxErrorException("Expected a modifier after colon.", modifierToken.Value);
+            }
+        }
+
+        return valueToken.ToLiteralValue(modifierToken);
     }
 
     private static FilterGroup FinalizeGroup(int nestingLevel, FilterGroupBuilder groupBuilder, SyntaxToken token)

@@ -10,8 +10,8 @@ public class FilterGroupTests
     public void ToExpression_WithAndOperator_ReturnsConjunctionExpression()
     {
         var group = new FilterGroup(LogicalOperator.And);
-        group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Equal, "Smartphone"));
-        group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Price"), ComparisonOperator.GreaterThan, 500));
+        group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Equal, new("Smartphone")));
+        group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Price"), ComparisonOperator.GreaterThan, new(500)));
 
         var result = group.ToExpression<Product>().ToString();
 
@@ -24,8 +24,8 @@ public class FilterGroupTests
     public void ToExpression_WithOrOperator_ReturnsDisjunctionExpression()
     {
         var group = new FilterGroup(LogicalOperator.Or);
-        group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Equal, "Smartphone"));
-        group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Price"), ComparisonOperator.GreaterThan, 500));
+        group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Equal, new("Smartphone")));
+        group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Price"), ComparisonOperator.GreaterThan, new(500)));
 
         var result = group.ToExpression<Product>().ToString();
 
@@ -38,7 +38,7 @@ public class FilterGroupTests
     public void ToExpression_SingleTerm_ReturnsExpectedExpression()
     {
         var group = new FilterGroup(LogicalOperator.Or);
-        group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Equal, "Smartphone"));
+        group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Equal, new("Smartphone")));
 
         var result = group.ToExpression<Product>().ToString();
 
@@ -62,8 +62,8 @@ public class FilterGroupTests
     public void Negate_Twice_ReturnsSemanticallyEquivalentFilterGroup()
     {
         var group = new FilterGroup(LogicalOperator.Or);
-        group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Equal, "Smartphone"));
-        group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Price"), ComparisonOperator.GreaterThan, 500));
+        group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Equal, new("Smartphone")));
+        group.Terms.Add(new FilterCondition(PropertyPathFactory.Create("Price"), ComparisonOperator.GreaterThan, new(500)));
 
         var doubleNegated = group.Negate().Negate();
 
