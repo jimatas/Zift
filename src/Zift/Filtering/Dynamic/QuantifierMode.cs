@@ -2,6 +2,6 @@
 
 public enum QuantifierMode
 {
-    Any,
+    Any = 1,
     All
 }

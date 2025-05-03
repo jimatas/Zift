@@ -9,9 +9,8 @@ public class LiteralValueTests
     [InlineData(true, null, "true")]
     [InlineData(false, null, "false")]
     [InlineData("abc", null, "abc")]
-    [InlineData("abc", "i", "abc:i")]
-    [InlineData("Hello World", "ignore", "Hello World:ignore")]
-    public void ToString_WithVariousValues_ReturnsExpectedString(object? rawValue, string? modifier, string expected)
+    [InlineData("abc", StringValueModifier.IgnoreCase, "abc:i")]
+    public void ToString_WithVariousValues_ReturnsExpectedString(object? rawValue, StringValueModifier? modifier, string expected)
     {
         var literal = new LiteralValue(rawValue) { Modifier = modifier };
 
@@ -38,15 +37,5 @@ public class LiteralValueTests
         var result = literal.ToString();
 
         Assert.Equal("42", result);
-    }
-
-    [Fact]
-    public void HasModifier_IsCaseInsensitive()
-    {
-        var literal = new LiteralValue("value") { Modifier = "i" };
-
-        Assert.True(literal.HasModifier("I"));
-        Assert.True(literal.HasModifier("i"));
-        Assert.False(literal.HasModifier("x"));
     }
 }

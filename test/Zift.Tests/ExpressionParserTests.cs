@@ -260,10 +260,10 @@ public class ExpressionParserTests
     }
 
     [Theory]
-    [InlineData("Name == 'Laptop':i", "Laptop", "i")]
-    [InlineData("Name == 'Smartphone':I", "Smartphone", "I")]
-    [InlineData("Name == '':i", "", "i")]
-    public void Parse_StringLiteralWithModifier_ReturnsExpectedValue(string expression, string expectedValue, string expectedModifier)
+    [InlineData("Name == 'Laptop':i", "Laptop", StringValueModifier.IgnoreCase)]
+    [InlineData("Name == 'Smartphone':I", "Smartphone", StringValueModifier.IgnoreCase)]
+    [InlineData("Name == '':i", "", StringValueModifier.IgnoreCase)]
+    public void Parse_StringLiteralWithModifier_ReturnsExpectedValue(string expression, string expectedValue, StringValueModifier expectedModifier)
     {
         var parser = new ExpressionParser(new(expression));
         var result = parser.Parse();
@@ -272,7 +272,7 @@ public class ExpressionParserTests
         var value = Assert.IsType<LiteralValue>(condition.Value);
 
         Assert.Equal(expectedValue, value.RawValue);
-        Assert.Equal(expectedModifier, value.Modifier, ignoreCase: true);
+        Assert.Equal(expectedModifier, value.Modifier);
     }
 
     [Theory]

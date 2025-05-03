@@ -128,7 +128,7 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
     private bool IsCaseInsensitiveStringComparison(Expression leftOperand, Expression rightOperand)
     {
         return leftOperand.Type == typeof(string) && rightOperand.Type == typeof(string)
-            && _condition.Value.HasModifier("i")
+            && _condition.Value.HasModifier(StringValueModifier.IgnoreCase)
             && _condition.Operator is ComparisonOperator.Equal
                 or ComparisonOperator.NotEqual
                 or ComparisonOperator.Contains

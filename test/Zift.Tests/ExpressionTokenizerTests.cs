@@ -1,5 +1,6 @@
 ﻿namespace Zift.Tests;
 
+using Filtering.Dynamic;
 using Filtering.Dynamic.Parsing;
 
 public class ExpressionTokenizerTests
@@ -305,9 +306,9 @@ public class ExpressionTokenizerTests
 
     [Theory]
     [InlineData("\"John\"", "John", null)]
-    [InlineData("\"Hello\":i", "Hello", "i")]
-    [InlineData("'Test':i", "Test", "i")]
-    public void ToLiteralValue_WithStringLiteralAndOptionalModifier_ReturnsExpected(string input, string expectedValue, string? expectedModifier)
+    [InlineData("\"Hello\":i", "Hello", StringValueModifier.IgnoreCase)]
+    [InlineData("'Test':i", "Test", StringValueModifier.IgnoreCase)]
+    public void ToLiteralValue_WithStringLiteralAndOptionalModifier_ReturnsExpected(string input, string expectedValue, StringValueModifier? expectedModifier)
     {
         var tokenizer = new ExpressionTokenizer(input);
         var valueToken = tokenizer.NextNonWhitespaceToken();

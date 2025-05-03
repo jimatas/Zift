@@ -31,18 +31,32 @@ public static class SyntaxTokenExtensions
 
     public static LiteralValue ToLiteralValue(this SyntaxToken valueToken, SyntaxToken? modifierToken = null)
     {
-        if (modifierToken is not null)
+        var rawValue = valueToken.ToTypedValue();
+        var modifier = ParseStringModifier(valueToken, modifierToken);
+
+        return new(rawValue) { Modifier = modifier };
+    }
+
+    private static StringValueModifier? ParseStringModifier(SyntaxToken valueToken, SyntaxToken? modifierToken)
+    {
+        if (modifierToken is not { Value: { } modifierSymbol })
         {
-            ValidateModifierSupport(valueToken, modifierToken.Value);
+            return null;
         }
 
-        var rawValue = valueToken.ToTypedValue();
-        var modifier = modifierToken?.Value;
-
-        return new LiteralValue(rawValue)
+        if (valueToken.Type != SyntaxTokenType.StringLiteral)
         {
-            Modifier = modifier
-        };
+            throw new SyntaxErrorException("Modifiers are only supported on string literals.", modifierToken.Value);
+        }
+
+        try
+        {
+            return StringValueModifierExtensions.FromSymbol(modifierSymbol);
+        }
+        catch (ArgumentException)
+        {
+            throw new SyntaxErrorException($"Unsupported modifier: {modifierSymbol}", modifierToken.Value);
+        }
     }
 
     private static object? ToTypedValue(this SyntaxToken token)
@@ -83,6 +97,13 @@ public static class SyntaxTokenExtensions
         throw new SyntaxErrorException($"Invalid numeric format: {token.Value}", token);
     }
 
+    private static bool IsIntegralWithoutScientificNotation(string literal, double number)
+    {
+        return Math.Floor(number) == number
+            && !literal.Contains('.')
+            && !literal.Contains('E', StringComparison.OrdinalIgnoreCase);
+    }
+
     private static object? ToStringValue(this SyntaxToken token)
     {
         var literal = token.Value;
@@ -92,26 +113,6 @@ public static class SyntaxTokenExtensions
         }
 
         return literal;
-    }
-
-    private static void ValidateModifierSupport(SyntaxToken valueToken, SyntaxToken modifierToken)
-    {
-        if (valueToken.Type != SyntaxTokenType.StringLiteral)
-        {
-            throw new SyntaxErrorException("Modifiers are only supported on string literals.", modifierToken);
-        }
-
-        if (!modifierToken.Value.Equals("i", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new SyntaxErrorException($"Unsupported modifier: {modifierToken.Value}", modifierToken);
-        }
-    }
-
-    private static bool IsIntegralWithoutScientificNotation(string literal, double number)
-    {
-        return Math.Floor(number) == number
-            && !literal.Contains('.')
-            && !literal.Contains('E', StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsProperlyQuoted(string literal)

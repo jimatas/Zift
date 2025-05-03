@@ -2,5 +2,5 @@
 
 public enum CollectionProjection
 {
-    Count
+    Count = 1
 }

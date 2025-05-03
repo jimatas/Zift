@@ -2,11 +2,11 @@
 
 public readonly record struct LiteralValue(object? RawValue)
 {
-    public string? Modifier { get; init; }
+    public StringValueModifier? Modifier { get; init; }
 
-    public bool HasModifier(string expected)
+    public bool HasModifier(StringValueModifier expected)
     {
-        return string.Equals(Modifier, expected, StringComparison.OrdinalIgnoreCase);
+        return Modifier.HasValue && Modifier.Value == expected;
     }
 
     public override string ToString()
@@ -15,7 +15,7 @@ public readonly record struct LiteralValue(object? RawValue)
         {
             null => "null",
             bool b => b ? "true" : "false",
-            string s when Modifier is { } modifier => $"{s}:{modifier}",
+            string s when Modifier is { } modifier => $"{s}:{modifier.ToSymbol()}",
             double d => d.ToString("R", CultureInfo.InvariantCulture),
             _ => RawValue.ToString()!,
         };
