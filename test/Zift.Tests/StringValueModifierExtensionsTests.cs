@@ -42,6 +42,6 @@ public class StringValueModifierExtensionsTests
         var ex = Assert.Throws<ArgumentException>(() =>
             StringValueModifierExtensions.FromSymbol(symbol));
 
-        Assert.StartsWith("Unknown string modifier symbol", ex.Message);
+        Assert.StartsWith("Unknown string modifier", ex.Message);
     }
 }

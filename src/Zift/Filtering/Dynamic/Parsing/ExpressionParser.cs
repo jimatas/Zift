@@ -256,11 +256,11 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
             switch (token.Type)
             {
                 case SyntaxTokenType.QuantifierMode:
-                    _quantifier = Enum.Parse<QuantifierMode>(token.Value, ignoreCase: true);
+                    _quantifier = QuantifierModeExtensions.FromSymbol(token.Value);
                     break;
 
                 case SyntaxTokenType.CollectionProjection:
-                    _projection = Enum.Parse<CollectionProjection>(token.Value, ignoreCase: true);
+                    _projection = CollectionProjectionExtensions.FromSymbol(token.Value);
                     break;
 
                 default:

@@ -12,12 +12,12 @@ public readonly record struct PropertyPathSegment(string Name)
     {
         if (includeModifier && Projection.HasValue)
         {
-            return $"{Name}:{Projection.Value.ToString().ToLowerInvariant()}";
+            return $"{Name}:{Projection.Value.ToSymbol()}";
         }
 
         if (includeModifier && Quantifier.HasValue)
         {
-            return $"{Name}:{Quantifier.Value.ToString().ToLowerInvariant()}";
+            return $"{Name}:{Quantifier.Value.ToSymbol()}";
         }
 
         return Name;
