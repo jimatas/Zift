@@ -12,8 +12,6 @@ public enum SyntaxTokenType
     Keyword,
     NumericLiteral,
     StringLiteral,
-    QuantifierMode,
-    CollectionProjection,
     Identifier,
     Colon,
     DotSeparator,
