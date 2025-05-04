@@ -2,7 +2,7 @@
 
 public class ExpressionTokenizer(string expression)
 {
-    private static readonly Dictionary<SyntaxTokenType, Regex> _regexPatternsByTokenType = new()
+    private static readonly Dictionary<SyntaxTokenType, Regex> _tokenPatterns = new()
     {
         [SyntaxTokenType.Whitespace] = SyntaxDefinitions.Whitespace,
         [SyntaxTokenType.LogicalOperator] = SyntaxDefinitions.LogicalOperator,
@@ -14,7 +14,7 @@ public class ExpressionTokenizer(string expression)
         [SyntaxTokenType.Identifier] = SyntaxDefinitions.Identifier
     };
 
-    private static readonly Dictionary<SyntaxTokenType, string> _stringPatternsByTokenType = new()
+    private static readonly Dictionary<SyntaxTokenType, string> _tokenSymbols = new()
     {
         [SyntaxTokenType.ParenthesisOpen] = SyntaxDefinitions.ParenthesisOpen,
         [SyntaxTokenType.ParenthesisClose] = SyntaxDefinitions.ParenthesisClose,
@@ -33,7 +33,7 @@ public class ExpressionTokenizer(string expression)
             return token;
         }
 
-        foreach (var (type, pattern) in _regexPatternsByTokenType)
+        foreach (var (type, pattern) in _tokenPatterns)
         {
             if (TryMatch(pattern, out var result, out var position))
             {
@@ -41,9 +41,9 @@ public class ExpressionTokenizer(string expression)
             }
         }
 
-        foreach (var (type, pattern) in _stringPatternsByTokenType)
+        foreach (var (type, symbol) in _tokenSymbols)
         {
-            if (TryMatch(pattern, out var result, out var position))
+            if (TryMatch(symbol, out var result, out var position))
             {
                 return new(type, result, position);
             }
@@ -111,11 +111,11 @@ public class ExpressionTokenizer(string expression)
         return false;
     }
 
-    private bool TryMatch(string pattern, out string result, out int position)
+    private bool TryMatch(string symbol, out string result, out int position)
     {
-        if (_expression[_position..].StartsWith(pattern, StringComparison.Ordinal))
+        if (_expression[_position..].StartsWith(symbol, StringComparison.Ordinal))
         {
-            result = pattern;
+            result = symbol;
             position = _position;
             _position += result.Length;
 
@@ -130,7 +130,7 @@ public class ExpressionTokenizer(string expression)
 
     private static bool IsStartOfAnyToken(char c)
     {
-        return _stringPatternsByTokenType.Values.Any(pattern => pattern.StartsWith(c))
-            || _regexPatternsByTokenType.Values.Any(pattern => pattern.IsMatch(c.ToString()));
+        return _tokenSymbols.Values.Any(symbol => symbol.StartsWith(c))
+            || _tokenPatterns.Values.Any(pattern => pattern.IsMatch(c.ToString()));
     }
 }
