@@ -91,21 +91,27 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
 
     private Expression BuildValueConversion(Type targetType)
     {
-        if (_condition.Value is null)
+        if (_condition.Value.RawValue is not { } value)
         {
             return Expression.Constant(null, targetType);
         }
 
         var nonNullType = Nullable.GetUnderlyingType(targetType) ?? targetType;
-        var value = EnsureValueOfType(_condition.Value, nonNullType);
+        var typedValue = EnsureValueOfType(value, nonNullType);
 
-        LambdaExpression wrappedValue = () => value; // Force EF to parameterize the value.
+        LambdaExpression wrappedValue = () => typedValue; // Force EF to parameterize the value.
 
         return Expression.Convert(wrappedValue.Body, targetType);
     }
 
     private Expression ApplyNullSafeComparison(Expression leftOperand, Expression rightOperand)
     {
+        if (IsCaseInsensitiveStringComparison(leftOperand, rightOperand))
+        {
+            leftOperand = WrapInNullSafeToLower(leftOperand);
+            rightOperand = WrapInNullSafeToLower(rightOperand);
+        }
+
         var comparison = _condition.Operator.ToComparisonExpression(leftOperand, rightOperand);
 
         var isDirectComparison = !_condition.Operator.IsImplementedAsMethodCall();
@@ -117,6 +123,27 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         var nullGuard = Expression.AndAlso(IsNonNull(leftOperand), IsNonNull(rightOperand));
 
         return Expression.Condition(nullGuard, comparison, Expression.Constant(false));
+    }
+
+    private bool IsCaseInsensitiveStringComparison(Expression leftOperand, Expression rightOperand)
+    {
+        return leftOperand.Type == typeof(string) && rightOperand.Type == typeof(string)
+            && _condition.Value.HasModifier(StringValueModifier.IgnoreCase)
+            && _condition.Operator is ComparisonOperator.Equal
+                or ComparisonOperator.NotEqual
+                or ComparisonOperator.Contains
+                or ComparisonOperator.StartsWith
+                or ComparisonOperator.EndsWith;
+    }
+
+    private static Expression WrapInNullSafeToLower(Expression operand)
+    {
+        var toLower = Expression.Call(operand, nameof(string.ToLower), Type.EmptyTypes);
+
+        return Expression.Condition(
+            IsNonNull(operand),
+            toLower,
+            Expression.Constant(null, typeof(string)));
     }
 
     private static void ValidateCollectionSegment(PropertyPathSegment segment, bool isCollection)

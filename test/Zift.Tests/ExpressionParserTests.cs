@@ -10,7 +10,7 @@ public class ExpressionParserTests
     {
         var parser = new ExpressionParser(new(string.Empty));
 
-        var ex = Assert.Throws<SyntaxErrorException>(() => parser.Parse());
+        var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
         Assert.Equal("Empty expression detected: An expression must contain at least one term.", ex.Message);
     }
@@ -21,7 +21,7 @@ public class ExpressionParserTests
         var parser = new ExpressionParser(new("Name == 'Laptop'"));
         parser.Parse();
 
-        var ex = Assert.Throws<SyntaxErrorException>(() => parser.Parse());
+        var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
         Assert.Equal("Empty expression detected: An expression must contain at least one term.", ex.Message);
     }
@@ -51,7 +51,7 @@ public class ExpressionParserTests
     {
         var parser = new ExpressionParser(new(expression));
 
-        var ex = Assert.Throws<SyntaxErrorException>(() => parser.Parse());
+        var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
         Assert.StartsWith("Unexpected token", ex.Message);
     }
@@ -63,7 +63,7 @@ public class ExpressionParserTests
     {
         var parser = new ExpressionParser(new(expression));
 
-        var ex = Assert.Throws<SyntaxErrorException>(() => parser.Parse());
+        var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
         Assert.StartsWith(expectedPartialMessage, ex.Message);
     }
@@ -73,7 +73,7 @@ public class ExpressionParserTests
     {
         var parser = new ExpressionParser(new("Name 'Laptop'"));
 
-        var ex = Assert.Throws<SyntaxErrorException>(() => parser.Parse());
+        var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
         Assert.StartsWith("Expected a comparison operator", ex.Message);
     }
@@ -83,7 +83,7 @@ public class ExpressionParserTests
     {
         var parser = new ExpressionParser(new("Name += 'Laptop'"));
 
-        var ex = Assert.Throws<SyntaxErrorException>(() => parser.Parse());
+        var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
         Assert.StartsWith("Expected a comparison operator", ex.Message);
     }
@@ -93,7 +93,7 @@ public class ExpressionParserTests
     {
         var parser = new ExpressionParser(new("!Name == 'Laptop'"));
 
-        var ex = Assert.Throws<SyntaxErrorException>(() => parser.Parse());
+        var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
         Assert.StartsWith("Unary logical operator must be followed by an opening parenthesis", ex.Message);
     }
@@ -158,7 +158,7 @@ public class ExpressionParserTests
     {
         var parser = new ExpressionParser(new(expression));
 
-        var ex = Assert.Throws<SyntaxErrorException>(() => parser.Parse());
+        var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
         Assert.StartsWith(expectedPartialMessage, ex.Message);
     }
@@ -170,12 +170,12 @@ public class ExpressionParserTests
     [InlineData("Products.Reviews.% == 'Any value'", "Expected an identifier, but got:")]
     [InlineData("Products.. == 'Any value'", "Expected an identifier, but got:")]
     [InlineData("Products.: == 'Any value'", "Expected an identifier, but got:")]
-    [InlineData("Products:: == 'Any value'", "Expected a quantifier mode or collection projection, but got:")]
+    [InlineData("Products:: == 'Any value'", "Expected an identifier, but got:")]
     public void Parse_InvalidNestedProperties_ThrowsSyntaxErrorException(string expression, string expectedPartialMessage)
     {
         var parser = new ExpressionParser(new(expression));
 
-        var ex = Assert.Throws<SyntaxErrorException>(() => parser.Parse());
+        var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
         Assert.StartsWith(expectedPartialMessage, ex.Message);
     }
@@ -241,7 +241,7 @@ public class ExpressionParserTests
     {
         var parser = new ExpressionParser(new(expression));
 
-        var ex = Assert.Throws<SyntaxErrorException>(() => parser.Parse());
+        var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
         Assert.StartsWith("Terminal collection projections (e.g., ':count') must appear at the end of the property path.", ex.Message);
     }
@@ -254,8 +254,58 @@ public class ExpressionParserTests
     {
         var parser = new ExpressionParser(new(expression));
 
-        var ex = Assert.Throws<SyntaxErrorException>(() => parser.Parse());
+        var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
         Assert.StartsWith("A property segment cannot have more than one modifier.", ex.Message);
+    }
+
+    [Theory]
+    [InlineData("Name == 'Laptop':i", "Laptop", StringValueModifier.IgnoreCase)]
+    [InlineData("Name == 'Smartphone':I", "Smartphone", StringValueModifier.IgnoreCase)]
+    [InlineData("Name == '':i", "", StringValueModifier.IgnoreCase)]
+    public void Parse_StringLiteralWithModifier_ReturnsExpectedValue(string expression, string expectedValue, StringValueModifier expectedModifier)
+    {
+        var parser = new ExpressionParser(new(expression));
+        var result = parser.Parse();
+
+        var condition = Assert.IsType<FilterCondition>(Assert.Single(result.Terms));
+        var value = Assert.IsType<LiteralValue>(condition.Value);
+
+        Assert.Equal(expectedValue, value.RawValue);
+        Assert.Equal(expectedModifier, value.Modifier);
+    }
+
+    [Theory]
+    [InlineData("Name == 42:i")]
+    [InlineData("Name == true:i")]
+    public void Parse_ModifierOnNonStringLiteral_ThrowsSyntaxError(string expression)
+    {
+        var parser = new ExpressionParser(new(expression));
+        var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
+
+        Assert.StartsWith("Modifiers are only supported on string literals.", ex.Message);
+    }
+
+    [Fact]
+    public void Parse_UnsupportedModifier_ThrowsSyntaxError()
+    {
+        var parser = new ExpressionParser(new("Name == 'Laptop':xyz"));
+        var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
+
+        Assert.StartsWith("Unsupported modifier", ex.Message);
+    }
+
+    [Theory]
+    [InlineData("Name == 'Laptop':42", "Expected a modifier after colon.")]
+    [InlineData("Name == 'Laptop':'i'", "Expected a modifier after colon.")]
+    [InlineData("Name == 'Laptop':==", "Expected a modifier after colon.")]
+    [InlineData("Name == 'Laptop':", "Expected a modifier after colon.")]
+    [InlineData("Name == 'Laptop':!i", "Expected a modifier after colon.")]
+    public void Parse_IllegalModifier_ThrowsSyntaxError(string expression, string expectedMessage)
+    {
+        var parser = new ExpressionParser(new(expression));
+        var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
+
+        Assert.StartsWith(expectedMessage, ex.Message);
     }
 }

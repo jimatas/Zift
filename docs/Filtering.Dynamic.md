@@ -27,21 +27,21 @@ var categories = await dbContext.Categories
 
 ## 3. Expression Examples
 
-### 3.1. Scalar filtering
+### 3.1. Scalar Filtering
 
 ```text
 "Name == 'Electronics'"
 "Price > 1000"
 ```
 
-### 3.2. Nested properties
+### 3.2. Nested Properties
 
 ```text
 "Products.Manufacturer == 'Logitech'"
 "Products.Reviews.Author.Name == 'Alice'"
 ```
 
-### 3.3. Collection properties
+### 3.3. Collection Properties
 
 ```text
 // Projected count of related items
@@ -59,15 +59,15 @@ var categories = await dbContext.Categories
 
 | Operator | Description |
 | :--- | :--- |
-| `==` | Equal |
-| `!=` | Not equal |
+| `==` | Equal (supports `:i`) |
+| `!=` | Not equal (supports `:i`) |
 | `>` | Greater than |
 | `<` | Less than |
 | `>=` | Greater than or equal |
 | `<=` | Less than or equal |
-| `%=` | String contains |
-| `^=` | String starts with |
-| `$=` | String ends with |
+| `%=` | String contains (supports `:i`) |
+| `^=` | String starts with (supports `:i`) |
+| `$=` | String ends with (supports `:i`) |
 | `&&` | Logical AND |
 | `\|\|` | Logical OR |
 | `!()` | Logical NOT |
@@ -98,6 +98,17 @@ They will be converted automatically during query translation.
 "CreatedOn > '2024-02-13'"
 "UserId == 'd9b25756-62d4-4c59-b1f5-9e1048385c63'"
 ```
+
+You can apply modifiers to string literals. The `:i` modifier enables case-insensitive string comparisons:
+
+```text
+"Name == 'smartphone':i"        // matches "Smartphone"
+"Name != 'REFRIGERATOR':i"      // excludes "Refrigerator"
+"Name ^= 'lap':i"               // matches "Laptop"
+"Name $= 'SHIRT':i"             // matches "T-Shirt"
+"Name %= 'great':i"             // matches "The Great Gatsby"
+```
+> Only string literals support modifiers. Using a modifier on non-string values results in a syntax error.
 
 ### 5.2. Numbers
 

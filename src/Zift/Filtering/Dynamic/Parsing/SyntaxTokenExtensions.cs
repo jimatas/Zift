@@ -29,7 +29,35 @@ public static class SyntaxTokenExtensions
         };
     }
 
-    public static object? ToTypedValue(this SyntaxToken token)
+    public static LiteralValue ToLiteralValue(this SyntaxToken valueToken, SyntaxToken? modifierToken = null)
+    {
+        var rawValue = valueToken.ToTypedValue();
+        var modifier = ParseStringModifier(valueToken, modifierToken);
+
+        return new(rawValue) { Modifier = modifier };
+    }
+
+    private static StringValueModifier? ParseStringModifier(SyntaxToken valueToken, SyntaxToken? modifierToken)
+    {
+        if (modifierToken is not { Value: { } modifierSymbol })
+        {
+            return null;
+        }
+
+        if (valueToken.Type != SyntaxTokenType.StringLiteral)
+        {
+            throw new SyntaxErrorException("Modifiers are only supported on string literals.", modifierToken.Value);
+        }
+
+        if (StringValueModifierExtensions.TryParse(modifierSymbol, out var modifier))
+        {
+            return modifier;
+        }
+
+        throw new SyntaxErrorException($"Unsupported modifier: {modifierSymbol}", modifierToken.Value);
+    }
+
+    private static object? ToTypedValue(this SyntaxToken token)
     {
         return token.Type switch
         {
@@ -41,7 +69,7 @@ public static class SyntaxTokenExtensions
         };
     }
 
-    public static object? ToKeywordValue(this SyntaxToken token)
+    private static object? ToKeywordValue(this SyntaxToken token)
     {
         return token.Value.ToLowerInvariant() switch
         {
@@ -52,7 +80,7 @@ public static class SyntaxTokenExtensions
         };
     }
 
-    public static object? ToNumericValue(this SyntaxToken token)
+    private static object? ToNumericValue(this SyntaxToken token)
     {
         if (double.TryParse(token.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var number))
         {
@@ -74,7 +102,7 @@ public static class SyntaxTokenExtensions
             && !literal.Contains('E', StringComparison.OrdinalIgnoreCase);
     }
 
-    public static object? ToStringValue(this SyntaxToken token)
+    private static object? ToStringValue(this SyntaxToken token)
     {
         var literal = token.Value;
         if (IsProperlyQuoted(literal))

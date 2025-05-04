@@ -2,6 +2,6 @@
 
 public enum LogicalOperator
 {
-    And,
+    And = 1,
     Or
 }

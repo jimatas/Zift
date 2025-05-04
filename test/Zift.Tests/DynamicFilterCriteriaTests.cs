@@ -164,4 +164,58 @@ public class DynamicFilterCriteriaTests
 
         Assert.Empty(result);
     }
+
+    [Fact]
+    public void Filter_ByProductName_EqualIgnoreCase_ReturnsMatchingCategory()
+    {
+        var filter = new DynamicFilterCriteria<Category>("Products.Name == 'SMARTPHONE':i");
+
+        var result = Catalog.Categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public void Filter_ByProductName_NotEqualIgnoreCase_ReturnsAllExceptMatch()
+    {
+        var filter = new DynamicFilterCriteria<Category>("Products:all.Name != 'SMARTPHONE':i");
+
+        var result = Catalog.Categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.DoesNotContain(result, c => c.Products.Any(p => p.Name == "Smartphone"));
+    }
+
+    [Fact]
+    public void Filter_ByProductNamePrefix_IgnoreCase_ReturnsMatchingCategory()
+    {
+        var filter = new DynamicFilterCriteria<Category>("Products.Name ^= 's':i");
+
+        var result = Catalog.Categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public void Filter_ByProductNameSuffix_IgnoreCase_ReturnsMatchingCategory()
+    {
+        var filter = new DynamicFilterCriteria<Category>("Products.Name $= 'PHONE':i");
+
+        var result = Catalog.Categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public void Filter_ByProductNameContains_IgnoreCase_ReturnsMatchingCategory()
+    {
+        var filter = new DynamicFilterCriteria<Category>("Products.Name %= 'marT':i");
+
+        var result = Catalog.Categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
 }

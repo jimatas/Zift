@@ -153,6 +153,95 @@ public class DynamicFilterCriteriaTests
         });
     }
 
+    [Fact]
+    public async Task Filter_ByProductNameEqualsIgnoreCase_ReturnsMatchingCategory()
+    {
+        await using var dbContext = await CreatePopulatedDbContextAsync();
+
+        var filter = new DynamicFilterCriteria<Category>("Products.Name == 'smartphone':i");
+
+        var result = await dbContext.Set<Category>()
+            .Filter(filter)
+            .ToListAsync();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public async Task Filter_ByProductNameNotEqualsIgnoreCase_ReturnsAllExceptMatch()
+    {
+        await using var dbContext = await CreatePopulatedDbContextAsync();
+
+        var filter = new DynamicFilterCriteria<Category>("Products:all.Name != 'SMARTPHONE':i");
+
+        var result = await dbContext.Set<Category>()
+            .Filter(filter)
+            .ToListAsync();
+
+        Assert.DoesNotContain(result, c => c.Products.Any(p => p.Name == "Smartphone"));
+    }
+
+    [Fact]
+    public async Task Filter_ByProductNameStartsWithIgnoreCase_ReturnsMatchingCategory()
+    {
+        await using var dbContext = await CreatePopulatedDbContextAsync();
+
+        var filter = new DynamicFilterCriteria<Category>("Products.Name ^= 's':i");
+
+        var result = await dbContext.Set<Category>()
+            .Filter(filter)
+            .ToListAsync();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public async Task Filter_ByProductNameEndsWithIgnoreCase_ReturnsMatchingCategory()
+    {
+        await using var dbContext = await CreatePopulatedDbContextAsync();
+
+        var filter = new DynamicFilterCriteria<Category>("Products.Name $= 'TOP':i");
+
+        var result = await dbContext.Set<Category>()
+            .Filter(filter)
+            .ToListAsync();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public async Task Filter_ByProductNameContainsIgnoreCase_ReturnsMatchingCategories()
+    {
+        await using var dbContext = await CreatePopulatedDbContextAsync();
+
+        var filter = new DynamicFilterCriteria<Category>("Products.Name %= 'EA':i");
+
+        var result = await dbContext.Set<Category>()
+            .Filter(filter)
+            .ToListAsync();
+
+        Assert.Equal(2, result.Count);
+        Assert.Contains(result, c => c.Name == "Clothing");
+        Assert.Contains(result, c => c.Name == "Books");
+    }
+
+    [Fact]
+    public async Task Filter_ByProductNameEqualsIgnoreCase_ReturnsEmpty()
+    {
+        await using var dbContext = await CreatePopulatedDbContextAsync();
+
+        var filter = new DynamicFilterCriteria<Category>("Products.Name == 'Unicorn':i");
+
+        var result = await dbContext.Set<Category>()
+            .Filter(filter)
+            .ToListAsync();
+
+        Assert.Empty(result);
+    }
+
     #region Fixture
     private static async Task<CatalogDbContext> CreatePopulatedDbContextAsync()
     {

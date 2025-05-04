@@ -100,7 +100,7 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
     {
         var property = ParsePropertyPath(token);
         var @operator = _tokenizer.NextNonWhitespaceToken().ToComparisonOperator();
-        var value = _tokenizer.NextNonWhitespaceToken().ToTypedValue();
+        var value = ParseLiteralValue();
 
         return new(property, @operator, value);
     }
@@ -137,6 +137,25 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
                     return new(segments);
             }
         }
+    }
+
+    private LiteralValue ParseLiteralValue()
+    {
+        var valueToken = _tokenizer.NextNonWhitespaceToken();
+        SyntaxToken? modifierToken = null;
+
+        if (_tokenizer.PeekNonWhitespaceToken().Type == SyntaxTokenType.Colon)
+        {
+            _tokenizer.NextNonWhitespaceToken();
+
+            modifierToken = _tokenizer.NextNonWhitespaceToken();
+            if (modifierToken.Value.Type != SyntaxTokenType.Identifier)
+            {
+                throw new SyntaxErrorException("Expected a modifier after colon.", modifierToken.Value);
+            }
+        }
+
+        return valueToken.ToLiteralValue(modifierToken);
     }
 
     private static FilterGroup FinalizeGroup(int nestingLevel, FilterGroupBuilder groupBuilder, SyntaxToken token)
@@ -234,18 +253,22 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
                 throw new SyntaxErrorException("A property segment cannot have more than one modifier.", token);
             }
 
-            switch (token.Type)
+            if (token.Type != SyntaxTokenType.Identifier)
             {
-                case SyntaxTokenType.QuantifierMode:
-                    _quantifier = Enum.Parse<QuantifierMode>(token.Value, ignoreCase: true);
-                    break;
+                throw new SyntaxErrorException($"Expected an identifier, but got: {token.Value}", token);
+            }
 
-                case SyntaxTokenType.CollectionProjection:
-                    _projection = Enum.Parse<CollectionProjection>(token.Value, ignoreCase: true);
-                    break;
-
-                default:
-                    throw new SyntaxErrorException($"Expected a quantifier mode or collection projection, but got: {token.Value}", token);
+            if (QuantifierModeExtensions.TryParse(token.Value, out var quantifier))
+            {
+                _quantifier = quantifier;
+            }
+            else if (CollectionProjectionExtensions.TryParse(token.Value, out var projection))
+            {
+                _projection = projection;
+            }
+            else
+            {
+                throw new SyntaxErrorException($"Expected a quantifier mode or collection projection, but got: {token.Value}", token);
             }
 
             _modifierApplied = true;

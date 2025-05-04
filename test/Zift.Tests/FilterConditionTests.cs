@@ -13,7 +13,7 @@ public class FilterConditionTests
         var @operator = ComparisonOperator.Contains;
         var value = "Smartphone";
 
-        var ex = Assert.Throws<ArgumentNullException>(() => new FilterCondition(property, @operator, value));
+        var ex = Assert.Throws<ArgumentNullException>(() => new FilterCondition(property, @operator, new(value)));
 
         Assert.Equal(nameof(property), ex.ParamName);
     }
@@ -21,7 +21,7 @@ public class FilterConditionTests
     [Fact]
     public void Negate_ReturnsNegatedCondition()
     {
-        var condition = new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Contains, "Smartphone");
+        var condition = new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Contains, new("Smartphone"));
 
         var result = condition.Negate();
 
@@ -32,7 +32,7 @@ public class FilterConditionTests
     [Fact]
     public void Negate_CalledTwice_ReturnsOriginalCondition()
     {
-        var original = new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Contains, "Smartphone");
+        var original = new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Contains, new("Smartphone"));
 
         var doubleNegated = original.Negate().Negate();
 
@@ -45,7 +45,7 @@ public class FilterConditionTests
         var property = PropertyPathFactory.Create("Name");
         var @operator = ComparisonOperator.Contains;
         var value = "Smartphone";
-        var condition = new FilterCondition(property, @operator, value);
+        var condition = new FilterCondition(property, @operator, new(value));
 
         var result = condition.ToExpression<Product>();
 
@@ -58,9 +58,9 @@ public class FilterConditionTests
         var property = PropertyPathFactory.Create("Products.Reviews.Rating:any"); // Rating is scalar
         var @operator = ComparisonOperator.Equal;
         var value = DateTime.UtcNow;
-        var condition = new FilterCondition(property, @operator, value);
+        var condition = new FilterCondition(property, @operator, new(value));
 
-        var ex = Assert.Throws<NotSupportedException>(() => condition.ToExpression<Category>());
+        var ex = Assert.Throws<NotSupportedException>(condition.ToExpression<Category>);
 
         Assert.Equal("Quantifier modes cannot be applied to scalar properties.", ex.Message);
     }
@@ -71,9 +71,9 @@ public class FilterConditionTests
         var property = PropertyPathFactory.Create("Products.Reviews.Rating:count"); // Rating is scalar
         var @operator = ComparisonOperator.Equal;
         var value = DateTime.UtcNow;
-        var condition = new FilterCondition(property, @operator, value);
+        var condition = new FilterCondition(property, @operator, new(value));
 
-        var ex = Assert.Throws<NotSupportedException>(() => condition.ToExpression<Category>());
+        var ex = Assert.Throws<NotSupportedException>(condition.ToExpression<Category>);
 
         Assert.Equal("Collection projections cannot be applied to scalar properties.", ex.Message);
     }

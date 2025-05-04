@@ -3,6 +3,30 @@
 public static class CollectionProjectionExtensions
 {
     private static readonly ConcurrentDictionary<string, MethodInfo> _linqMethodCache = new();
+    private static readonly Dictionary<CollectionProjection, string> _displayNames = new()
+    {
+        [CollectionProjection.Count] = "count"
+    };
+
+    public static string ToDisplayString(this CollectionProjection projection)
+    {
+        return _displayNames.TryGetValue(projection, out var displayName) ? displayName : projection.ToString();
+    }
+
+    public static bool TryParse(string value, out CollectionProjection result)
+    {
+        foreach (var (candidate, displayName) in _displayNames)
+        {
+            if (displayName.Equals(value, StringComparison.OrdinalIgnoreCase))
+            {
+                result = candidate;
+                return true;
+            }
+        }
+
+        result = default;
+        return false;
+    }
 
     public static bool IsTerminal(this CollectionProjection projection)
     {
@@ -23,4 +47,3 @@ public static class CollectionProjectionExtensions
                 && method.GetParameters().Length == 1);
     }
 }
-    
