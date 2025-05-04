@@ -49,14 +49,12 @@ public static class SyntaxTokenExtensions
             throw new SyntaxErrorException("Modifiers are only supported on string literals.", modifierToken.Value);
         }
 
-        try
+        if (StringValueModifierExtensions.TryParse(modifierSymbol, out var modifier))
         {
-            return StringValueModifierExtensions.FromSymbol(modifierSymbol);
+            return modifier;
         }
-        catch (ArgumentException)
-        {
-            throw new SyntaxErrorException($"Unsupported modifier: {modifierSymbol}", modifierToken.Value);
-        }
+
+        throw new SyntaxErrorException($"Unsupported modifier: {modifierSymbol}", modifierToken.Value);
     }
 
     private static object? ToTypedValue(this SyntaxToken token)

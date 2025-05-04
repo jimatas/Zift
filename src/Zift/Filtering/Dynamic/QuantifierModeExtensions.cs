@@ -3,28 +3,30 @@
 public static class QuantifierModeExtensions
 {
     private static readonly ConcurrentDictionary<(string, int), MethodInfo> _linqMethodCache = new();
-    private static readonly Dictionary<QuantifierMode, string> _symbolMap = new()
+    private static readonly Dictionary<QuantifierMode, string> _displayNames = new()
     {
         [QuantifierMode.Any] = "any",
         [QuantifierMode.All] = "all"
     };
 
-    public static string ToSymbol(this QuantifierMode quantifier)
+    public static string ToDisplayString(this QuantifierMode quantifier)
     {
-        return _symbolMap.TryGetValue(quantifier, out var symbol) ? symbol : quantifier.ToString();
+        return _displayNames.TryGetValue(quantifier, out var displayName) ? displayName : quantifier.ToString();
     }
 
-    public static QuantifierMode FromSymbol(string symbol)
+    public static bool TryParse(string value, out QuantifierMode result)
     {
-        foreach (var (quantifier, mappedSymbol) in _symbolMap)
+        foreach (var (candidate, displayName) in _displayNames)
         {
-            if (mappedSymbol.Equals(symbol, StringComparison.OrdinalIgnoreCase))
+            if (displayName.Equals(value, StringComparison.OrdinalIgnoreCase))
             {
-                return quantifier;
+                result = candidate;
+                return true;
             }
         }
 
-        throw new ArgumentException($"Unknown quantifier mode: {symbol}", nameof(symbol));
+        result = default;
+        return false;
     }
 
     public static MethodInfo ToLinqMethod(this QuantifierMode quantifier, bool withPredicate)

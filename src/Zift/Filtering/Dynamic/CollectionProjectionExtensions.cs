@@ -3,27 +3,29 @@
 public static class CollectionProjectionExtensions
 {
     private static readonly ConcurrentDictionary<string, MethodInfo> _linqMethodCache = new();
-    private static readonly Dictionary<CollectionProjection, string> _symbolMap = new()
+    private static readonly Dictionary<CollectionProjection, string> _displayNames = new()
     {
         [CollectionProjection.Count] = "count"
     };
 
-    public static string ToSymbol(this CollectionProjection projection)
+    public static string ToDisplayString(this CollectionProjection projection)
     {
-        return _symbolMap.TryGetValue(projection, out var symbol) ? symbol : projection.ToString();
+        return _displayNames.TryGetValue(projection, out var displayName) ? displayName : projection.ToString();
     }
 
-    public static CollectionProjection FromSymbol(string symbol)
+    public static bool TryParse(string value, out CollectionProjection result)
     {
-        foreach (var (projection, mappedSymbol) in _symbolMap)
+        foreach (var (candidate, displayName) in _displayNames)
         {
-            if (mappedSymbol.Equals(symbol, StringComparison.OrdinalIgnoreCase))
+            if (displayName.Equals(value, StringComparison.OrdinalIgnoreCase))
             {
-                return projection;
+                result = candidate;
+                return true;
             }
         }
 
-        throw new ArgumentException($"Unknown collection projection: {symbol}", nameof(symbol));
+        result = default;
+        return false;
     }
 
     public static bool IsTerminal(this CollectionProjection projection)
@@ -45,4 +47,3 @@ public static class CollectionProjectionExtensions
                 && method.GetParameters().Length == 1);
     }
 }
-    

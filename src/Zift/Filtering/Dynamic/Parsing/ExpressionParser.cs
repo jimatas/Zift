@@ -253,18 +253,22 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
                 throw new SyntaxErrorException("A property segment cannot have more than one modifier.", token);
             }
 
-            switch (token.Type)
+            if (token.Type != SyntaxTokenType.Identifier)
             {
-                case SyntaxTokenType.QuantifierMode:
-                    _quantifier = QuantifierModeExtensions.FromSymbol(token.Value);
-                    break;
+                throw new SyntaxErrorException($"Expected an identifier, but got: {token.Value}", token);
+            }
 
-                case SyntaxTokenType.CollectionProjection:
-                    _projection = CollectionProjectionExtensions.FromSymbol(token.Value);
-                    break;
-
-                default:
-                    throw new SyntaxErrorException($"Expected a quantifier mode or collection projection, but got: {token.Value}", token);
+            if (QuantifierModeExtensions.TryParse(token.Value, out var quantifier))
+            {
+                _quantifier = quantifier;
+            }
+            else if (CollectionProjectionExtensions.TryParse(token.Value, out var projection))
+            {
+                _projection = projection;
+            }
+            else
+            {
+                throw new SyntaxErrorException($"Expected a quantifier mode or collection projection, but got: {token.Value}", token);
             }
 
             _modifierApplied = true;

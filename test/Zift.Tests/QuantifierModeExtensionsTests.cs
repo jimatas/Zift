@@ -7,18 +7,18 @@ public class QuantifierModeExtensionsTests
     [Theory]
     [InlineData(QuantifierMode.Any, "any")]
     [InlineData(QuantifierMode.All, "all")]
-    public void ToSymbol_KnownQuantifier_ReturnsExpectedSymbol(QuantifierMode mode, string expected)
+    public void ToDisplayString_KnownQuantifier_ReturnsExpectedSymbol(QuantifierMode mode, string expected)
     {
-        var result = mode.ToSymbol();
+        var result = mode.ToDisplayString();
+
         Assert.Equal(expected, result);
     }
 
     [Fact]
-    public void ToSymbol_UnknownQuantifier_FallsBackToEnumName()
+    public void ToDisplayString_UnknownQuantifier_FallsBackToEnumName()
     {
         var unknown = (QuantifierMode)99;
-
-        var result = unknown.ToSymbol();
+        var result = unknown.ToDisplayString();
 
         Assert.Equal("99", result);
     }
@@ -30,18 +30,22 @@ public class QuantifierModeExtensionsTests
     [InlineData("all", QuantifierMode.All)]
     [InlineData("All", QuantifierMode.All)]
     [InlineData("ALL", QuantifierMode.All)]
-    public void FromSymbol_ValidSymbol_ReturnsExpectedMode(string symbol, QuantifierMode expected)
+    public void TryParse_ValidSymbol_ReturnsExpectedMode(string symbol, QuantifierMode expected)
     {
-        var result = QuantifierModeExtensions.FromSymbol(symbol);
-        Assert.Equal(expected, result);
+        var success = QuantifierModeExtensions.TryParse(symbol, out var actual);
+
+        Assert.True(success);
+        Assert.Equal(expected, actual);
     }
 
-    [Fact]
-    public void FromSymbol_InvalidSymbol_ThrowsArgumentException()
+    [Theory]
+    [InlineData("invalid")]
+    [InlineData("")]
+    [InlineData("none")]
+    public void TryParse_InvalidSymbol_ReturnsFalse(string symbol)
     {
-        var ex = Assert.Throws<ArgumentException>(() =>
-            QuantifierModeExtensions.FromSymbol("invalid"));
+        var success = QuantifierModeExtensions.TryParse(symbol, out var _);
 
-        Assert.Contains("invalid", ex.Message);
+        Assert.False(success);
     }
 }

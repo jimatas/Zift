@@ -170,7 +170,7 @@ public class ExpressionParserTests
     [InlineData("Products.Reviews.% == 'Any value'", "Expected an identifier, but got:")]
     [InlineData("Products.. == 'Any value'", "Expected an identifier, but got:")]
     [InlineData("Products.: == 'Any value'", "Expected an identifier, but got:")]
-    [InlineData("Products:: == 'Any value'", "Expected a quantifier mode or collection projection, but got:")]
+    [InlineData("Products:: == 'Any value'", "Expected an identifier, but got:")]
     public void Parse_InvalidNestedProperties_ThrowsSyntaxErrorException(string expression, string expectedPartialMessage)
     {
         var parser = new ExpressionParser(new(expression));

@@ -2,26 +2,28 @@
 
 public static class StringValueModifierExtensions
 {
-    private static readonly Dictionary<StringValueModifier, string> _symbolMap = new()
+    private static readonly Dictionary<StringValueModifier, string> _displayNames = new()
     {
         [StringValueModifier.IgnoreCase] = "i"
     };
 
-    public static string ToSymbol(this StringValueModifier modifier)
+    public static string ToDisplayString(this StringValueModifier modifier)
     {
-        return _symbolMap.TryGetValue(modifier, out var symbol) ? symbol : modifier.ToString();
+        return _displayNames.TryGetValue(modifier, out var displayName) ? displayName : modifier.ToString();
     }
 
-    public static StringValueModifier FromSymbol(string symbol)
+    public static bool TryParse(string value, out StringValueModifier result)
     {
-        foreach (var (modifier, mappedSymbol) in _symbolMap)
+        foreach (var (candidate, displayName) in _displayNames)
         {
-            if (mappedSymbol.Equals(symbol, StringComparison.OrdinalIgnoreCase))
+            if (displayName.Equals(value, StringComparison.OrdinalIgnoreCase))
             {
-                return modifier;
+                result = candidate;
+                return true;
             }
         }
 
-        throw new ArgumentException($"Unknown string modifier: {symbol}", nameof(symbol));
+        result = default;
+        return false;
     }
 }

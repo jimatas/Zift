@@ -15,7 +15,7 @@ public readonly record struct LiteralValue(object? RawValue)
         {
             null => "null",
             bool b => b ? "true" : "false",
-            string s when Modifier is { } modifier => $"{s}:{modifier.ToSymbol()}",
+            string s when Modifier is { } modifier => $"{s}:{modifier.ToDisplayString()}",
             double d => d.ToString("R", CultureInfo.InvariantCulture),
             _ => RawValue.ToString()!,
         };

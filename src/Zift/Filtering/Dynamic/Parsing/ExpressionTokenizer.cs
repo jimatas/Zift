@@ -11,8 +11,6 @@ public class ExpressionTokenizer(string expression)
         [SyntaxTokenType.Keyword] = SyntaxDefinitions.Keyword,
         [SyntaxTokenType.NumericLiteral] = SyntaxDefinitions.NumericLiteral,
         [SyntaxTokenType.StringLiteral] = SyntaxDefinitions.StringLiteral,
-        [SyntaxTokenType.QuantifierMode] = SyntaxDefinitions.QuantifierMode,
-        [SyntaxTokenType.CollectionProjection] = SyntaxDefinitions.CollectionProjection,
         [SyntaxTokenType.Identifier] = SyntaxDefinitions.Identifier
     };
 

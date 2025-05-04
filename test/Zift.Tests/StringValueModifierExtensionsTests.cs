@@ -6,19 +6,18 @@ public class StringValueModifierExtensionsTests
 {
     [Theory]
     [InlineData(StringValueModifier.IgnoreCase, "i")]
-    public void ToSymbol_KnownModifier_ReturnsExpectedSymbol(StringValueModifier modifier, string expected)
+    public void ToDisplayString_KnownModifier_ReturnsExpectedSymbol(StringValueModifier modifier, string expected)
     {
-        var symbol = modifier.ToSymbol();
+        var symbol = modifier.ToDisplayString();
 
         Assert.Equal(expected, symbol);
     }
 
     [Fact]
-    public void ToSymbol_UnknownModifier_FallsBackToEnumName()
+    public void ToDisplayString_UnknownModifier_FallsBackToEnumValue()
     {
         var unknown = (StringValueModifier)99;
-
-        var result = unknown.ToSymbol();
+        var result = unknown.ToDisplayString();
 
         Assert.Equal("99", result);
     }
@@ -26,22 +25,22 @@ public class StringValueModifierExtensionsTests
     [Theory]
     [InlineData("i", StringValueModifier.IgnoreCase)]
     [InlineData("I", StringValueModifier.IgnoreCase)]
-    public void FromSymbol_ValidSymbol_ReturnsExpectedModifier(string symbol, StringValueModifier expected)
+    public void TryParse_ValidSymbol_ReturnsExpectedModifier(string symbol, StringValueModifier expected)
     {
-        var result = StringValueModifierExtensions.FromSymbol(symbol);
+        var success = StringValueModifierExtensions.TryParse(symbol, out var actual);
 
-        Assert.Equal(expected, result);
+        Assert.True(success);
+        Assert.Equal(expected, actual);
     }
 
     [Theory]
     [InlineData("x")]
     [InlineData("ignoreCase")]
     [InlineData("")]
-    public void FromSymbol_InvalidSymbol_ThrowsArgumentException(string symbol)
+    public void TryParse_InvalidSymbol_ReturnsFalse(string symbol)
     {
-        var ex = Assert.Throws<ArgumentException>(() =>
-            StringValueModifierExtensions.FromSymbol(symbol));
+        var success = StringValueModifierExtensions.TryParse(symbol, out var actual);
 
-        Assert.StartsWith("Unknown string modifier", ex.Message);
+        Assert.False(success);
     }
 }
