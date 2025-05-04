@@ -47,8 +47,8 @@ dotnet add package Zift.EntityFrameworkCore
 
 Alternatively, if you prefer to work with the source:
 
-- Clone the repository locally
-- Reference the project(s) directly from your solution
+- Clone the repository locally.
+- Reference the project(s) directly from your solution.
 
 ### 3.1. Basic Example
 
@@ -105,7 +105,7 @@ Queries are composed using standard LINQ patterns and executed only when enumera
 - Deferred query execution.
 - Null-safe API validation.
 - Lightweight, extensible core.
-- Architecture-agnostic — no repository or unit-of-work assumptions.
+- Persistence-agnostic — no repository or unit-of-work assumptions.
 
 ## 5. Filtering
 
@@ -298,15 +298,15 @@ Zift extends `IQueryable<T>` with:
 
 | Method | Purpose |
 |:---|:---|
-| `Filter(IFilterCriteria<T>)` | Apply filtering using a criteria object |
-| `Filter(Expression<Func<T, bool>>)` | Apply filtering using a predicate |
-| `Filter(string)` | Apply filtering using a dynamic expression |
-| `SortBy(ISortCriteria<T>)` | Apply sorting using a criteria object |
-| `SortBy(Action<SortCriteriaBuilder<T>>)` | Apply sorting using a fluent builder |
-| `ToPaginatedList(IPaginationCriteria<T>)` | Apply pagination using a criteria object |
-| `ToPaginatedList(Action<PaginationCriteriaBuilder<T>>)` | Apply pagination using a fluent builder |
-| `ToPaginatedListAsync(IPaginationCriteria<T>)` | Apply pagination using a criteria object (EF Core) |
-| `ToPaginatedListAsync(Action<PaginationCriteriaBuilder<T>>)` | Apply pagination using a fluent builder (EF Core) |
+| `Filter(IFilterCriteria<T>)` | Apply filtering using a criteria object. |
+| `Filter(Expression<Func<T, bool>>)` | Apply filtering using a predicate. |
+| `Filter(string)` | Apply filtering using a dynamic expression. |
+| `SortBy(ISortCriteria<T>)` | Apply sorting using a criteria object. |
+| `SortBy(Action<SortCriteriaBuilder<T>>)` | Apply sorting using a fluent builder. |
+| `ToPaginatedList(IPaginationCriteria<T>)` | Apply pagination using a criteria object. |
+| `ToPaginatedList(Action<PaginationCriteriaBuilder<T>>)` | Apply pagination using a fluent builder. |
+| `ToPaginatedListAsync(IPaginationCriteria<T>)` | Apply pagination using a criteria object (EF Core). |
+| `ToPaginatedListAsync(Action<PaginationCriteriaBuilder<T>>)` | Apply pagination using a fluent builder (EF Core). |
 
 ## 9. Advanced Topics
 
