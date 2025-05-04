@@ -37,10 +37,6 @@ public class CatalogDbContext(DbContextOptions<CatalogDbContext> options) : DbCo
             builder.Property(review => review.Rating);
             builder.Property(review => review.Content).HasMaxLength(500);
             builder.Property(review => review.DatePosted);
-            //builder.HasOne(review => review.Author)
-            //    .WithMany()
-            //    .HasForeignKey("AuthorId");
-
             builder.OwnsOne(b => b.Author, author =>
             {
                 author.WithOwner();

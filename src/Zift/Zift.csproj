@@ -5,12 +5,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>true</IsPackable>
-    <Version>0.4.0</Version>
+    <Version>0.4.1</Version>
     <Authors>Jim Atas</Authors>
     <Description>Lightweight, composable .NET library for filtering, sorting, and paginating IQueryable&lt;T&gt; using expression- or string-based criteria.</Description>
     <PackageTags>filtering sorting pagination queryable expressions linq</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>Readme.md</PackageReadmeFile>
+    <PackageIcon>Zift_Logo_128x128.png</PackageIcon>
     <PackageProjectUrl>https://github.com/jimatas/Zift</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jimatas/Zift</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -18,6 +19,7 @@
 
   <ItemGroup>
     <None Include="../../Readme.md" Pack="true" PackagePath="" />
+    <None Include="../../docs/assets/Zift_Logo_128x128.png" Pack="true" PackagePath="" />
   </ItemGroup>
   
   <ItemGroup>
