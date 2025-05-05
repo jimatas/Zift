@@ -16,15 +16,15 @@ public static class SyntaxTokenExtensions
     {
         return token.Value switch
         {
-            "==" => ComparisonOperator.Equal,
-            "!=" => ComparisonOperator.NotEqual,
-            ">" => ComparisonOperator.GreaterThan,
-            ">=" => ComparisonOperator.GreaterThanOrEqual,
-            "<" => ComparisonOperator.LessThan,
-            "<=" => ComparisonOperator.LessThanOrEqual,
-            "%=" => ComparisonOperator.Contains,
-            "^=" => ComparisonOperator.StartsWith,
-            "$=" => ComparisonOperator.EndsWith,
+            "==" => Dynamic.ComparisonOperator.Equal,
+            "!=" => Dynamic.ComparisonOperator.NotEqual,
+            ">" => Dynamic.ComparisonOperator.GreaterThan,
+            ">=" => Dynamic.ComparisonOperator.GreaterThanOrEqual,
+            "<" => Dynamic.ComparisonOperator.LessThan,
+            "<=" => Dynamic.ComparisonOperator.LessThanOrEqual,
+            "%=" => Dynamic.ComparisonOperator.Contains,
+            "^=" => Dynamic.ComparisonOperator.StartsWith,
+            "$=" => Dynamic.ComparisonOperator.EndsWith,
             _ => throw new SyntaxErrorException($"Expected a comparison operator, but got: {token.Value}", token)
         };
     }

@@ -6,6 +6,8 @@ public enum SyntaxTokenType
     Whitespace,
     ParenthesisOpen,
     ParenthesisClose,
+    BracketOpen,
+    BracketClose,
     LogicalOperator,
     UnaryLogicalOperator,
     ComparisonOperator,
@@ -15,5 +17,6 @@ public enum SyntaxTokenType
     Identifier,
     Colon,
     DotSeparator,
+    Comma,
     End
 }

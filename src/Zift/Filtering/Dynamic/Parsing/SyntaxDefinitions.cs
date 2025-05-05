@@ -12,6 +12,9 @@ public static class SyntaxDefinitions
     public static readonly Regex Identifier = new(@"^[a-zA-Z_][a-zA-Z0-9_]*", RegexOptions.Compiled);
     public const string ParenthesisOpen = "(";
     public const string ParenthesisClose = ")";
+    public const string BracketOpen = "[";
+    public const string BracketClose = "]";
     public const string Colon = ":";
     public const string DotSeparator = ".";
+    public const string Comma = ",";
 }

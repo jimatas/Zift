@@ -18,8 +18,11 @@ public class ExpressionTokenizer(string expression)
     {
         [SyntaxTokenType.ParenthesisOpen] = SyntaxDefinitions.ParenthesisOpen,
         [SyntaxTokenType.ParenthesisClose] = SyntaxDefinitions.ParenthesisClose,
+        [SyntaxTokenType.BracketOpen] = SyntaxDefinitions.BracketOpen,
+        [SyntaxTokenType.BracketClose] = SyntaxDefinitions.BracketClose,
         [SyntaxTokenType.Colon] = SyntaxDefinitions.Colon,
-        [SyntaxTokenType.DotSeparator] = SyntaxDefinitions.DotSeparator
+        [SyntaxTokenType.DotSeparator] = SyntaxDefinitions.DotSeparator,
+        [SyntaxTokenType.Comma] = SyntaxDefinitions.Comma
     };
 
     private readonly string _expression = expression;
@@ -76,21 +79,7 @@ public class ExpressionTokenizer(string expression)
         }
 
         result = default;
-
         return false;
-    }
-
-    private SyntaxToken HandleUnknownOrEndToken()
-    {
-        var startPosition = _position;
-        while (_position < _expression.Length && !IsStartOfAnyToken(_expression[_position]))
-        {
-            _position++;
-        }
-
-        return startPosition < _position
-            ? new(SyntaxTokenType.Unknown, _expression[startPosition.._position], startPosition)
-            : new(SyntaxTokenType.End, string.Empty, _position);
     }
 
     private bool TryMatch(Regex pattern, out string result, out int position)
@@ -126,6 +115,19 @@ public class ExpressionTokenizer(string expression)
         position = 0;
 
         return false;
+    }
+
+    private SyntaxToken HandleUnknownOrEndToken()
+    {
+        var startPosition = _position;
+        while (_position < _expression.Length && !IsStartOfAnyToken(_expression[_position]))
+        {
+            _position++;
+        }
+
+        return startPosition < _position
+            ? new(SyntaxTokenType.Unknown, _expression[startPosition.._position], startPosition)
+            : new(SyntaxTokenType.End, string.Empty, _position);
     }
 
     private static bool IsStartOfAnyToken(char c)

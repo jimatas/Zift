@@ -308,4 +308,12 @@ public class ExpressionParserTests
 
         Assert.StartsWith(expectedMessage, ex.Message);
     }
+
+    [Fact]
+    public void Parse_LiteralValueList_ReturnsExpectedValues()
+    {
+        var parser = new ExpressionParser(new("Name == ['Laptop', 'Smartphone', 128"));
+
+        var result = parser.Parse();
+    }
 }

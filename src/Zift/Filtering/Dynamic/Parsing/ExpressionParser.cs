@@ -100,6 +100,15 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
     {
         var property = ParsePropertyPath(token);
         var @operator = _tokenizer.NextNonWhitespaceToken().ToComparisonOperator();
+
+        if (@operator is Dynamic.ComparisonOperator.Equal or Dynamic.ComparisonOperator.NotEqual
+            && _tokenizer.PeekNonWhitespaceToken().Type == SyntaxTokenType.BracketOpen)
+        {
+            var values = ParseLiteralValueList();
+
+            return new(property, @operator, new(values));
+        }
+
         var value = ParseLiteralValue();
 
         return new(property, @operator, value);
@@ -156,6 +165,41 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
         }
 
         return valueToken.ToLiteralValue(modifierToken);
+    }
+
+    private IReadOnlyList<LiteralValue> ParseLiteralValueList()
+    {
+        _tokenizer.NextNonWhitespaceToken();
+
+        var values = new List<LiteralValue>();
+        var expectingComma = false;
+
+        while (true)
+        {
+            var nextToken = _tokenizer.PeekNonWhitespaceToken();
+            if (nextToken.Type == SyntaxTokenType.BracketClose)
+            {
+                _tokenizer.NextNonWhitespaceToken();
+                break;
+            }
+
+            if (expectingComma)
+            {
+                if (_tokenizer.NextNonWhitespaceToken().Type != SyntaxTokenType.Comma)
+                {
+                    throw new SyntaxErrorException($"Expected a comma between values, but got: {nextToken.Value}", nextToken);
+                }
+
+                expectingComma = false;
+                continue;
+            }
+
+            var value = ParseLiteralValue();
+            values.Add(value);
+            expectingComma = true;
+        }
+
+        return values;
     }
 
     private static FilterGroup FinalizeGroup(int nestingLevel, FilterGroupBuilder groupBuilder, SyntaxToken token)

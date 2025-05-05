@@ -28,16 +28,16 @@ public class SyntaxTokenExtensionsTests
     }
 
     [Theory]
-    [InlineData("==", ComparisonOperator.Equal)]
-    [InlineData("!=", ComparisonOperator.NotEqual)]
-    [InlineData(">", ComparisonOperator.GreaterThan)]
-    [InlineData(">=", ComparisonOperator.GreaterThanOrEqual)]
-    [InlineData("<", ComparisonOperator.LessThan)]
-    [InlineData("<=", ComparisonOperator.LessThanOrEqual)]
-    [InlineData("%=", ComparisonOperator.Contains)]
-    [InlineData("^=", ComparisonOperator.StartsWith)]
-    [InlineData("$=", ComparisonOperator.EndsWith)]
-    public void ToComparisonOperator_ForSupportedOperator_ReturnsExpectedComparisonOperator(string @operator, ComparisonOperator expectedResult)
+    [InlineData("==", Filtering.Dynamic.ComparisonOperator.Equal)]
+    [InlineData("!=", Filtering.Dynamic.ComparisonOperator.NotEqual)]
+    [InlineData(">", Filtering.Dynamic.ComparisonOperator.GreaterThan)]
+    [InlineData(">=", Filtering.Dynamic.ComparisonOperator.GreaterThanOrEqual)]
+    [InlineData("<", Filtering.Dynamic.ComparisonOperator.LessThan)]
+    [InlineData("<=", Filtering.Dynamic.ComparisonOperator.LessThanOrEqual)]
+    [InlineData("%=", Filtering.Dynamic.ComparisonOperator.Contains)]
+    [InlineData("^=", Filtering.Dynamic.ComparisonOperator.StartsWith)]
+    [InlineData("$=", Filtering.Dynamic.ComparisonOperator.EndsWith)]
+    public void ToComparisonOperator_ForSupportedOperator_ReturnsExpectedComparisonOperator(string @operator, Filtering.Dynamic.ComparisonOperator expectedResult)
     {
         var token = new SyntaxToken(SyntaxTokenType.ComparisonOperator, @operator, Position: 0);
 
