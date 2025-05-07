@@ -2,8 +2,7 @@
 
 public readonly record struct ComparisonOperatorType(string Symbol)
 {
-    private static readonly HashSet<string> _noModifiers = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly HashSet<string> _ignoreCase = new(StringComparer.OrdinalIgnoreCase) { "i" };
+    private static readonly IReadOnlySet<string> _ignoreCase = new HashSet<string>(["i"], StringComparer.OrdinalIgnoreCase);
 
     public static readonly ComparisonOperatorType Equal = new("==") { SupportedModifiers = _ignoreCase };
     public static readonly ComparisonOperatorType NotEqual = new("!=") { SupportedModifiers = _ignoreCase };
@@ -42,7 +41,7 @@ public readonly record struct ComparisonOperatorType(string Symbol)
         return _bySymbol.TryGetValue(symbol, out result);
     }
 
-    public IReadOnlySet<string> SupportedModifiers { get; init; } = _noModifiers;
+    public IReadOnlySet<string> SupportedModifiers { get; init; } = CollectionUtilities.EmptySet<string>();
 
     public override string ToString() => Symbol;
 

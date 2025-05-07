@@ -2,7 +2,7 @@
 
 public readonly record struct ComparisonOperator(ComparisonOperatorType Type)
 {
-    public IReadOnlySet<string> Modifiers { get; init; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    public IReadOnlySet<string> Modifiers { get; init; } = CollectionUtilities.EmptySet<string>();
 
     public bool HasModifier(string modifier) => Modifiers.Contains(modifier);
 
