@@ -1,6 +1,5 @@
 ﻿namespace Zift.Tests;
 
-using Filtering.Dynamic;
 using Filtering.Dynamic.Parsing;
 
 public class ExpressionTokenizerTests
@@ -224,22 +223,22 @@ public class ExpressionTokenizerTests
     [InlineData("-2147483648")]
     [InlineData("1.7976931348623157E+308")]
     [InlineData("-1.7976931348623157E+308")]
-    public void ToLiteralValue_WithValidNumericLiteral_ReturnsExpectedValue(string literal)
+    public void ToTypedValue_WithValidNumericLiteral_ReturnsExpectedValue(string literal)
     {
-        var result = new SyntaxToken(SyntaxTokenType.NumericLiteral, literal, 0).ToLiteralValue();
+        var result = new SyntaxToken(SyntaxTokenType.NumericLiteral, literal, 0).ToTypedValue();
 
-        Assert.Equal(literal, string.Format(CultureInfo.InvariantCulture, "{0}", result.RawValue));
+        Assert.Equal(literal, string.Format(CultureInfo.InvariantCulture, "{0}", result));
     }
 
     [Theory]
     [InlineData("42_000")]
     [InlineData("3.14_15")]
     [InlineData("0xFF")]
-    public void ToLiteralValue_WithInvalidNumericLiteral_ThrowsSyntaxErrorException(string literal)
+    public void ToTypedValue_WithInvalidNumericLiteral_ThrowsSyntaxErrorException(string literal)
     {
         var token = new SyntaxToken(SyntaxTokenType.NumericLiteral, literal, 0);
 
-        Assert.Throws<SyntaxErrorException>(() => _ = token.ToLiteralValue());
+        Assert.Throws<SyntaxErrorException>(() => _ = token.ToTypedValue());
     }
 
     [Theory]
@@ -249,22 +248,22 @@ public class ExpressionTokenizerTests
     [InlineData("False", false)]
     [InlineData("null", null)]
     [InlineData("NULL", null)]
-    public void ToLiteralValue_WithValidKeyword_ReturnsExpectedValue(string keyword, object? expected)
+    public void ToTypedValue_WithValidKeyword_ReturnsExpectedValue(string keyword, object? expected)
     {
-        var result = new SyntaxToken(SyntaxTokenType.Keyword, keyword, 0).ToLiteralValue();
+        var result = new SyntaxToken(SyntaxTokenType.Keyword, keyword, 0).ToTypedValue();
 
-        Assert.Equal(expected, result.RawValue);
+        Assert.Equal(expected, result);
     }
 
     [Theory]
     [InlineData("nill")]
     [InlineData("void")]
     [InlineData("undefined")]
-    public void ToLiteralValue_WithInvalidKeyword_ThrowsSyntaxErrorException(string keyword)
+    public void ToTypedValue_WithInvalidKeyword_ThrowsSyntaxErrorException(string keyword)
     {
         var token = new SyntaxToken(SyntaxTokenType.Keyword, keyword, 0);
 
-        Assert.Throws<SyntaxErrorException>(() => _ = token.ToLiteralValue());
+        Assert.Throws<SyntaxErrorException>(() => _ = token.ToTypedValue());
     }
 
     [Theory]
@@ -272,11 +271,11 @@ public class ExpressionTokenizerTests
     [InlineData("''")]
     [InlineData("\"John Doe\"")]
     [InlineData("'Jane Smith'")]
-    public void ToLiteralValue_WithProperlyQuotedStringLiteral_ReturnsExpectedValue(string literal)
+    public void ToTypedValue_WithProperlyQuotedStringLiteral_ReturnsExpectedValue(string literal)
     {
-        var result = new SyntaxToken(SyntaxTokenType.StringLiteral, literal, 0).ToLiteralValue();
+        var result = new SyntaxToken(SyntaxTokenType.StringLiteral, literal, 0).ToTypedValue();
 
-        Assert.Equal(literal[1..^1], result.RawValue);
+        Assert.Equal(literal[1..^1], result);
     }
 
     [Theory]
@@ -285,11 +284,11 @@ public class ExpressionTokenizerTests
     [InlineData("\"'")]
     [InlineData("'\"")]
     [InlineData("John Doe")]
-    public void ToLiteralValue_WithImproperlyQuotedStringLiteral_ReturnsStringAsIs(string literal)
+    public void ToTypedValue_WithImproperlyQuotedStringLiteral_ReturnsStringAsIs(string literal)
     {
-        var result = new SyntaxToken(SyntaxTokenType.StringLiteral, literal, 0).ToLiteralValue();
+        var result = new SyntaxToken(SyntaxTokenType.StringLiteral, literal, 0).ToTypedValue();
 
-        Assert.Equal(literal, result.RawValue);
+        Assert.Equal(literal, result);
     }
 
     [Theory]
@@ -297,32 +296,10 @@ public class ExpressionTokenizerTests
     [InlineData("'\\\"'", "\\\"")]
     [InlineData("\"\\'\"", "\\'")]
     [InlineData("'\\''", "'")]
-    public void ToLiteralValue_WithEscapedStringLiteral_ReturnsExpectedValue(string literal, string expected)
+    public void ToTypedValue_WithEscapedStringLiteral_ReturnsExpectedValue(string literal, string expected)
     {
-        var result = new SyntaxToken(SyntaxTokenType.StringLiteral, literal, 0).ToLiteralValue();
+        var result = new SyntaxToken(SyntaxTokenType.StringLiteral, literal, 0).ToTypedValue();
 
-        Assert.Equal(expected, result.RawValue);
-    }
-
-    [Theory]
-    [InlineData("\"John\"", "John", null)]
-    [InlineData("\"Hello\":i", "Hello", StringValueModifier.IgnoreCase)]
-    [InlineData("'Test':i", "Test", StringValueModifier.IgnoreCase)]
-    public void ToLiteralValue_WithStringLiteralAndOptionalModifier_ReturnsExpected(string input, string expectedValue, StringValueModifier? expectedModifier)
-    {
-        var tokenizer = new ExpressionTokenizer(input);
-        var valueToken = tokenizer.NextNonWhitespaceToken();
-
-        SyntaxToken? modifierToken = null;
-        if (tokenizer.PeekToken().Type == SyntaxTokenType.Colon)
-        {
-            tokenizer.NextToken();
-            modifierToken = tokenizer.NextNonWhitespaceToken();
-        }
-
-        var literal = valueToken.ToLiteralValue(modifierToken);
-
-        Assert.Equal(expectedValue, literal.RawValue);
-        Assert.Equal(expectedModifier, literal.Modifier);
+        Assert.Equal(expected, result);
     }
 }

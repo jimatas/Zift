@@ -260,60 +260,56 @@ public class ExpressionParserTests
     }
 
     [Theory]
-    [InlineData("Name == 'Laptop':i", "Laptop", StringValueModifier.IgnoreCase)]
-    [InlineData("Name == 'Smartphone':I", "Smartphone", StringValueModifier.IgnoreCase)]
-    [InlineData("Name == '':i", "", StringValueModifier.IgnoreCase)]
-    public void Parse_StringLiteralWithModifier_ReturnsExpectedValue(string expression, string expectedValue, StringValueModifier expectedModifier)
+    [InlineData("Name ==:i 'Laptop'", "==", "i")]
+    [InlineData("Name == :i 'Laptop'", "==", "i")]
+    [InlineData("Name == : i 'Laptop'", "==", "i")]
+    [InlineData("Name ==:I 'Smartphone'", "==", "i")]
+    [InlineData("Name ==:i ''", "==", "i")]
+    public void Parse_StringLiteralWithOperatorModifier_ReturnsExpectedOperatorAndValue(string expression, string expectedOperator, string expectedModifier)
     {
         var parser = new ExpressionParser(new(expression));
         var result = parser.Parse();
 
         var condition = Assert.IsType<FilterCondition>(Assert.Single(result.Terms));
-        var value = Assert.IsType<LiteralValue>(condition.Value);
+        var op = condition.Operator;
 
-        Assert.Equal(expectedValue, value.RawValue);
-        Assert.Equal(expectedModifier, value.Modifier);
+        Assert.Equal(expectedOperator, op.Type.Symbol);
+        Assert.Contains(expectedModifier, op.Modifiers);
     }
 
     [Theory]
-    [InlineData("Name == 42:i")]
-    [InlineData("Name == true:i")]
-    public void Parse_ModifierOnNonStringLiteral_ThrowsSyntaxError(string expression)
+    [InlineData("Products.Price >:i 42", ">")]
+    [InlineData("Products.Price >=:i 42", ">=")]
+    [InlineData("Products.Price <:i 42", "<")]
+    [InlineData("Products.Price <=:i 42", "<=")]
+    public void Parse_ModifierOnUnsupportedOperator_ThrowsSyntaxErrorException(string expression, string @operator)
     {
         var parser = new ExpressionParser(new(expression));
         var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
-        Assert.StartsWith("Modifiers are only supported on string literals.", ex.Message);
+        Assert.StartsWith($"The '{@operator}' operator does not support the following modifier(s)", ex.Message);
     }
 
     [Fact]
     public void Parse_UnsupportedModifier_ThrowsSyntaxError()
     {
-        var parser = new ExpressionParser(new("Name == 'Laptop':xyz"));
+        var parser = new ExpressionParser(new("Name ==:xyz 'Laptop'"));
         var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
-        Assert.StartsWith("Unsupported modifier", ex.Message);
+        Assert.StartsWith("The '==' operator does not support", ex.Message);
     }
 
     [Theory]
-    [InlineData("Name == 'Laptop':42", "Expected a modifier after colon.")]
-    [InlineData("Name == 'Laptop':'i'", "Expected a modifier after colon.")]
-    [InlineData("Name == 'Laptop':==", "Expected a modifier after colon.")]
-    [InlineData("Name == 'Laptop':", "Expected a modifier after colon.")]
-    [InlineData("Name == 'Laptop':!i", "Expected a modifier after colon.")]
+    [InlineData("Name ==:42 'Laptop'", "Expected a modifier after colon")]
+    [InlineData("Name ==:'i' 'Laptop'", "Expected a modifier after colon")]
+    [InlineData("Name ==:== 'Laptop'", "Expected a modifier after colon")]
+    [InlineData("Name ==: 'Laptop'", "Expected a modifier after colon")]
+    [InlineData("Name ==:!i 'Laptop'", "Expected a modifier after colon")]
     public void Parse_IllegalModifier_ThrowsSyntaxError(string expression, string expectedMessage)
     {
         var parser = new ExpressionParser(new(expression));
         var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
         Assert.StartsWith(expectedMessage, ex.Message);
-    }
-
-    [Fact]
-    public void Parse_LiteralValueList_ReturnsExpectedValues()
-    {
-        var parser = new ExpressionParser(new("Name == ['Laptop', 'Smartphone', 128"));
-
-        var result = parser.Parse();
     }
 }

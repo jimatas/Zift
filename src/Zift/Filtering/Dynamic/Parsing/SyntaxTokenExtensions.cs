@@ -11,53 +11,18 @@ public static class SyntaxTokenExtensions
             _ => throw new SyntaxErrorException($"Expected a logical operator, but got: {token.Value}", token)
         };
     }
-    
-    public static ComparisonOperator ToComparisonOperator(this SyntaxToken token)
+
+    public static ComparisonOperatorType ToComparisonOperator(this SyntaxToken token)
     {
-        return token.Value switch
+        if (ComparisonOperatorType.TryParse(token.Value, out var @operator))
         {
-            "==" => Dynamic.ComparisonOperator.Equal,
-            "!=" => Dynamic.ComparisonOperator.NotEqual,
-            ">" => Dynamic.ComparisonOperator.GreaterThan,
-            ">=" => Dynamic.ComparisonOperator.GreaterThanOrEqual,
-            "<" => Dynamic.ComparisonOperator.LessThan,
-            "<=" => Dynamic.ComparisonOperator.LessThanOrEqual,
-            "%=" => Dynamic.ComparisonOperator.Contains,
-            "^=" => Dynamic.ComparisonOperator.StartsWith,
-            "$=" => Dynamic.ComparisonOperator.EndsWith,
-            _ => throw new SyntaxErrorException($"Expected a comparison operator, but got: {token.Value}", token)
-        };
-    }
-
-    public static LiteralValue ToLiteralValue(this SyntaxToken valueToken, SyntaxToken? modifierToken = null)
-    {
-        var rawValue = valueToken.ToTypedValue();
-        var modifier = ParseStringModifier(valueToken, modifierToken);
-
-        return new(rawValue) { Modifier = modifier };
-    }
-
-    private static StringValueModifier? ParseStringModifier(SyntaxToken valueToken, SyntaxToken? modifierToken)
-    {
-        if (modifierToken is not { Value: { } modifierSymbol })
-        {
-            return null;
+            return @operator;
         }
 
-        if (valueToken.Type != SyntaxTokenType.StringLiteral)
-        {
-            throw new SyntaxErrorException("Modifiers are only supported on string literals.", modifierToken.Value);
-        }
-
-        if (StringValueModifierExtensions.TryParse(modifierSymbol, out var modifier))
-        {
-            return modifier;
-        }
-
-        throw new SyntaxErrorException($"Unsupported modifier: {modifierSymbol}", modifierToken.Value);
+        throw new SyntaxErrorException($"Expected a comparison operator, but got: {token.Value}", token);
     }
 
-    private static object? ToTypedValue(this SyntaxToken token)
+    public static object? ToTypedValue(this SyntaxToken token)
     {
         return token.Type switch
         {
@@ -97,9 +62,9 @@ public static class SyntaxTokenExtensions
 
     private static bool IsIntegralWithoutScientificNotation(string literal, double number)
     {
-        return Math.Floor(number) == number
-            && !literal.Contains('.')
-            && !literal.Contains('E', StringComparison.OrdinalIgnoreCase);
+        return Math.Floor(number) == number &&
+            !literal.Contains('.') &&
+            !literal.Contains('E', StringComparison.OrdinalIgnoreCase);
     }
 
     private static object? ToStringValue(this SyntaxToken token)

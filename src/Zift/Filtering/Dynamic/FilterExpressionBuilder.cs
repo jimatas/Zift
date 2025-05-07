@@ -51,7 +51,7 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         var elementType = collection.Type.GetCollectionElementType()!;
         var isLastSegment = segmentIndex == propertyPath.Count - 1;
 
-        var method = quantifier.ToLinqMethod(withPredicate: !isLastSegment).MakeGenericMethod(elementType);
+        var method = quantifier.GetLinqMethod(withPredicate: !isLastSegment).MakeGenericMethod(elementType);
         Expression methodCall;
 
         if (isLastSegment)
@@ -75,7 +75,7 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         var segment = propertyPath[segmentIndex];
         var elementType = collection.Type.GetCollectionElementType()!;
 
-        var method = segment.Projection!.Value.ToLinqMethod().MakeGenericMethod(elementType);
+        var method = segment.Projection!.Value.GetLinqMethod().MakeGenericMethod(elementType);
         var methodCall = Expression.Call(method, collection);
         var comparison = BuildComparison(methodCall);
 
@@ -91,7 +91,7 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
 
     private Expression BuildValueConversion(Type targetType)
     {
-        if (_condition.Value.RawValue is not { } value)
+        if (_condition.Value is not { } value)
         {
             return Expression.Constant(null, targetType);
         }
@@ -112,9 +112,13 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
             rightOperand = WrapInNullSafeToLower(rightOperand);
         }
 
-        var comparison = _condition.Operator.ToComparisonExpression(leftOperand, rightOperand);
+        var comparison = _condition.Operator.Type.ToComparisonExpression(leftOperand, rightOperand);
 
-        var isDirectComparison = !_condition.Operator.IsImplementedAsMethodCall();
+        var isDirectComparison = _condition.Operator.Type != ComparisonOperatorType.In
+            && _condition.Operator.Type != ComparisonOperatorType.Contains
+            && _condition.Operator.Type != ComparisonOperatorType.StartsWith
+            && _condition.Operator.Type != ComparisonOperatorType.EndsWith;
+
         if (isDirectComparison)
         {
             return comparison;
@@ -127,13 +131,15 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
 
     private bool IsCaseInsensitiveStringComparison(Expression leftOperand, Expression rightOperand)
     {
-        return leftOperand.Type == typeof(string) && rightOperand.Type == typeof(string)
-            && _condition.Value.HasModifier(StringValueModifier.IgnoreCase)
-            && _condition.Operator is ComparisonOperator.Equal
-                or ComparisonOperator.NotEqual
-                or ComparisonOperator.Contains
-                or ComparisonOperator.StartsWith
-                or ComparisonOperator.EndsWith;
+        return leftOperand.Type == typeof(string)
+            && rightOperand.Type == typeof(string)
+            && _condition.Operator.HasModifier("i")
+            && (_condition.Operator.Type == ComparisonOperatorType.Equal
+                || _condition.Operator.Type == ComparisonOperatorType.NotEqual
+                || _condition.Operator.Type == ComparisonOperatorType.Contains
+                || _condition.Operator.Type == ComparisonOperatorType.StartsWith
+                || _condition.Operator.Type == ComparisonOperatorType.EndsWith
+                || _condition.Operator.Type == ComparisonOperatorType.In);
     }
 
     private static Expression WrapInNullSafeToLower(Expression operand)

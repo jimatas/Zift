@@ -65,7 +65,9 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
     private static void ValidateTokenExpectation(bool expectLogicalOperator, SyntaxToken token)
     {
         if (expectLogicalOperator
-            && token.Type is not SyntaxTokenType.LogicalOperator and not SyntaxTokenType.ParenthesisClose)
+            && token.Type is
+                not SyntaxTokenType.LogicalOperator
+                and not SyntaxTokenType.ParenthesisClose)
         {
             throw new SyntaxErrorException("Expected a logical operator between terms.", token);
         }
@@ -99,85 +101,54 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
     private FilterCondition ParseCondition(SyntaxToken token)
     {
         var property = ParsePropertyPath(token);
-        var @operator = _tokenizer.NextNonWhitespaceToken().ToComparisonOperator();
+        var @operator = ParseComparisonOperator();
 
-        if (@operator is Dynamic.ComparisonOperator.Equal or Dynamic.ComparisonOperator.NotEqual
-            && _tokenizer.PeekNonWhitespaceToken().Type == SyntaxTokenType.BracketOpen)
+        if (@operator.Type == ComparisonOperatorType.In)
         {
-            var values = ParseLiteralValueList();
+            token = _tokenizer.PeekNonWhitespaceToken();
+            if (token.Type != SyntaxTokenType.BracketOpen)
+            {
+                throw new SyntaxErrorException($"Expected an opening bracket, but got: {token.Value}", token);
+            }
 
-            return new(property, @operator, new(values));
+            var values = ParseValueList();
+
+            return new(property, @operator, values);
         }
 
-        var value = ParseLiteralValue();
+        var value = ParseValue();
 
         return new(property, @operator, value);
     }
 
     private PropertyPath ParsePropertyPath(SyntaxToken token)
     {
-        var segments = new List<PropertyPathSegment>();
-        var segmentBuilder = new PropertyPathSegmentBuilder();
-
-        segmentBuilder.StartNew(token);
-
-        while (true)
-        {
-            token = _tokenizer.PeekNonWhitespaceToken();
-
-            switch (token.Type)
-            {
-                case SyntaxTokenType.Colon:
-                    _tokenizer.NextToken();
-                    token = _tokenizer.NextNonWhitespaceToken();
-                    segmentBuilder.ApplyModifier(token);
-                    break;
-
-                case SyntaxTokenType.DotSeparator:
-                    _tokenizer.NextToken();
-                    segments.Add(segmentBuilder.Build(isLastSegment: false, token));
-
-                    token = _tokenizer.NextNonWhitespaceToken();
-                    segmentBuilder.StartNew(token);
-                    break;
-
-                default:
-                    segments.Add(segmentBuilder.Build(isLastSegment: true, token));
-                    return new(segments);
-            }
-        }
+        return new PropertyPathParser(_tokenizer).Parse(token);
     }
 
-    private LiteralValue ParseLiteralValue()
+    private ComparisonOperator ParseComparisonOperator()
     {
-        var valueToken = _tokenizer.NextNonWhitespaceToken();
-        SyntaxToken? modifierToken = null;
-
-        if (_tokenizer.PeekNonWhitespaceToken().Type == SyntaxTokenType.Colon)
-        {
-            _tokenizer.NextNonWhitespaceToken();
-
-            modifierToken = _tokenizer.NextNonWhitespaceToken();
-            if (modifierToken.Value.Type != SyntaxTokenType.Identifier)
-            {
-                throw new SyntaxErrorException("Expected a modifier after colon.", modifierToken.Value);
-            }
-        }
-
-        return valueToken.ToLiteralValue(modifierToken);
+        return new ComparisonOperatorParser(_tokenizer).Parse();
     }
 
-    private IReadOnlyList<LiteralValue> ParseLiteralValueList()
+    private object? ParseValue()
+    {
+        var token = _tokenizer.NextNonWhitespaceToken();
+
+        return token.ToTypedValue();
+    }
+
+    private IReadOnlyList<object?> ParseValueList()
     {
         _tokenizer.NextNonWhitespaceToken();
 
-        var values = new List<LiteralValue>();
+        var values = new List<object?>();
         var expectingComma = false;
 
         while (true)
         {
-            var nextToken = _tokenizer.PeekNonWhitespaceToken();
-            if (nextToken.Type == SyntaxTokenType.BracketClose)
+            var token = _tokenizer.PeekNonWhitespaceToken();
+            if (token.Type == SyntaxTokenType.BracketClose)
             {
                 _tokenizer.NextNonWhitespaceToken();
                 break;
@@ -185,16 +156,17 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
 
             if (expectingComma)
             {
-                if (_tokenizer.NextNonWhitespaceToken().Type != SyntaxTokenType.Comma)
+                token = _tokenizer.NextNonWhitespaceToken();
+                if (token.Type != SyntaxTokenType.Comma)
                 {
-                    throw new SyntaxErrorException($"Expected a comma between values, but got: {nextToken.Value}", nextToken);
+                    throw new SyntaxErrorException($"Expected a comma between values, but got: {token.Value}", token);
                 }
 
                 expectingComma = false;
                 continue;
             }
 
-            var value = ParseLiteralValue();
+            var value = ParseValue();
             values.Add(value);
             expectingComma = true;
         }
@@ -228,7 +200,8 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
         groupBuilder.SetOperator(newOperator);
 
         token = _tokenizer.PeekNonWhitespaceToken();
-        if (token.Type is not SyntaxTokenType.UnaryLogicalOperator
+        if (token.Type is
+            not SyntaxTokenType.UnaryLogicalOperator
             and not SyntaxTokenType.ParenthesisOpen
             and not SyntaxTokenType.Identifier)
         {
@@ -267,75 +240,6 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
             _terms.ForEach(group.Terms.Add);
 
             return group;
-        }
-    }
-
-    private class PropertyPathSegmentBuilder
-    {
-        private string? _name;
-        private QuantifierMode? _quantifier;
-        private CollectionProjection? _projection;
-        private bool _modifierApplied;
-
-        public void StartNew(SyntaxToken token)
-        {
-            if (token.Type != SyntaxTokenType.Identifier)
-            {
-                throw new SyntaxErrorException($"Expected an identifier, but got: {token.Value}", token);
-            }
-
-            _name = token.Value;
-            _quantifier = null;
-            _projection = null;
-            _modifierApplied = false;
-        }
-
-        public void ApplyModifier(SyntaxToken token)
-        {
-            if (_modifierApplied)
-            {
-                throw new SyntaxErrorException("A property segment cannot have more than one modifier.", token);
-            }
-
-            if (token.Type != SyntaxTokenType.Identifier)
-            {
-                throw new SyntaxErrorException($"Expected an identifier, but got: {token.Value}", token);
-            }
-
-            if (QuantifierModeExtensions.TryParse(token.Value, out var quantifier))
-            {
-                _quantifier = quantifier;
-            }
-            else if (CollectionProjectionExtensions.TryParse(token.Value, out var projection))
-            {
-                _projection = projection;
-            }
-            else
-            {
-                throw new SyntaxErrorException($"Expected a quantifier mode or collection projection, but got: {token.Value}", token);
-            }
-
-            _modifierApplied = true;
-        }
-
-        public PropertyPathSegment Build(bool isLastSegment, SyntaxToken contextToken)
-        {
-            var segment = new PropertyPathSegment(_name!)
-            {
-                Quantifier = _quantifier,
-                Projection = _projection
-            };
-
-            try
-            {
-                segment.Validate(isLastSegment);
-            }
-            catch (InvalidOperationException exception)
-            {
-                throw new SyntaxErrorException(exception.Message, contextToken);
-            }
-
-            return segment;
         }
     }
 }

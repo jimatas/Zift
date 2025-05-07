@@ -6,18 +6,18 @@ public class CollectionProjectionExtensionsTests
 {
     [Theory]
     [InlineData(CollectionProjection.Count, "count")]
-    public void ToDisplayString_KnownProjection_ReturnsExpectedSymbol(CollectionProjection projection, string expected)
+    public void ToSymbol_KnownProjection_ReturnsExpectedSymbol(CollectionProjection projection, string expected)
     {
-        var result = projection.ToDisplayString();
+        var result = projection.ToSymbol();
 
         Assert.Equal(expected, result);
     }
 
     [Fact]
-    public void ToDisplayString_UnknownProjection_FallsBackToEnumName()
+    public void ToSymbol_UnknownProjection_FallsBackToEnumName()
     {
         var unknown = (CollectionProjection)99;
-        var result = unknown.ToDisplayString();
+        var result = unknown.ToSymbol();
 
         Assert.Equal("99", result);
     }

@@ -27,17 +27,23 @@ public class SyntaxTokenExtensionsTests
         Assert.StartsWith("Expected a logical operator, but got: invalid", ex.Message);
     }
 
+    public static IEnumerable<object[]> ComparisonOperators()
+    {
+        yield return ["==", ComparisonOperatorType.Equal];
+        yield return ["!=", ComparisonOperatorType.NotEqual];
+        yield return [">", ComparisonOperatorType.GreaterThan];
+        yield return [">=", ComparisonOperatorType.GreaterThanOrEqual];
+        yield return ["<", ComparisonOperatorType.LessThan];
+        yield return ["<=", ComparisonOperatorType.LessThanOrEqual];
+        yield return ["%=", ComparisonOperatorType.Contains];
+        yield return ["^=", ComparisonOperatorType.StartsWith];
+        yield return ["$=", ComparisonOperatorType.EndsWith];
+        yield return ["in", ComparisonOperatorType.In];
+    }
+
     [Theory]
-    [InlineData("==", Filtering.Dynamic.ComparisonOperator.Equal)]
-    [InlineData("!=", Filtering.Dynamic.ComparisonOperator.NotEqual)]
-    [InlineData(">", Filtering.Dynamic.ComparisonOperator.GreaterThan)]
-    [InlineData(">=", Filtering.Dynamic.ComparisonOperator.GreaterThanOrEqual)]
-    [InlineData("<", Filtering.Dynamic.ComparisonOperator.LessThan)]
-    [InlineData("<=", Filtering.Dynamic.ComparisonOperator.LessThanOrEqual)]
-    [InlineData("%=", Filtering.Dynamic.ComparisonOperator.Contains)]
-    [InlineData("^=", Filtering.Dynamic.ComparisonOperator.StartsWith)]
-    [InlineData("$=", Filtering.Dynamic.ComparisonOperator.EndsWith)]
-    public void ToComparisonOperator_ForSupportedOperator_ReturnsExpectedComparisonOperator(string @operator, Filtering.Dynamic.ComparisonOperator expectedResult)
+    [MemberData(nameof(ComparisonOperators))]
+    public void ToComparisonOperator_ForSupportedOperator_ReturnsExpectedComparisonOperator(string @operator, ComparisonOperatorType expectedResult)
     {
         var token = new SyntaxToken(SyntaxTokenType.ComparisonOperator, @operator, Position: 0);
 

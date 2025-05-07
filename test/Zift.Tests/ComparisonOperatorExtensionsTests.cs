@@ -9,7 +9,7 @@ public class ComparisonOperatorExtensionsTests
     {
         var leftOperand = Expression.Constant(1);
         var rightOperand = Expression.Constant(1);
-        var @operator = (ComparisonOperator)int.MaxValue;
+        var @operator = new ComparisonOperatorType("~=");
 
         var ex = Assert.Throws<NotSupportedException>(() => _ = @operator.ToComparisonExpression(leftOperand, rightOperand));
         Assert.Equal($"The operator '{@operator}' is not supported.", ex.Message);
@@ -20,7 +20,7 @@ public class ComparisonOperatorExtensionsTests
     {
         var leftOperand = Expression.Constant(1);
         var rightOperand = Expression.Constant(1);
-        var @operator = ComparisonOperator.Equal;
+        var @operator = ComparisonOperatorType.Equal;
 
         var result = @operator.ToComparisonExpression(leftOperand, rightOperand);
 
@@ -33,7 +33,7 @@ public class ComparisonOperatorExtensionsTests
     {
         var leftOperand = Expression.Constant(1);
         var rightOperand = Expression.Constant(1);
-        var @operator = ComparisonOperator.NotEqual;
+        var @operator = ComparisonOperatorType.NotEqual;
 
         var result = @operator.ToComparisonExpression(leftOperand, rightOperand);
 
@@ -46,7 +46,7 @@ public class ComparisonOperatorExtensionsTests
     {
         var leftOperand = Expression.Constant(1);
         var rightOperand = Expression.Constant(1);
-        var @operator = ComparisonOperator.GreaterThan;
+        var @operator = ComparisonOperatorType.GreaterThan;
 
         var result = @operator.ToComparisonExpression(leftOperand, rightOperand);
 
@@ -59,7 +59,7 @@ public class ComparisonOperatorExtensionsTests
     {
         var leftOperand = Expression.Constant(1);
         var rightOperand = Expression.Constant(1);
-        var @operator = ComparisonOperator.GreaterThanOrEqual;
+        var @operator = ComparisonOperatorType.GreaterThanOrEqual;
 
         var result = @operator.ToComparisonExpression(leftOperand, rightOperand);
 
@@ -72,7 +72,7 @@ public class ComparisonOperatorExtensionsTests
     {
         var leftOperand = Expression.Constant(1);
         var rightOperand = Expression.Constant(1);
-        var @operator = ComparisonOperator.LessThan;
+        var @operator = ComparisonOperatorType.LessThan;
 
         var result = @operator.ToComparisonExpression(leftOperand, rightOperand);
 
@@ -85,7 +85,7 @@ public class ComparisonOperatorExtensionsTests
     {
         var leftOperand = Expression.Constant(1);
         var rightOperand = Expression.Constant(1);
-        var @operator = ComparisonOperator.LessThanOrEqual;
+        var @operator = ComparisonOperatorType.LessThanOrEqual;
 
         var result = @operator.ToComparisonExpression(leftOperand, rightOperand);
 
@@ -98,7 +98,7 @@ public class ComparisonOperatorExtensionsTests
     {
         var leftOperand = Expression.Constant("abc");
         var rightOperand = Expression.Constant("a");
-        var @operator = ComparisonOperator.Contains;
+        var @operator = ComparisonOperatorType.Contains;
 
         var result = @operator.ToComparisonExpression(leftOperand, rightOperand);
 
@@ -111,7 +111,7 @@ public class ComparisonOperatorExtensionsTests
     {
         var leftOperand = Expression.Constant("abc");
         var rightOperand = Expression.Constant("a");
-        var @operator = ComparisonOperator.StartsWith;
+        var @operator = ComparisonOperatorType.StartsWith;
 
         var result = @operator.ToComparisonExpression(leftOperand, rightOperand);
 
@@ -124,7 +124,7 @@ public class ComparisonOperatorExtensionsTests
     {
         var leftOperand = Expression.Constant("abc");
         var rightOperand = Expression.Constant("a");
-        var @operator = ComparisonOperator.EndsWith;
+        var @operator = ComparisonOperatorType.EndsWith;
 
         var result = @operator.ToComparisonExpression(leftOperand, rightOperand);
 
@@ -136,8 +136,7 @@ public class ComparisonOperatorExtensionsTests
     {
         return typeof(string)
             .GetMethods()
-            .Single(method =>
-                method.Name == name
+            .Single(method => method.Name == name
                 && method.GetParameters().Length == 1
                 && method.GetParameters().Single().ParameterType == typeof(string));
     }

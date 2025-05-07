@@ -15,8 +15,7 @@ internal static class ExpressionExtensions
         return new ParameterReplacer(target, replacement).Visit(expression);
     }
 
-    private class ParameterReplacer(ParameterExpression target, ParameterExpression replacement)
-        : ExpressionVisitor
+    private class ParameterReplacer(ParameterExpression target, ParameterExpression replacement) : ExpressionVisitor
     {
         protected override Expression VisitParameter(ParameterExpression parameter)
         {

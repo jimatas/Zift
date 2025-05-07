@@ -7,18 +7,18 @@ public class QuantifierModeExtensionsTests
     [Theory]
     [InlineData(QuantifierMode.Any, "any")]
     [InlineData(QuantifierMode.All, "all")]
-    public void ToDisplayString_KnownQuantifier_ReturnsExpectedSymbol(QuantifierMode mode, string expected)
+    public void ToSymbol_KnownQuantifier_ReturnsExpectedSymbol(QuantifierMode mode, string expected)
     {
-        var result = mode.ToDisplayString();
+        var result = mode.ToSymbol();
 
         Assert.Equal(expected, result);
     }
 
     [Fact]
-    public void ToDisplayString_UnknownQuantifier_FallsBackToEnumName()
+    public void ToSymbol_UnknownQuantifier_FallsBackToEnumName()
     {
         var unknown = (QuantifierMode)99;
-        var result = unknown.ToDisplayString();
+        var result = unknown.ToSymbol();
 
         Assert.Equal("99", result);
     }
