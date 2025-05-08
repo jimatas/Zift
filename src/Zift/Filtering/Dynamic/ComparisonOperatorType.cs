@@ -61,9 +61,9 @@ public readonly record struct ComparisonOperatorType(string Symbol)
                 Expression.Call(leftOperand, _stringComparisonMethods[nameof(string.StartsWith)], rightOperand),
             var op when op == EndsWith && leftOperand.Type == typeof(string) =>
                 Expression.Call(leftOperand, _stringComparisonMethods[nameof(string.EndsWith)], rightOperand),
-            var op when op == In =>
+            var op when op == In && rightOperand.Type.IsCollectionType() =>
                 Expression.Call(typeof(Enumerable), nameof(Enumerable.Contains), [leftOperand.Type], rightOperand, leftOperand),
-            _ => throw new NotSupportedException($"The operator '{this}' is not supported.")
+            _ => throw new NotSupportedException($"The operator '{this}' is not supported or cannot be applied to the given operands.")
         };
     }
 

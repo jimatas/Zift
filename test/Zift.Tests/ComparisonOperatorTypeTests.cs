@@ -1,9 +1,31 @@
 ﻿namespace Zift.Tests;
 
 using Filtering.Dynamic;
+using Fixture;
 
-public class ComparisonOperatorExtensionsTests
+public class ComparisonOperatorTypeTests
 {
+    [Theory]
+    [ClassData(typeof(ComparisonOperatorData))]
+    public void TryParse_ValidOperator_ReturnsTrueAndOperator(string symbol, ComparisonOperatorType expectedResult)
+    {
+        var result = ComparisonOperatorType.TryParse(symbol, out var @operator);
+
+        Assert.True(result);
+        Assert.Equal(expectedResult, @operator);
+    }
+
+    [Theory]
+    [InlineData("~=")]
+    [InlineData("invalid")]
+    public void TryParse_InvalidOperator_ReturnsFalse(string symbol)
+    {
+        var result = ComparisonOperatorType.TryParse(symbol, out var @operator);
+
+        Assert.False(result);
+        Assert.Equal(default, @operator);
+    }
+
     [Fact]
     public void ToComparisonExpression_InvalidOperator_ThrowsNotSupportedException()
     {
@@ -12,7 +34,7 @@ public class ComparisonOperatorExtensionsTests
         var @operator = new ComparisonOperatorType("~=");
 
         var ex = Assert.Throws<NotSupportedException>(() => _ = @operator.ToComparisonExpression(leftOperand, rightOperand));
-        Assert.Equal($"The operator '{@operator}' is not supported.", ex.Message);
+        Assert.StartsWith($"The operator '{@operator}' is not supported", ex.Message);
     }
 
     [Fact]
@@ -132,10 +154,67 @@ public class ComparisonOperatorExtensionsTests
         Assert.Equal(expected.ToString(), result.ToString());
     }
 
+    [Fact]
+    public void ToComparisonExpression_InOperatorWithArrayOperand_ReturnsInExpression()
+    {
+        var leftOperand = Expression.Constant(1);
+        var rightOperand = Expression.Constant(new[] { 1, 2, 3 });
+        var @operator = ComparisonOperatorType.In;
+        
+        var result = @operator.ToComparisonExpression(leftOperand, rightOperand);
+        
+        var expected = Expression.Call(typeof(Enumerable), nameof(Enumerable.Contains), [leftOperand.Type], rightOperand, leftOperand);
+        Assert.Equal(expected.ToString(), result.ToString());
+    }
+
+    [Fact]
+    public void ToComparisonExpression_InOperatorWithNonArrayOperand_ThrowsNotSupportedException()
+    {
+        var leftOperand = Expression.Constant(1);
+        var rightOperand = Expression.Constant(1);
+        var @operator = ComparisonOperatorType.In;
+
+        var ex = Assert.Throws<NotSupportedException>(() => _ = @operator.ToComparisonExpression(leftOperand, rightOperand));
+        Assert.StartsWith($"The operator '{@operator}' is not supported", ex.Message);
+    }
+
+    [Fact]
+    public void ToComparisonExpression_ContainsOperatorWithNonStringOperands_ThrowsNotSupportedException()
+    {
+        var leftOperand = Expression.Constant(1);
+        var rightOperand = Expression.Constant(1);
+        var @operator = ComparisonOperatorType.Contains;
+
+        var ex = Assert.Throws<NotSupportedException>(() => _ = @operator.ToComparisonExpression(leftOperand, rightOperand));
+        Assert.StartsWith($"The operator '{@operator}' is not supported", ex.Message);
+    }
+
+    [Fact]
+    public void ToComparisonExpression_StartsWithOperatorWithNonStringOperands_ThrowsNotSupportedException()
+    {
+        var leftOperand = Expression.Constant(1);
+        var rightOperand = Expression.Constant(1);
+        var @operator = ComparisonOperatorType.StartsWith;
+        
+        var ex = Assert.Throws<NotSupportedException>(() => _ = @operator.ToComparisonExpression(leftOperand, rightOperand));
+        Assert.StartsWith($"The operator '{@operator}' is not supported", ex.Message);
+    }
+
+    [Fact]
+    public void ToComparisonExpression_EndsWithOperatorWithNonStringOperands_ThrowsNotSupportedException()
+    {
+        var leftOperand = Expression.Constant(1);
+        var rightOperand = Expression.Constant(1);
+        var @operator = ComparisonOperatorType.EndsWith;
+        
+        var ex = Assert.Throws<NotSupportedException>(() => _ = @operator.ToComparisonExpression(leftOperand, rightOperand));
+        Assert.StartsWith($"The operator '{@operator}' is not supported", ex.Message);
+    }
+
     private static MethodInfo GetComparisonMethod(string name)
     {
         return typeof(string)
-            .GetMethods()
+            .GetMethods(BindingFlags.Instance | BindingFlags.Public)
             .Single(method => method.Name == name
                 && method.GetParameters().Length == 1
                 && method.GetParameters().Single().ParameterType == typeof(string));

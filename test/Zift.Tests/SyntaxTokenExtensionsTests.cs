@@ -2,6 +2,7 @@
 
 using Filtering.Dynamic;
 using Filtering.Dynamic.Parsing;
+using Zift.Tests.Fixture;
 
 public class SyntaxTokenExtensionsTests
 {
@@ -27,22 +28,8 @@ public class SyntaxTokenExtensionsTests
         Assert.StartsWith("Expected a logical operator, but got: invalid", ex.Message);
     }
 
-    public static IEnumerable<object[]> ComparisonOperators()
-    {
-        yield return ["==", ComparisonOperatorType.Equal];
-        yield return ["!=", ComparisonOperatorType.NotEqual];
-        yield return [">", ComparisonOperatorType.GreaterThan];
-        yield return [">=", ComparisonOperatorType.GreaterThanOrEqual];
-        yield return ["<", ComparisonOperatorType.LessThan];
-        yield return ["<=", ComparisonOperatorType.LessThanOrEqual];
-        yield return ["%=", ComparisonOperatorType.Contains];
-        yield return ["^=", ComparisonOperatorType.StartsWith];
-        yield return ["$=", ComparisonOperatorType.EndsWith];
-        yield return ["in", ComparisonOperatorType.In];
-    }
-
     [Theory]
-    [MemberData(nameof(ComparisonOperators))]
+    [ClassData(typeof(ComparisonOperatorData))]
     public void ToComparisonOperator_ForSupportedOperator_ReturnsExpectedComparisonOperator(string @operator, ComparisonOperatorType expectedResult)
     {
         var token = new SyntaxToken(SyntaxTokenType.ComparisonOperator, @operator, Position: 0);
