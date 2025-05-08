@@ -265,7 +265,7 @@ public class ExpressionParserTests
     [InlineData("Name == : i 'Laptop'", "==", "i")]
     [InlineData("Name ==:I 'Smartphone'", "==", "i")]
     [InlineData("Name ==:i ''", "==", "i")]
-    public void Parse_StringLiteralWithOperatorModifier_ReturnsExpectedOperatorAndValue(string expression, string expectedOperator, string expectedModifier)
+    public void Parse_StringLiteralWithOperatorModifier_ReturnsExpectedOperatorAndModifier(string expression, string expectedOperator, string expectedModifier)
     {
         var parser = new ExpressionParser(new(expression));
         var result = parser.Parse();
@@ -285,6 +285,7 @@ public class ExpressionParserTests
     public void Parse_ModifierOnUnsupportedOperator_ThrowsSyntaxErrorException(string expression, string @operator)
     {
         var parser = new ExpressionParser(new(expression));
+
         var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
         Assert.StartsWith($"The '{@operator}' operator does not support the following modifier(s)", ex.Message);
@@ -294,6 +295,7 @@ public class ExpressionParserTests
     public void Parse_UnsupportedModifier_ThrowsSyntaxError()
     {
         var parser = new ExpressionParser(new("Name ==:xyz 'Laptop'"));
+
         var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
         Assert.StartsWith("The '==' operator does not support", ex.Message);
@@ -308,6 +310,7 @@ public class ExpressionParserTests
     public void Parse_IllegalModifier_ThrowsSyntaxError(string expression, string expectedMessage)
     {
         var parser = new ExpressionParser(new(expression));
+
         var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
 
         Assert.StartsWith(expectedMessage, ex.Message);
