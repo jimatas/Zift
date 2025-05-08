@@ -15,10 +15,7 @@ internal class ComparisonOperatorParser(ExpressionTokenizer tokenizer)
         var symbol = token.Value;
         var modifiers = ParseModifiers();
 
-        if (!ComparisonOperatorType.TryParse(symbol, out var @operator))
-        {
-            throw new SyntaxErrorException($"Unknown comparison operator: '{symbol}'", token);
-        }
+        _ = ComparisonOperatorType.TryParse(symbol, out var @operator);
 
         var unsupported = modifiers.Except(@operator.SupportedModifiers, StringComparer.OrdinalIgnoreCase);
         if (unsupported.Any())

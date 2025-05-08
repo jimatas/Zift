@@ -315,4 +315,59 @@ public class ExpressionParserTests
 
         Assert.StartsWith(expectedMessage, ex.Message);
     }
+
+    [Theory]
+    [InlineData("Name in ['Laptop', 'Smartphone']")]
+    [InlineData("Price in [100, 200, 300]")]
+    [InlineData("Category.Name in ['Electronics', 'Appliances']")]
+    public void Parse_InOperatorWithListLiteral_ReturnsFilterCondition(string expression)
+    {
+        var parser = new ExpressionParser(new(expression));
+
+        var result = parser.Parse();
+
+        var condition = Assert.IsType<FilterCondition>(Assert.Single(result.Terms));
+        Assert.Equal(ComparisonOperatorType.In, condition.Operator.Type);
+        Assert.IsType<IEnumerable>(condition.Value, exactMatch: false);
+    }
+
+    [Fact]
+    public void Parse_InOperatorWithScalarValue_ThrowsArgumentException()
+    {
+        var parser = new ExpressionParser(new("Name in 'Laptop'"));
+
+        var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
+
+        Assert.StartsWith("Expected an opening bracket, but got", ex.Message);
+    }
+
+    [Fact]
+    public void Parse_InOperatorWithEmptyList_ReturnsFilterCondition()
+    {
+        var parser = new ExpressionParser(new("Name in []"));
+
+        var result = parser.Parse();
+
+        var condition = Assert.IsType<FilterCondition>(Assert.Single(result.Terms));
+
+        Assert.Equal(ComparisonOperatorType.In, condition.Operator.Type);
+        Assert.IsType<IEnumerable>(condition.Value, exactMatch: false);
+        Assert.Empty((IEnumerable)condition.Value!);
+    }
+
+    [Theory]
+    [InlineData("Name in [", "Unexpected token type while parsing value.")]
+    [InlineData("Name in ['Laptop'", "Expected a comma between values, but got")]
+    [InlineData("Name in Laptop]", "Expected an opening bracket, but got")]
+    [InlineData("Name in ['Laptop', ]", "Unexpected closing bracket")]
+    [InlineData("Name in [,]", "Unexpected token type while parsing value.")]
+    [InlineData("Name in [,,]", "Unexpected token type while parsing value.")]
+    public void Parse_MalformedInList_ThrowsSyntaxError(string expression, string expectedMessage)
+    {
+        var parser = new ExpressionParser(new(expression));
+
+        var ex = Assert.Throws<SyntaxErrorException>(parser.Parse);
+
+        Assert.StartsWith(expectedMessage, ex.Message);
+    }
 }

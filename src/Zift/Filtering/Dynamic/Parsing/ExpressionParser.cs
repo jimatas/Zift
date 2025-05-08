@@ -143,32 +143,38 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
         _tokenizer.NextNonWhitespaceToken();
 
         var values = new List<object?>();
-        var expectingComma = false;
+        var expectingValue = true;
 
         while (true)
         {
             var token = _tokenizer.PeekNonWhitespaceToken();
+
             if (token.Type == SyntaxTokenType.BracketClose)
             {
+                if (expectingValue && values.Count > 0)
+                {
+                    throw new SyntaxErrorException("Unexpected closing bracket: Expected a value before the closing bracket.", token);
+                }
+
                 _tokenizer.NextNonWhitespaceToken();
                 break;
             }
 
-            if (expectingComma)
+            if (!expectingValue)
             {
-                token = _tokenizer.NextNonWhitespaceToken();
                 if (token.Type != SyntaxTokenType.Comma)
                 {
                     throw new SyntaxErrorException($"Expected a comma between values, but got: {token.Value}", token);
                 }
 
-                expectingComma = false;
+                _tokenizer.NextNonWhitespaceToken();
+                expectingValue = true;
                 continue;
             }
 
             var value = ParseValue();
             values.Add(value);
-            expectingComma = true;
+            expectingValue = false;
         }
 
         return values;

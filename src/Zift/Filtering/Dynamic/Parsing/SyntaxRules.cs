@@ -2,7 +2,8 @@
 
 public static class SyntaxRules
 {
-    public static readonly IReadOnlyList<SyntaxRule> All = [
+    public static readonly IReadOnlyList<SyntaxRule> All =
+    [
         new(SyntaxTokenType.Whitespace) { Pattern = new(@"^\s+", RegexOptions.Compiled) },
         new(SyntaxTokenType.LogicalOperator) { Pattern = new(@"^(?:&&|\|\|)", RegexOptions.Compiled) },
         new(SyntaxTokenType.UnaryLogicalOperator) { Pattern = new(@"^!(?!=)", RegexOptions.Compiled) },
