@@ -19,6 +19,56 @@ public class FilterConditionTests
     }
 
     [Fact]
+    public void Constructor_InOperatorWithNonListValue_ThrowsArgumentException()
+    {
+        var property = PropertyPathFactory.Create("Name");
+        var @operator = new ComparisonOperator(ComparisonOperatorType.In);
+        var value = "Smartphone";
+
+        var ex = Assert.Throws<ArgumentException>(() => new FilterCondition(property, @operator, value));
+
+        Assert.Equal("value", ex.ParamName);
+        Assert.Contains("requires a list", ex.Message);
+    }
+
+    [Fact]
+    public void Constructor_NonInOperatorWithListValue_ThrowsArgumentException()
+    {
+        var property = PropertyPathFactory.Create("Name");
+        var @operator = new ComparisonOperator(ComparisonOperatorType.Contains);
+        var value = new[] { "A", "B" };
+
+        var ex = Assert.Throws<ArgumentException>(() => new FilterCondition(property, @operator, value));
+
+        Assert.Equal("value", ex.ParamName);
+        Assert.Contains("does not support a list", ex.Message);
+    }
+
+    [Fact]
+    public void Constructor_InOperatorWithListValue_DoesNotThrow()
+    {
+        var property = PropertyPathFactory.Create("Name");
+        var @operator = new ComparisonOperator(ComparisonOperatorType.In);
+        var value = new[] { "A", "B" };
+
+        var exception = Record.Exception(() => new FilterCondition(property, @operator, value));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Constructor_NonInOperatorWithScalarValue_DoesNotThrow()
+    {
+        var property = PropertyPathFactory.Create("Name");
+        var @operator = new ComparisonOperator(ComparisonOperatorType.Contains);
+        var value = "Smartphone";
+
+        var exception = Record.Exception(() => new FilterCondition(property, @operator, value));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
     public void Negate_ReturnsNegatedCondition()
     {
         var condition = new FilterCondition(PropertyPathFactory.Create("Name"), new(ComparisonOperatorType.Contains), "Smartphone");
