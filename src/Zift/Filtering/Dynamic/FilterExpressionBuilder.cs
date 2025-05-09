@@ -79,40 +79,26 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
 
     private Expression BuildComparison(Expression leftOperand)
     {
-        if (_condition.Operator.Type == ComparisonOperatorType.In)
-        {
-            return BuildInComparison(leftOperand);
-        }
-
         var rightOperand = BuildRightHandExpression(leftOperand.Type);
 
         return ApplyNullSafeComparison(leftOperand, rightOperand);
     }
 
-    private Expression BuildInComparison(Expression leftOperand)
-    {
-        var elementType = leftOperand.Type;
-        var rawValues = (IEnumerable)_condition.Value!;
-        var normalizedValues = NormalizeValuesToArray(rawValues, elementType);
-        var enumerableType = typeof(IEnumerable<>).MakeGenericType(elementType);
-        var rightOperand = ConstantAsParameter(normalizedValues, enumerableType);
-
-        if (IsCaseInsensitiveStringComparison(leftOperand))
-        {
-            leftOperand = WrapInNullSafeToLower(leftOperand);
-        }
-
-        var comparison = ComparisonOperatorType.In.ToComparisonExpression(leftOperand, rightOperand);
-
-        return Expression.Condition(
-            IsNonNull(leftOperand),
-            comparison,
-            Expression.Constant(false));
-    }
-
     private Expression BuildRightHandExpression(Type targetType)
     {
-        var normalizedValue = NormalizeRightHandValue(_condition.Value, targetType);
+        object? normalizedValue;
+
+        if (_condition.Operator.Type == ComparisonOperatorType.In)
+        {
+            var rawValues = (IEnumerable)_condition.Value!;
+
+            normalizedValue = NormalizeValuesToArray(rawValues, targetType);
+            targetType = typeof(IEnumerable<>).MakeGenericType(targetType);
+        }
+        else
+        {
+            normalizedValue = NormalizeRightHandValue(_condition.Value, targetType);
+        }
 
         return ConstantAsParameter(normalizedValue, targetType);
     }
