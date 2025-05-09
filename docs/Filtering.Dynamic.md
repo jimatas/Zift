@@ -68,6 +68,7 @@ var categories = await dbContext.Categories
 | `%=` | String contains (supports `:i`) |
 | `^=` | String starts with (supports `:i`) |
 | `$=` | String ends with (supports `:i`) |
+| `in` | Membership (supports `:i`) |
 | `&&` | Logical AND |
 | `\|\|` | Logical OR |
 | `!()` | Logical NOT |
@@ -99,16 +100,23 @@ They will be converted automatically during query translation.
 "UserId == 'd9b25756-62d4-4c59-b1f5-9e1048385c63'"
 ```
 
-You can apply modifiers to string literals. The `:i` modifier enables case-insensitive string comparisons:
+You can apply modifiers to comparison operators. The `:i` modifier enables case-insensitive string comparisons:
 
 ```text
-"Name == 'smartphone':i"        // matches "Smartphone"
-"Name != 'REFRIGERATOR':i"      // excludes "Refrigerator"
-"Name ^= 'lap':i"               // matches "Laptop"
-"Name $= 'SHIRT':i"             // matches "T-Shirt"
-"Name %= 'great':i"             // matches "The Great Gatsby"
+"Name ==:i 'smartphone'"        // matches "Smartphone"
+"Name !=:i 'REFRIGERATOR'"      // excludes "Refrigerator"
+"Name ^=:i 'lap'"               // matches "Laptop"
+"Name $=:i 'SHIRT'"             // matches "T-Shirt"
+"Name %=:i 'great'"             // matches "The Great Gatsby"
 ```
-> Only string literals support modifiers. Using a modifier on non-string values results in a syntax error.
+
+> Modifiers are only supported on string comparisons. Using a modifier with a non-string property will result in a syntax error.
+
+Example of using the `in` operator with the `:i` modifier:
+
+```text
+"Name in:i ['laptop', 'smartphone']"
+```
 
 ### 5.2. Numbers
 

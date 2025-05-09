@@ -28,7 +28,7 @@ public class PropertyPath
             {
                 _segments[i].Validate(isLastSegment: i == _segments.Count - 1);
             }
-            catch (Exception exception)
+            catch (InvalidOperationException exception)
             {
                 throw new ArgumentException(exception.Message, paramName);
             }

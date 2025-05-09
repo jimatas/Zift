@@ -12,11 +12,11 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         return Expression.Lambda<Func<T, bool>>(lambdaBody, parameter);
     }
 
-    private Expression BuildSegmentExpression(Expression target, PropertyPath propertyPath, int segmentIndex)
+    private Expression BuildSegmentExpression(Expression current, PropertyPath propertyPath, int segmentIndex)
     {
         var segment = propertyPath[segmentIndex];
-        var member = Expression.Property(target, segment.Name);
-        var isCollection = member.Type.IsCollectionType();
+        var property = Expression.Property(current, segment.Name);
+        var isCollection = property.Type.IsCollectionType();
 
         ValidateCollectionSegment(segment, isCollection);
 
@@ -24,26 +24,21 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
 
         if (segment.Projection.HasValue)
         {
-            segmentExpression = BuildProjectionExpression(member, propertyPath, segmentIndex);
+            segmentExpression = BuildProjectionExpression(property, propertyPath, segmentIndex);
         }
         else if (isCollection || segment.Quantifier.HasValue)
         {
-            segmentExpression = BuildQuantifierExpression(member, segment.Quantifier ?? QuantifierMode.Any, propertyPath, segmentIndex);
+            segmentExpression = BuildQuantifierExpression(property, segment.Quantifier ?? QuantifierMode.Any, propertyPath, segmentIndex);
         }
         else
         {
             var isLastSegment = segmentIndex == propertyPath.Count - 1;
-            if (isLastSegment)
-            {
-                segmentExpression = BuildComparison(member);
-            }
-            else
-            {
-                segmentExpression = BuildSegmentExpression(member, propertyPath, segmentIndex + 1);
-            }
+            segmentExpression = isLastSegment
+                ? BuildComparison(property)
+                : BuildSegmentExpression(property, propertyPath, segmentIndex + 1);
         }
 
-        return NullGuarded(target, segmentExpression);
+        return NullGuarded(current, segmentExpression);
     }
 
     private Expression BuildQuantifierExpression(Expression collection, QuantifierMode quantifier, PropertyPath propertyPath, int segmentIndex)
@@ -51,7 +46,7 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         var elementType = collection.Type.GetCollectionElementType()!;
         var isLastSegment = segmentIndex == propertyPath.Count - 1;
 
-        var method = quantifier.ToLinqMethod(withPredicate: !isLastSegment).MakeGenericMethod(elementType);
+        var method = quantifier.GetLinqMethod(withPredicate: !isLastSegment).MakeGenericMethod(elementType);
         Expression methodCall;
 
         if (isLastSegment)
@@ -75,7 +70,7 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         var segment = propertyPath[segmentIndex];
         var elementType = collection.Type.GetCollectionElementType()!;
 
-        var method = segment.Projection!.Value.ToLinqMethod().MakeGenericMethod(elementType);
+        var method = segment.Projection!.Value.GetLinqMethod().MakeGenericMethod(elementType);
         var methodCall = Expression.Call(method, collection);
         var comparison = BuildComparison(methodCall);
 
@@ -84,38 +79,100 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
 
     private Expression BuildComparison(Expression leftOperand)
     {
-        var rightOperand = BuildValueConversion(leftOperand.Type);
+        var rightOperand = BuildRightHandExpression(leftOperand.Type);
 
         return ApplyNullSafeComparison(leftOperand, rightOperand);
     }
 
-    private Expression BuildValueConversion(Type targetType)
+    private Expression BuildRightHandExpression(Type operandType)
     {
-        if (_condition.Value.RawValue is not { } value)
+        object? normalizedValue;
+        Type parameterType;
+
+        if (_condition.Operator.Type == ComparisonOperatorType.In)
         {
-            return Expression.Constant(null, targetType);
+            var rawValues = (IEnumerable)_condition.Value!;
+
+            normalizedValue = NormalizeValuesToArray(rawValues, operandType);
+            parameterType = typeof(IEnumerable<>).MakeGenericType(operandType);
+        }
+        else
+        {
+            normalizedValue = NormalizeRightHandValue(_condition.Value, operandType);
+            parameterType = operandType;
         }
 
-        var nonNullType = Nullable.GetUnderlyingType(targetType) ?? targetType;
-        var typedValue = EnsureValueOfType(value, nonNullType);
+        return ConstantAsParameter(normalizedValue, parameterType);
+    }
 
-        LambdaExpression wrappedValue = () => typedValue; // Force EF to parameterize the value.
+    private object? NormalizeRightHandValue(object? value, Type operandType)
+    {
+        if (value is null)
+        {
+            return null;
+        }
 
-        return Expression.Convert(wrappedValue.Body, targetType);
+        var effectiveType = Nullable.GetUnderlyingType(operandType) ?? operandType;
+        var typedValue = EnsureValueOfType(value, effectiveType);
+
+        if (effectiveType == typeof(string)
+            && _condition.Operator.HasModifier("i")
+            && _condition.Operator.Type.SupportedModifiers.Contains("i"))
+        {
+            return typedValue.ToString()!.ToLowerInvariant();
+        }
+
+        return typedValue;
+    }
+
+    private static object EnsureValueOfType(object value, Type expectedType)
+    {
+        if (!expectedType.IsInstanceOfType(value))
+        {
+            try
+            {
+                value = Convert.ChangeType(value, expectedType, CultureInfo.InvariantCulture);
+            }
+            catch (InvalidCastException)
+            {
+                var typeConverter = TypeDescriptor.GetConverter(expectedType);
+
+                value = typeConverter.ConvertFrom(context: null, CultureInfo.InvariantCulture, value)!;
+            }
+        }
+
+        return value;
+    }
+
+    private Array NormalizeValuesToArray(IEnumerable rawValues, Type elementType)
+    {
+        var normalizedValues = rawValues.Cast<object?>()
+            .Select(value => NormalizeRightHandValue(value, elementType))
+            .ToArray();
+
+        var array = Array.CreateInstance(elementType, normalizedValues.Length);
+        normalizedValues.CopyTo(array, 0);
+
+        return array;
+    }
+
+    private static Expression ConstantAsParameter(object? value, Type parameterType)
+    {
+        LambdaExpression wrappedValue = () => value; // Wrap in a lambda to force parameterization by EF Core.
+
+        return Expression.Convert(wrappedValue.Body, parameterType);
     }
 
     private Expression ApplyNullSafeComparison(Expression leftOperand, Expression rightOperand)
     {
-        if (IsCaseInsensitiveStringComparison(leftOperand, rightOperand))
+        if (IsCaseInsensitiveStringComparison(leftOperand))
         {
             leftOperand = WrapInNullSafeToLower(leftOperand);
-            rightOperand = WrapInNullSafeToLower(rightOperand);
         }
 
-        var comparison = _condition.Operator.ToComparisonExpression(leftOperand, rightOperand);
+        var comparison = _condition.Operator.Type.ToComparisonExpression(leftOperand, rightOperand);
 
-        var isDirectComparison = !_condition.Operator.IsImplementedAsMethodCall();
-        if (isDirectComparison)
+        if (IsDirectComparisonOperator(_condition.Operator.Type))
         {
             return comparison;
         }
@@ -125,15 +182,19 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         return Expression.Condition(nullGuard, comparison, Expression.Constant(false));
     }
 
-    private bool IsCaseInsensitiveStringComparison(Expression leftOperand, Expression rightOperand)
+    private bool IsCaseInsensitiveStringComparison(Expression leftOperand)
     {
-        return leftOperand.Type == typeof(string) && rightOperand.Type == typeof(string)
-            && _condition.Value.HasModifier(StringValueModifier.IgnoreCase)
-            && _condition.Operator is ComparisonOperator.Equal
-                or ComparisonOperator.NotEqual
-                or ComparisonOperator.Contains
-                or ComparisonOperator.StartsWith
-                or ComparisonOperator.EndsWith;
+        return leftOperand.Type == typeof(string)
+            && _condition.Operator.HasModifier("i")
+            && _condition.Operator.Type.SupportedModifiers.Contains("i");
+    }
+
+    private static bool IsDirectComparisonOperator(ComparisonOperatorType @operator)
+    {
+        return @operator != ComparisonOperatorType.In
+            && @operator != ComparisonOperatorType.Contains
+            && @operator != ComparisonOperatorType.StartsWith
+            && @operator != ComparisonOperatorType.EndsWith;
     }
 
     private static Expression WrapInNullSafeToLower(Expression operand)
@@ -159,25 +220,6 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         }
     }
 
-    private static object EnsureValueOfType(object value, Type targetType)
-    {
-        if (!targetType.IsInstanceOfType(value))
-        {
-            try
-            {
-                value = Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
-            }
-            catch (InvalidCastException)
-            {
-                var typeConverter = TypeDescriptor.GetConverter(targetType);
-
-                value = typeConverter.ConvertFrom(context: null, CultureInfo.InvariantCulture, value)!;
-            }
-        }
-
-        return value;
-    }
-
     private static Expression NullGuarded(Expression subject, Expression innerExpression)
     {
         return Expression.AndAlso(IsNonNull(subject), innerExpression);
@@ -185,6 +227,8 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
 
     private static Expression IsNonNull(Expression expression)
     {
-        return Expression.NotEqual(expression, Expression.Constant(null, expression.Type));
+        return expression.Type.IsNullableType()
+            ? Expression.NotEqual(expression, Expression.Constant(null, expression.Type))
+            : Expression.Constant(true);
     }
 }

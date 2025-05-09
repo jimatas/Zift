@@ -166,9 +166,9 @@ public class DynamicFilterCriteriaTests
     }
 
     [Fact]
-    public void Filter_ByProductName_EqualIgnoreCase_ReturnsMatchingCategory()
+    public void Filter_ByProductNameEqualIgnoreCase_ReturnsMatchingCategory()
     {
-        var filter = new DynamicFilterCriteria<Category>("Products.Name == 'SMARTPHONE':i");
+        var filter = new DynamicFilterCriteria<Category>("Products.Name ==:i 'SMARTPHONE'");
 
         var result = Catalog.Categories.AsQueryable().Filter(filter).ToList();
 
@@ -177,9 +177,9 @@ public class DynamicFilterCriteriaTests
     }
 
     [Fact]
-    public void Filter_ByProductName_NotEqualIgnoreCase_ReturnsAllExceptMatch()
+    public void Filter_ByProductNameNotEqualIgnoreCase_ReturnsAllExceptMatch()
     {
-        var filter = new DynamicFilterCriteria<Category>("Products:all.Name != 'SMARTPHONE':i");
+        var filter = new DynamicFilterCriteria<Category>("Products:all.Name !=:i 'SMARTPHONE'");
 
         var result = Catalog.Categories.AsQueryable().Filter(filter).ToList();
 
@@ -187,9 +187,9 @@ public class DynamicFilterCriteriaTests
     }
 
     [Fact]
-    public void Filter_ByProductNamePrefix_IgnoreCase_ReturnsMatchingCategory()
+    public void Filter_ByProductNamePrefixIgnoreCase_ReturnsMatchingCategory()
     {
-        var filter = new DynamicFilterCriteria<Category>("Products.Name ^= 's':i");
+        var filter = new DynamicFilterCriteria<Category>("Products.Name ^=:i 's'");
 
         var result = Catalog.Categories.AsQueryable().Filter(filter).ToList();
 
@@ -198,9 +198,9 @@ public class DynamicFilterCriteriaTests
     }
 
     [Fact]
-    public void Filter_ByProductNameSuffix_IgnoreCase_ReturnsMatchingCategory()
+    public void Filter_ByProductNameSuffixIgnoreCase_ReturnsMatchingCategory()
     {
-        var filter = new DynamicFilterCriteria<Category>("Products.Name $= 'PHONE':i");
+        var filter = new DynamicFilterCriteria<Category>("Products.Name $=:i 'PHONE'");
 
         var result = Catalog.Categories.AsQueryable().Filter(filter).ToList();
 
@@ -209,13 +209,81 @@ public class DynamicFilterCriteriaTests
     }
 
     [Fact]
-    public void Filter_ByProductNameContains_IgnoreCase_ReturnsMatchingCategory()
+    public void Filter_ByProductNameContainsIgnoreCase_ReturnsMatchingCategory()
     {
-        var filter = new DynamicFilterCriteria<Category>("Products.Name %= 'marT':i");
+        var filter = new DynamicFilterCriteria<Category>("Products.Name %=:i 'marT'");
 
         var result = Catalog.Categories.AsQueryable().Filter(filter).ToList();
 
         Assert.Single(result);
         Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public void Filter_ByProductNameInList_ReturnsMatchingCategory()
+    {
+        var filter = new DynamicFilterCriteria<Category>("Products.Name in ['Smartphone', 'Tablet']");
+
+        var result = Catalog.Categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public void Filter_ByProductNameInListWhenNoMatch_ReturnsEmpty()
+    {
+        var filter = new DynamicFilterCriteria<Category>("Products.Name in ['NonExistent']");
+
+        var result = Catalog.Categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void Filter_ByProductNameInListIgnoreCase_ReturnsMatchingCategory()
+    {
+        var filter = new DynamicFilterCriteria<Category>("Products.Name in:i ['SMARTPHONE', 'TABLET']");
+
+        var result = Catalog.Categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public void Filter_ByProductIdInList_ReturnsMatchingCategory()
+    {
+        var categories = Catalog.Categories.ToList();
+        var ids = categories
+            .SelectMany(c => c.Products)
+            .Where(p => p.Name == "Smartphone" || p.Name == "Tablet")
+            .Select(p => p.Id)
+            .ToList();
+
+        var idList = $"[{string.Join(", ", ids.Select(id => $"'{id}'"))}]";
+        var filter = new DynamicFilterCriteria<Category>($"Products.Id in {idList}");
+
+        var result = categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public void Filter_ByProductIdInList_ReturnsMatchingProducts()
+    {
+        var categories = Catalog.Categories.ToList();
+        var ids = categories.SelectMany(c => c.Products)
+            .Where(p => p.Name == "Smartphone" || p.Name == "Refrigerator")
+            .Select(p => p.Id)
+            .ToList();
+
+        var idList = $"[{string.Join(", ", ids.Select(id => $"'{id}'"))}]";
+        var filter = new DynamicFilterCriteria<Product>($"Id in {idList}");
+
+        var result = categories.SelectMany(c => c.Products).AsQueryable().Filter(filter).ToList();
+
+        Assert.Equal(2, result.Count);
     }
 }

@@ -2,46 +2,47 @@
 
 public static class QuantifierModeExtensions
 {
-    private static readonly ConcurrentDictionary<(string, int), MethodInfo> _linqMethodCache = new();
-    private static readonly Dictionary<QuantifierMode, string> _displayNames = new()
+    private static readonly Dictionary<QuantifierMode, string> _symbols = new()
     {
         [QuantifierMode.Any] = "any",
         [QuantifierMode.All] = "all"
     };
 
-    public static string ToDisplayString(this QuantifierMode quantifier)
+    private static readonly Dictionary<string, QuantifierMode> _bySymbol = _symbols.ToDictionary(
+        pair => pair.Value,
+        pair => pair.Key,
+        StringComparer.OrdinalIgnoreCase);
+
+    private static readonly Dictionary<(QuantifierMode, int), MethodInfo> _linqMethods = new()
     {
-        return _displayNames.TryGetValue(quantifier, out var displayName) ? displayName : quantifier.ToString();
+        [(QuantifierMode.Any, 1)] = ResolveLinqMethod(nameof(Enumerable.Any), 1),
+        [(QuantifierMode.Any, 2)] = ResolveLinqMethod(nameof(Enumerable.Any), 2),
+        [(QuantifierMode.All, 2)] = ResolveLinqMethod(nameof(Enumerable.All), 2)
+    };
+
+    public static string ToSymbol(this QuantifierMode quantifier)
+    {
+        return _symbols.TryGetValue(quantifier, out var symbol) ? symbol : quantifier.ToString();
     }
 
-    public static bool TryParse(string value, out QuantifierMode result)
+    public static bool TryParse(string symbol, out QuantifierMode result)
     {
-        foreach (var (candidate, displayName) in _displayNames)
-        {
-            if (displayName.Equals(value, StringComparison.OrdinalIgnoreCase))
-            {
-                result = candidate;
-                return true;
-            }
-        }
-
-        result = default;
-        return false;
+        return _bySymbol.TryGetValue(symbol, out result);
     }
 
-    public static MethodInfo ToLinqMethod(this QuantifierMode quantifier, bool withPredicate)
+    public static MethodInfo GetLinqMethod(this QuantifierMode quantifier, bool withPredicate)
     {
-        return _linqMethodCache.GetOrAdd(
-            key: (quantifier.ToString(), withPredicate ? 2 : 1),
-            valueFactory: ResolveLinqMethod);
+        var parameterCount = withPredicate ? 2 : 1;
+
+        return _linqMethods.TryGetValue((quantifier, parameterCount), out var linqMethod)
+            ? linqMethod
+            : throw new NotSupportedException($"LINQ method not defined for quantifier mode {quantifier}.");
     }
 
-    private static MethodInfo ResolveLinqMethod((string MethodName, int ParameterCount) signature)
+    private static MethodInfo ResolveLinqMethod(string methodName, int parameterCount)
     {
         return typeof(Enumerable)
-            .GetMethods()
-            .Single(method =>
-                method.Name == signature.MethodName
-                && method.GetParameters().Length == signature.ParameterCount);
+            .GetMethods(BindingFlags.Static | BindingFlags.Public)
+            .Single(method => method.Name == methodName && method.GetParameters().Length == parameterCount);
     }
 }

@@ -10,18 +10,68 @@ public class FilterConditionTests
     public void Constructor_NullPropertyPath_ThrowsArgumentNullException()
     {
         PropertyPath property = null!;
-        var @operator = ComparisonOperator.Contains;
+        var @operator = new ComparisonOperator(ComparisonOperatorType.Contains);
         var value = "Smartphone";
 
-        var ex = Assert.Throws<ArgumentNullException>(() => new FilterCondition(property, @operator, new(value)));
+        var ex = Assert.Throws<ArgumentNullException>(() => new FilterCondition(property, @operator, value));
 
         Assert.Equal(nameof(property), ex.ParamName);
     }
 
     [Fact]
+    public void Constructor_InOperatorWithNonListValue_ThrowsArgumentException()
+    {
+        var property = PropertyPathFactory.Create("Name");
+        var @operator = new ComparisonOperator(ComparisonOperatorType.In);
+        var value = "Smartphone";
+
+        var ex = Assert.Throws<ArgumentException>(() => new FilterCondition(property, @operator, value));
+
+        Assert.Equal("value", ex.ParamName);
+        Assert.Contains("requires a list", ex.Message);
+    }
+
+    [Fact]
+    public void Constructor_NonInOperatorWithListValue_ThrowsArgumentException()
+    {
+        var property = PropertyPathFactory.Create("Name");
+        var @operator = new ComparisonOperator(ComparisonOperatorType.Contains);
+        var value = new[] { "A", "B" };
+
+        var ex = Assert.Throws<ArgumentException>(() => new FilterCondition(property, @operator, value));
+
+        Assert.Equal("value", ex.ParamName);
+        Assert.Contains("does not support a list", ex.Message);
+    }
+
+    [Fact]
+    public void Constructor_InOperatorWithListValue_DoesNotThrow()
+    {
+        var property = PropertyPathFactory.Create("Name");
+        var @operator = new ComparisonOperator(ComparisonOperatorType.In);
+        var value = new[] { "A", "B" };
+
+        var exception = Record.Exception(() => new FilterCondition(property, @operator, value));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Constructor_NonInOperatorWithScalarValue_DoesNotThrow()
+    {
+        var property = PropertyPathFactory.Create("Name");
+        var @operator = new ComparisonOperator(ComparisonOperatorType.Contains);
+        var value = "Smartphone";
+
+        var exception = Record.Exception(() => new FilterCondition(property, @operator, value));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
     public void Negate_ReturnsNegatedCondition()
     {
-        var condition = new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Contains, new("Smartphone"));
+        var condition = new FilterCondition(PropertyPathFactory.Create("Name"), new(ComparisonOperatorType.Contains), "Smartphone");
 
         var result = condition.Negate();
 
@@ -32,7 +82,7 @@ public class FilterConditionTests
     [Fact]
     public void Negate_CalledTwice_ReturnsOriginalCondition()
     {
-        var original = new FilterCondition(PropertyPathFactory.Create("Name"), ComparisonOperator.Contains, new("Smartphone"));
+        var original = new FilterCondition(PropertyPathFactory.Create("Name"), new(ComparisonOperatorType.Contains), "Smartphone");
 
         var doubleNegated = original.Negate().Negate();
 
@@ -43,9 +93,9 @@ public class FilterConditionTests
     public void ToExpression_ReturnsExpectedExpression()
     {
         var property = PropertyPathFactory.Create("Name");
-        var @operator = ComparisonOperator.Contains;
+        var @operator = new ComparisonOperator(ComparisonOperatorType.Contains);
         var value = "Smartphone";
-        var condition = new FilterCondition(property, @operator, new(value));
+        var condition = new FilterCondition(property, @operator, value);
 
         var result = condition.ToExpression<Product>();
 
@@ -56,9 +106,9 @@ public class FilterConditionTests
     public void ToExpression_WithQuantifierOnScalarProperty_ThrowsNotSupportedException()
     {
         var property = PropertyPathFactory.Create("Products.Reviews.Rating:any"); // Rating is scalar
-        var @operator = ComparisonOperator.Equal;
+        var @operator = new ComparisonOperator(ComparisonOperatorType.Equal);
         var value = DateTime.UtcNow;
-        var condition = new FilterCondition(property, @operator, new(value));
+        var condition = new FilterCondition(property, @operator, value);
 
         var ex = Assert.Throws<NotSupportedException>(condition.ToExpression<Category>);
 
@@ -69,9 +119,9 @@ public class FilterConditionTests
     public void ToExpression_WithProjectionOnScalarProperty_ThrowsNotSupportedException()
     {
         var property = PropertyPathFactory.Create("Products.Reviews.Rating:count"); // Rating is scalar
-        var @operator = ComparisonOperator.Equal;
+        var @operator = new ComparisonOperator(ComparisonOperatorType.Equal);
         var value = DateTime.UtcNow;
-        var condition = new FilterCondition(property, @operator, new(value));
+        var condition = new FilterCondition(property, @operator, value);
 
         var ex = Assert.Throws<NotSupportedException>(condition.ToExpression<Category>);
 

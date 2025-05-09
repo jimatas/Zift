@@ -169,12 +169,15 @@ var filteredCategories = dbContext.Categories
     .Filter("Name ^= 'Gaming' && Products:count > 0");
 ```
 
+> All expressions are null-safe by default — null collections and missing properties will not cause runtime errors.
+
 ### 5.4. Expression Syntax Overview
 
 Supports:
 
 - Scalar comparisons (`==`, `>`, `<`, etc.)
-- Case-insensitive string matching with `:i` (e.g., `Name == 'laptop':i`)
+- Membership comparisons with `in` (e.g., `Name in ['Laptop', 'Smartphone']`)
+- Case-insensitive string matching with `:i` (e.g., `Name ==:i 'laptop'`)
 - Nested properties (e.g., `Products.Manufacturer`)
 - Collection quantifiers (`:any`, `:all`) and projections (`:count`)
 - Logical operators (`&&`, `||`, `!()`)

@@ -2,30 +2,29 @@
 
 public static class CollectionProjectionExtensions
 {
-    private static readonly ConcurrentDictionary<string, MethodInfo> _linqMethodCache = new();
-    private static readonly Dictionary<CollectionProjection, string> _displayNames = new()
+    private static readonly Dictionary<CollectionProjection, string> _symbols = new()
     {
         [CollectionProjection.Count] = "count"
     };
 
-    public static string ToDisplayString(this CollectionProjection projection)
+    private static readonly Dictionary<string, CollectionProjection> _bySymbol = _symbols.ToDictionary(
+        pair => pair.Value,
+        pair => pair.Key,
+        StringComparer.OrdinalIgnoreCase);
+
+    private static readonly Dictionary<CollectionProjection, MethodInfo> _linqMethods = new()
     {
-        return _displayNames.TryGetValue(projection, out var displayName) ? displayName : projection.ToString();
+        [CollectionProjection.Count] = ResolveLinqMethod(nameof(Enumerable.Count))
+    };
+
+    public static string ToSymbol(this CollectionProjection projection)
+    {
+        return _symbols.TryGetValue(projection, out var symbol) ? symbol : projection.ToString();
     }
 
-    public static bool TryParse(string value, out CollectionProjection result)
+    public static bool TryParse(string symbol, out CollectionProjection result)
     {
-        foreach (var (candidate, displayName) in _displayNames)
-        {
-            if (displayName.Equals(value, StringComparison.OrdinalIgnoreCase))
-            {
-                result = candidate;
-                return true;
-            }
-        }
-
-        result = default;
-        return false;
+        return _bySymbol.TryGetValue(symbol, out result);
     }
 
     public static bool IsTerminal(this CollectionProjection projection)
@@ -33,17 +32,17 @@ public static class CollectionProjectionExtensions
         return projection == CollectionProjection.Count;
     }
 
-    public static MethodInfo ToLinqMethod(this CollectionProjection projection)
+    public static MethodInfo GetLinqMethod(this CollectionProjection projection)
     {
-        return _linqMethodCache.GetOrAdd(projection.ToString(), ResolveLinqMethod);
+        return _linqMethods.TryGetValue(projection, out var linqMethod)
+            ? linqMethod
+            : throw new NotSupportedException($"LINQ method not defined for collection projection {projection}.");
     }
 
-    private static MethodInfo ResolveLinqMethod(string name)
+    private static MethodInfo ResolveLinqMethod(string methodName)
     {
         return typeof(Enumerable)
-            .GetMethods()
-            .Single(method =>
-                method.Name == name
-                && method.GetParameters().Length == 1);
+            .GetMethods(BindingFlags.Static | BindingFlags.Public)
+            .Single(method => method.Name == methodName && method.GetParameters().Length == 1);
     }
 }

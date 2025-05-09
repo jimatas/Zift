@@ -1,14 +1,13 @@
 ﻿namespace Zift.Filtering.Dynamic;
 
-public enum ComparisonOperator
+public readonly record struct ComparisonOperator(ComparisonOperatorType Type)
 {
-    Equal = 1,
-    NotEqual,
-    GreaterThan,
-    GreaterThanOrEqual,
-    LessThan,
-    LessThanOrEqual,
-    Contains,
-    StartsWith,
-    EndsWith
+    public IReadOnlySet<string> Modifiers { get; init; } = EmptySet<string>.Instance;
+
+    public bool HasModifier(string modifier) => Modifiers.Contains(modifier);
+
+    public override string ToString()
+    {
+        return Type + (Modifiers.Count > 0 ? ":" + string.Join(":", Modifiers) : string.Empty);
+    }
 }

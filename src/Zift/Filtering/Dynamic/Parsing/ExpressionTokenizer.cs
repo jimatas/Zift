@@ -2,26 +2,6 @@
 
 public class ExpressionTokenizer(string expression)
 {
-    private static readonly Dictionary<SyntaxTokenType, Regex> _tokenPatterns = new()
-    {
-        [SyntaxTokenType.Whitespace] = SyntaxDefinitions.Whitespace,
-        [SyntaxTokenType.LogicalOperator] = SyntaxDefinitions.LogicalOperator,
-        [SyntaxTokenType.UnaryLogicalOperator] = SyntaxDefinitions.UnaryLogicalOperator,
-        [SyntaxTokenType.ComparisonOperator] = SyntaxDefinitions.ComparisonOperator,
-        [SyntaxTokenType.Keyword] = SyntaxDefinitions.Keyword,
-        [SyntaxTokenType.NumericLiteral] = SyntaxDefinitions.NumericLiteral,
-        [SyntaxTokenType.StringLiteral] = SyntaxDefinitions.StringLiteral,
-        [SyntaxTokenType.Identifier] = SyntaxDefinitions.Identifier
-    };
-
-    private static readonly Dictionary<SyntaxTokenType, string> _tokenSymbols = new()
-    {
-        [SyntaxTokenType.ParenthesisOpen] = SyntaxDefinitions.ParenthesisOpen,
-        [SyntaxTokenType.ParenthesisClose] = SyntaxDefinitions.ParenthesisClose,
-        [SyntaxTokenType.Colon] = SyntaxDefinitions.Colon,
-        [SyntaxTokenType.DotSeparator] = SyntaxDefinitions.DotSeparator
-    };
-
     private readonly string _expression = expression;
     private int _position;
     private SyntaxToken? _lookaheadToken;
@@ -33,19 +13,16 @@ public class ExpressionTokenizer(string expression)
             return token;
         }
 
-        foreach (var (type, pattern) in _tokenPatterns)
+        foreach (var rule in SyntaxRules.All)
         {
-            if (TryMatch(pattern, out var result, out var position))
+            if (rule.Pattern is { } pattern && TryMatch(pattern, out var result, out var position))
             {
-                return new(type, result, position);
+                return new(rule.Type, result, position);
             }
-        }
 
-        foreach (var (type, symbol) in _tokenSymbols)
-        {
-            if (TryMatch(symbol, out var result, out var position))
+            if (rule.Symbol is { } symbol && TryMatch(symbol, out result, out position))
             {
-                return new(type, result, position);
+                return new(rule.Type, result, position);
             }
         }
 
@@ -76,21 +53,7 @@ public class ExpressionTokenizer(string expression)
         }
 
         result = default;
-
         return false;
-    }
-
-    private SyntaxToken HandleUnknownOrEndToken()
-    {
-        var startPosition = _position;
-        while (_position < _expression.Length && !IsStartOfAnyToken(_expression[_position]))
-        {
-            _position++;
-        }
-
-        return startPosition < _position
-            ? new(SyntaxTokenType.Unknown, _expression[startPosition.._position], startPosition)
-            : new(SyntaxTokenType.End, string.Empty, _position);
     }
 
     private bool TryMatch(Regex pattern, out string result, out int position)
@@ -128,9 +91,23 @@ public class ExpressionTokenizer(string expression)
         return false;
     }
 
+    private SyntaxToken HandleUnknownOrEndToken()
+    {
+        var startPosition = _position;
+        while (_position < _expression.Length && !IsStartOfAnyToken(_expression[_position]))
+        {
+            _position++;
+        }
+
+        return startPosition < _position
+            ? new(SyntaxTokenType.Unknown, _expression[startPosition.._position], startPosition)
+            : new(SyntaxTokenType.End, string.Empty, _position);
+    }
+
     private static bool IsStartOfAnyToken(char c)
     {
-        return _tokenSymbols.Values.Any(symbol => symbol.StartsWith(c))
-            || _tokenPatterns.Values.Any(pattern => pattern.IsMatch(c.ToString()));
+        return SyntaxRules.All.Any(
+            rule => rule.Symbol is { } symbol && symbol.StartsWith(c)
+                || rule.Pattern is { } pattern && pattern.IsMatch(c.ToString()));
     }
 }

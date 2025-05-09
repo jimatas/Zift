@@ -158,7 +158,7 @@ public class DynamicFilterCriteriaTests
     {
         await using var dbContext = await CreatePopulatedDbContextAsync();
 
-        var filter = new DynamicFilterCriteria<Category>("Products.Name == 'smartphone':i");
+        var filter = new DynamicFilterCriteria<Category>("Products.Name ==:i 'smartphone'");
 
         var result = await dbContext.Set<Category>()
             .Filter(filter)
@@ -173,7 +173,7 @@ public class DynamicFilterCriteriaTests
     {
         await using var dbContext = await CreatePopulatedDbContextAsync();
 
-        var filter = new DynamicFilterCriteria<Category>("Products:all.Name != 'SMARTPHONE':i");
+        var filter = new DynamicFilterCriteria<Category>("Products:all.Name !=:i 'SMARTPHONE'");
 
         var result = await dbContext.Set<Category>()
             .Filter(filter)
@@ -187,7 +187,7 @@ public class DynamicFilterCriteriaTests
     {
         await using var dbContext = await CreatePopulatedDbContextAsync();
 
-        var filter = new DynamicFilterCriteria<Category>("Products.Name ^= 's':i");
+        var filter = new DynamicFilterCriteria<Category>("Products.Name ^=:i 's'");
 
         var result = await dbContext.Set<Category>()
             .Filter(filter)
@@ -202,7 +202,7 @@ public class DynamicFilterCriteriaTests
     {
         await using var dbContext = await CreatePopulatedDbContextAsync();
 
-        var filter = new DynamicFilterCriteria<Category>("Products.Name $= 'TOP':i");
+        var filter = new DynamicFilterCriteria<Category>("Products.Name $=:i 'TOP'");
 
         var result = await dbContext.Set<Category>()
             .Filter(filter)
@@ -217,7 +217,7 @@ public class DynamicFilterCriteriaTests
     {
         await using var dbContext = await CreatePopulatedDbContextAsync();
 
-        var filter = new DynamicFilterCriteria<Category>("Products.Name %= 'EA':i");
+        var filter = new DynamicFilterCriteria<Category>("Products.Name %=:i 'EA'");
 
         var result = await dbContext.Set<Category>()
             .Filter(filter)
@@ -233,13 +233,74 @@ public class DynamicFilterCriteriaTests
     {
         await using var dbContext = await CreatePopulatedDbContextAsync();
 
-        var filter = new DynamicFilterCriteria<Category>("Products.Name == 'Unicorn':i");
+        var filter = new DynamicFilterCriteria<Category>("Products.Name ==:i 'Unicorn'");
 
         var result = await dbContext.Set<Category>()
             .Filter(filter)
             .ToListAsync();
 
         Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task Filter_ByProductNameInList_MaterializesCorrectly()
+    {
+        await using var dbContext = await CreatePopulatedDbContextAsync();
+
+        var filter = new DynamicFilterCriteria<Category>("Products.Name in ['Smartphone', 'Laptop']");
+
+        var result = await dbContext.Set<Category>()
+            .Filter(filter)
+            .ToListAsync();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public async Task Filter_ByProductNameInListIgnoreCase_MaterializesCorrectly()
+    {
+        await using var dbContext = await CreatePopulatedDbContextAsync();
+
+        var filter = new DynamicFilterCriteria<Category>("Products.Name in:i ['smartPHONE', 'LAPTOP']");
+
+        var result = await dbContext.Set<Category>()
+            .Filter(filter)
+            .ToListAsync();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public async Task Filter_ByNullableReviewRatingInList_MaterializesCorrectly()
+    {
+        await using var dbContext = await CreatePopulatedDbContextAsync();
+
+        var filter = new DynamicFilterCriteria<Category>("Products.Reviews.Rating in [4, null]");
+
+        var result = await dbContext.Set<Category>()
+            .Filter(filter)
+            .ToListAsync();
+
+        Assert.NotEmpty(result);
+    }
+
+    [Fact]
+    public async Task Filter_ByProductNameInListAcrossCategories_MaterializesMultiple()
+    {
+        await using var dbContext = await CreatePopulatedDbContextAsync();
+
+        var filter = new DynamicFilterCriteria<Category>("Products.Name in ['Smartphone', 'Refrigerator', 'T-Shirt']");
+
+        var result = await dbContext.Set<Category>()
+            .Filter(filter)
+            .ToListAsync();
+
+        Assert.Equal(3, result.Count);
+        Assert.Contains(result, c => c.Name == "Electronics");
+        Assert.Contains(result, c => c.Name == "Home Appliances");
+        Assert.Contains(result, c => c.Name == "Clothing");
     }
 
     #region Fixture
