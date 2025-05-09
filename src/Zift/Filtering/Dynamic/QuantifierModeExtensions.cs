@@ -9,8 +9,8 @@ public static class QuantifierModeExtensions
     };
 
     private static readonly Dictionary<string, QuantifierMode> _bySymbol = _symbols.ToDictionary(
-        kvp => kvp.Value,
-        kvp => kvp.Key,
+        pair => pair.Value,
+        pair => pair.Key,
         StringComparer.OrdinalIgnoreCase);
 
     private static readonly Dictionary<(QuantifierMode, int), MethodInfo> _linqMethods = new()
