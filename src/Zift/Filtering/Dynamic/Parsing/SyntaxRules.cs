@@ -7,7 +7,7 @@ public static class SyntaxRules
         new(SyntaxTokenType.Whitespace) { Pattern = new(@"^\s+", RegexOptions.Compiled) },
         new(SyntaxTokenType.LogicalOperator) { Pattern = new(@"^(?:&&|\|\|)", RegexOptions.Compiled) },
         new(SyntaxTokenType.UnaryLogicalOperator) { Pattern = new(@"^!(?!=)", RegexOptions.Compiled) },
-        new(SyntaxTokenType.ComparisonOperator) { Pattern = new(@"^(?:==|!=|<=|<|>=|>|%=|\^=|\$=|in\b)", RegexOptions.Compiled) },
+        new(SyntaxTokenType.ComparisonOperator) { Pattern = new(@"^(?:==|!=|<=|<|>=|>|%=|\^=|\$=|in\b)", RegexOptions.IgnoreCase | RegexOptions.Compiled) },
         new(SyntaxTokenType.Keyword) { Pattern = new(@"^(?:true|false|null)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled) },
         new(SyntaxTokenType.NumericLiteral) { Pattern = new(@"^[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?", RegexOptions.Compiled) },
         new(SyntaxTokenType.StringLiteral) { Pattern = new(@"^(?:""(?:\\.|[^""\\])*""|'(?:\\.|[^'\\])*')", RegexOptions.Compiled) },
