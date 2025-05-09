@@ -28,14 +28,14 @@ public class FilterCondition : FilterTerm
         if (isListOperator && !isMultiValued)
         {
             throw new ArgumentException(
-                $"Operator '{@operator.Type.Symbol}' requires a list of values.",
+                $"Operator '{@operator.Type}' requires a list of values.",
                 nameof(value));
         }
 
         if (!isListOperator && isMultiValued)
         {
             throw new ArgumentException(
-                $"Operator '{@operator.Type.Symbol}' does not support a list of values.",
+                $"Operator '{@operator.Type}' does not support a list of values.",
                 nameof(value));
         }
     }
