@@ -1,4 +1,4 @@
-﻿namespace Zift;
+﻿namespace Zift.Filtering.Dynamic;
 
 internal static class CollectionUtilities
 {
