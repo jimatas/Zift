@@ -176,11 +176,11 @@ var filteredCategories = dbContext.Categories
 Supports:
 
 - Scalar comparisons (`==`, `>`, `<`, etc.)
+- Membership comparisons with `in` (e.g., `Name in ['Laptop', 'Smartphone']`)
 - Case-insensitive string matching with `:i` (e.g., `Name ==:i 'laptop'`)
 - Nested properties (e.g., `Products.Manufacturer`)
 - Collection quantifiers (`:any`, `:all`) and projections (`:count`)
 - Logical operators (`&&`, `||`, `!()`)
-- Membership comparisons with `in` (e.g., `Name in ['Laptop', 'Smartphone']`)
 
 Example:
 
