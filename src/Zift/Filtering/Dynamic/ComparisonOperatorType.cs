@@ -41,7 +41,7 @@ public readonly record struct ComparisonOperatorType(string Symbol)
         return _bySymbol.TryGetValue(symbol, out result);
     }
 
-    public IReadOnlySet<string> SupportedModifiers { get; init; } = CollectionUtilities.EmptySet<string>();
+    public IReadOnlySet<string> SupportedModifiers { get; init; } = EmptySet<string>.Instance;
 
     public override string ToString() => Symbol;
 
