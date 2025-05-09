@@ -218,4 +218,72 @@ public class DynamicFilterCriteriaTests
         Assert.Single(result);
         Assert.Equal("Electronics", result[0].Name);
     }
+
+    [Fact]
+    public void Filter_ByProductNameInList_ReturnsMatchingCategory()
+    {
+        var filter = new DynamicFilterCriteria<Category>("Products.Name in ['Smartphone', 'Tablet']");
+
+        var result = Catalog.Categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public void Filter_ByProductNameInListWhenNoMatch_ReturnsEmpty()
+    {
+        var filter = new DynamicFilterCriteria<Category>("Products.Name in ['NonExistent']");
+
+        var result = Catalog.Categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void Filter_ByProductNameInListIgnoreCase_ReturnsMatchingCategory()
+    {
+        var filter = new DynamicFilterCriteria<Category>("Products.Name in:i ['SMARTPHONE', 'TABLET']");
+
+        var result = Catalog.Categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public void Filter_ByProductIdInList_ReturnsMatchingCategory()
+    {
+        var categories = Catalog.Categories.ToList();
+        var ids = categories
+            .SelectMany(c => c.Products)
+            .Where(p => p.Name == "Smartphone" || p.Name == "Tablet")
+            .Select(p => p.Id)
+            .ToList();
+
+        var idList = $"[{string.Join(", ", ids.Select(id => $"'{id}'"))}]";
+        var filter = new DynamicFilterCriteria<Category>($"Products.Id in {idList}");
+
+        var result = categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public void Filter_ByProductIdInList_ReturnsMatchingProducts()
+    {
+        var categories = Catalog.Categories.ToList();
+        var ids = categories.SelectMany(c => c.Products)
+            .Where(p => p.Name == "Smartphone" || p.Name == "Refrigerator")
+            .Select(p => p.Id)
+            .ToList();
+
+        var idList = $"[{string.Join(", ", ids.Select(id => $"'{id}'"))}]";
+        var filter = new DynamicFilterCriteria<Product>($"Id in {idList}");
+
+        var result = categories.SelectMany(c => c.Products).AsQueryable().Filter(filter).ToList();
+
+        Assert.Equal(2, result.Count);
+    }
 }

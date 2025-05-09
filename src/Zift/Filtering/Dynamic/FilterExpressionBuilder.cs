@@ -92,10 +92,7 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
     private Expression BuildInComparison(Expression leftOperand)
     {
         var elementType = leftOperand.Type;
-
-        var rawValues = _condition.Value as IEnumerable
-            ?? throw new NotSupportedException("The 'in' operator requires a collection of values.");
-
+        var rawValues = (IEnumerable)_condition.Value!;
         var normalizedValues = NormalizeValuesToArray(rawValues, elementType);
         var enumerableType = typeof(IEnumerable<>).MakeGenericType(elementType);
         var rightOperand = ConstantAsParameter(normalizedValues, enumerableType);
@@ -240,9 +237,11 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
     {
         return Expression.AndAlso(IsNonNull(subject), innerExpression);
     }
-    
+
     private static Expression IsNonNull(Expression expression)
     {
-        return Expression.NotEqual(expression, Expression.Constant(null, expression.Type));
+        return expression.Type.IsNullableType()
+            ? Expression.NotEqual(expression, Expression.Constant(null, expression.Type))
+            : Expression.Constant(true);
     }
 }

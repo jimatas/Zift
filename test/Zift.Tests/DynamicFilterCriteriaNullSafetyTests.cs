@@ -232,4 +232,38 @@ public class DynamicFilterCriteriaNullSafetyTests
         Assert.Single(result);
         Assert.Equal("Mixed", result[0].Name);
     }
+
+    [Fact]
+    public void Filter_ByProductNameInList_DoesNotThrowOnNulls()
+    {
+        var products = new[]
+        {
+            new Product { Name = null },
+            new Product { Name = "Tablet" }
+        };
+
+        var filter = new DynamicFilterCriteria<Product>("Name in ['Tablet', 'Phone']");
+
+        var result = products.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Tablet", result[0].Name);
+    }
+
+    [Fact]
+    public void Filter_ByProductNameInListIgnoreCase_SkipsNullsAndMatches()
+    {
+        var products = new[]
+        {
+            new Product { Name = null },
+            new Product { Name = "Tablet" }
+        };
+
+        var filter = new DynamicFilterCriteria<Product>("Name in:i ['TABLET', null]");
+
+        var result = products.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Tablet", result[0].Name);
+    }
 }
