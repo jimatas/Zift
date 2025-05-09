@@ -242,6 +242,50 @@ public class DynamicFilterCriteriaTests
         Assert.Empty(result);
     }
 
+    [Fact]
+    public async Task Filter_ByProductNameInList_MaterializesCorrectly()
+    {
+        await using var dbContext = await CreatePopulatedDbContextAsync();
+
+        var filter = new DynamicFilterCriteria<Category>("Products.Name in ['Smartphone', 'Laptop']");
+
+        var result = await dbContext.Set<Category>()
+            .Filter(filter)
+            .ToListAsync();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public async Task Filter_ByProductNameInListIgnoreCase_MaterializesCorrectly()
+    {
+        await using var dbContext = await CreatePopulatedDbContextAsync();
+
+        var filter = new DynamicFilterCriteria<Category>("Products.Name in:i ['smartPHONE', 'LAPTOP']");
+
+        var result = await dbContext.Set<Category>()
+            .Filter(filter)
+            .ToListAsync();
+
+        Assert.Single(result);
+        Assert.Equal("Electronics", result[0].Name);
+    }
+
+    [Fact]
+    public async Task Filter_ByNullableReviewRatingInList_MaterializesCorrectly()
+    {
+        await using var dbContext = await CreatePopulatedDbContextAsync();
+
+        var filter = new DynamicFilterCriteria<Category>("Products.Reviews.Rating in [4, null]");
+
+        var result = await dbContext.Set<Category>()
+            .Filter(filter)
+            .ToListAsync();
+
+        Assert.NotEmpty(result);
+    }
+
     #region Fixture
     private static async Task<CatalogDbContext> CreatePopulatedDbContextAsync()
     {
