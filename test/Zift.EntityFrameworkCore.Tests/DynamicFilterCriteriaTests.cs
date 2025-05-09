@@ -286,6 +286,23 @@ public class DynamicFilterCriteriaTests
         Assert.NotEmpty(result);
     }
 
+    [Fact]
+    public async Task Filter_ByProductNameInListAcrossCategories_MaterializesMultiple()
+    {
+        await using var dbContext = await CreatePopulatedDbContextAsync();
+
+        var filter = new DynamicFilterCriteria<Category>("Products.Name in ['Smartphone', 'Refrigerator', 'T-Shirt']");
+
+        var result = await dbContext.Set<Category>()
+            .Filter(filter)
+            .ToListAsync();
+
+        Assert.Equal(3, result.Count);
+        Assert.Contains(result, c => c.Name == "Electronics");
+        Assert.Contains(result, c => c.Name == "Home Appliances");
+        Assert.Contains(result, c => c.Name == "Clothing");
+    }
+
     #region Fixture
     private static async Task<CatalogDbContext> CreatePopulatedDbContextAsync()
     {
