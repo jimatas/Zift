@@ -169,6 +169,8 @@ var filteredCategories = dbContext.Categories
     .Filter("Name ^= 'Gaming' && Products:count > 0");
 ```
 
+> All expressions are null-safe by default — null collections and missing properties will not cause runtime errors.
+
 ### 5.4. Expression Syntax Overview
 
 Supports:
@@ -179,8 +181,6 @@ Supports:
 - Collection quantifiers (`:any`, `:all`) and projections (`:count`)
 - Logical operators (`&&`, `||`, `!()`)
 - Membership comparisons with `in` (e.g., `Name in ['Laptop', 'Smartphone']`)
-
-> All expressions are null-safe by default — null collections and missing properties will not cause runtime errors.
 
 Example:
 
