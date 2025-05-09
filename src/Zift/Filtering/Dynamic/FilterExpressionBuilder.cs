@@ -33,14 +33,9 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         else
         {
             var isLastSegment = segmentIndex == propertyPath.Count - 1;
-            if (isLastSegment)
-            {
-                segmentExpression = BuildComparison(member);
-            }
-            else
-            {
-                segmentExpression = BuildSegmentExpression(member, propertyPath, segmentIndex + 1);
-            }
+            segmentExpression = isLastSegment
+                ? BuildComparison(member)
+                : BuildSegmentExpression(member, propertyPath, segmentIndex + 1);
         }
 
         return NullGuarded(target, segmentExpression);
@@ -84,42 +79,116 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
 
     private Expression BuildComparison(Expression leftOperand)
     {
-        var rightOperand = BuildValueConversion(leftOperand.Type);
+        if (_condition.Operator.Type == ComparisonOperatorType.In)
+        {
+            return BuildInComparison(leftOperand);
+        }
+
+        var rightOperand = BuildRightHandExpression(leftOperand.Type);
 
         return ApplyNullSafeComparison(leftOperand, rightOperand);
     }
 
-    private Expression BuildValueConversion(Type targetType)
+    private Expression BuildInComparison(Expression leftOperand)
     {
-        if (_condition.Value is not { } value)
+        var elementType = leftOperand.Type;
+
+        var rawValues = _condition.Value as IEnumerable
+            ?? throw new NotSupportedException("The 'in' operator requires a collection of values.");
+
+        var normalizedValues = NormalizeValuesToArray(rawValues, elementType);
+        var enumerableType = typeof(IEnumerable<>).MakeGenericType(elementType);
+        var rightOperand = ConstantAsParameter(normalizedValues, enumerableType);
+
+        if (IsCaseInsensitiveStringComparison(leftOperand))
         {
-            return Expression.Constant(null, targetType);
+            leftOperand = WrapInNullSafeToLower(leftOperand);
         }
 
-        var nonNullType = Nullable.GetUnderlyingType(targetType) ?? targetType;
-        var typedValue = EnsureValueOfType(value, nonNullType);
+        var comparison = ComparisonOperatorType.In.ToComparisonExpression(leftOperand, rightOperand);
 
-        LambdaExpression wrappedValue = () => typedValue; // Force EF to parameterize the value.
+        return Expression.Condition(
+            IsNonNull(leftOperand),
+            comparison,
+            Expression.Constant(false));
+    }
 
-        return Expression.Convert(wrappedValue.Body, targetType);
+    private Expression BuildRightHandExpression(Type targetType)
+    {
+        var normalizedValue = NormalizeRightHandValue(_condition.Value, targetType);
+
+        return ConstantAsParameter(normalizedValue, targetType);
+    }
+
+    private object? NormalizeRightHandValue(object? value, Type targetType)
+    {
+        if (value is null)
+        {
+            return null;
+        }
+
+        targetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+
+        var typedValue = EnsureValueOfType(value, targetType);
+
+        if (targetType == typeof(string)
+            && _condition.Operator.HasModifier("i")
+            && _condition.Operator.Type.SupportedModifiers.Contains("i"))
+        {
+            return typedValue.ToString()!.ToLowerInvariant();
+        }
+
+        return typedValue;
+    }
+
+    private static object EnsureValueOfType(object value, Type targetType)
+    {
+        if (!targetType.IsInstanceOfType(value))
+        {
+            try
+            {
+                value = Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
+            }
+            catch (InvalidCastException)
+            {
+                var typeConverter = TypeDescriptor.GetConverter(targetType);
+
+                value = typeConverter.ConvertFrom(context: null, CultureInfo.InvariantCulture, value)!;
+            }
+        }
+
+        return value;
+    }
+
+    private Array NormalizeValuesToArray(IEnumerable values, Type elementType)
+    {
+        var normalizedValues = values.Cast<object?>()
+            .Select(value => NormalizeRightHandValue(value, elementType))
+            .ToArray();
+
+        var array = Array.CreateInstance(elementType, normalizedValues.Length);
+        normalizedValues.CopyTo(array, 0);
+
+        return array;
+    }
+
+    private static Expression ConstantAsParameter(object? value, Type targetType)
+    {
+        LambdaExpression wrapper = () => value; // Wrap in a lambda to force parameterization by EF Core.
+
+        return Expression.Convert(wrapper.Body, targetType);
     }
 
     private Expression ApplyNullSafeComparison(Expression leftOperand, Expression rightOperand)
     {
-        if (IsCaseInsensitiveStringComparison(leftOperand, rightOperand))
+        if (IsCaseInsensitiveStringComparison(leftOperand))
         {
             leftOperand = WrapInNullSafeToLower(leftOperand);
-            rightOperand = WrapInNullSafeToLower(rightOperand);
         }
 
         var comparison = _condition.Operator.Type.ToComparisonExpression(leftOperand, rightOperand);
 
-        var isDirectComparison = _condition.Operator.Type != ComparisonOperatorType.In
-            && _condition.Operator.Type != ComparisonOperatorType.Contains
-            && _condition.Operator.Type != ComparisonOperatorType.StartsWith
-            && _condition.Operator.Type != ComparisonOperatorType.EndsWith;
-
-        if (isDirectComparison)
+        if (IsDirectComparisonOperator(_condition.Operator.Type))
         {
             return comparison;
         }
@@ -129,17 +198,19 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         return Expression.Condition(nullGuard, comparison, Expression.Constant(false));
     }
 
-    private bool IsCaseInsensitiveStringComparison(Expression leftOperand, Expression rightOperand)
+    private bool IsCaseInsensitiveStringComparison(Expression leftOperand)
     {
         return leftOperand.Type == typeof(string)
-            && rightOperand.Type == typeof(string)
             && _condition.Operator.HasModifier("i")
-            && (_condition.Operator.Type == ComparisonOperatorType.Equal
-                || _condition.Operator.Type == ComparisonOperatorType.NotEqual
-                || _condition.Operator.Type == ComparisonOperatorType.Contains
-                || _condition.Operator.Type == ComparisonOperatorType.StartsWith
-                || _condition.Operator.Type == ComparisonOperatorType.EndsWith
-                || _condition.Operator.Type == ComparisonOperatorType.In);
+            && _condition.Operator.Type.SupportedModifiers.Contains("i");
+    }
+
+    private static bool IsDirectComparisonOperator(ComparisonOperatorType @operator)
+    {
+        return @operator != ComparisonOperatorType.In
+            && @operator != ComparisonOperatorType.Contains
+            && @operator != ComparisonOperatorType.StartsWith
+            && @operator != ComparisonOperatorType.EndsWith;
     }
 
     private static Expression WrapInNullSafeToLower(Expression operand)
@@ -165,30 +236,11 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         }
     }
 
-    private static object EnsureValueOfType(object value, Type targetType)
-    {
-        if (!targetType.IsInstanceOfType(value))
-        {
-            try
-            {
-                value = Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
-            }
-            catch (InvalidCastException)
-            {
-                var typeConverter = TypeDescriptor.GetConverter(targetType);
-
-                value = typeConverter.ConvertFrom(context: null, CultureInfo.InvariantCulture, value)!;
-            }
-        }
-
-        return value;
-    }
-
     private static Expression NullGuarded(Expression subject, Expression innerExpression)
     {
         return Expression.AndAlso(IsNonNull(subject), innerExpression);
     }
-
+    
     private static Expression IsNonNull(Expression expression)
     {
         return Expression.NotEqual(expression, Expression.Constant(null, expression.Type));
