@@ -12,11 +12,11 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         return Expression.Lambda<Func<T, bool>>(lambdaBody, parameter);
     }
 
-    private Expression BuildSegmentExpression(Expression target, PropertyPath propertyPath, int segmentIndex)
+    private Expression BuildSegmentExpression(Expression current, PropertyPath propertyPath, int segmentIndex)
     {
         var segment = propertyPath[segmentIndex];
-        var member = Expression.Property(target, segment.Name);
-        var isCollection = member.Type.IsCollectionType();
+        var property = Expression.Property(current, segment.Name);
+        var isCollection = property.Type.IsCollectionType();
 
         ValidateCollectionSegment(segment, isCollection);
 
@@ -24,21 +24,21 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
 
         if (segment.Projection.HasValue)
         {
-            segmentExpression = BuildProjectionExpression(member, propertyPath, segmentIndex);
+            segmentExpression = BuildProjectionExpression(property, propertyPath, segmentIndex);
         }
         else if (isCollection || segment.Quantifier.HasValue)
         {
-            segmentExpression = BuildQuantifierExpression(member, segment.Quantifier ?? QuantifierMode.Any, propertyPath, segmentIndex);
+            segmentExpression = BuildQuantifierExpression(property, segment.Quantifier ?? QuantifierMode.Any, propertyPath, segmentIndex);
         }
         else
         {
             var isLastSegment = segmentIndex == propertyPath.Count - 1;
             segmentExpression = isLastSegment
-                ? BuildComparison(member)
-                : BuildSegmentExpression(member, propertyPath, segmentIndex + 1);
+                ? BuildComparison(property)
+                : BuildSegmentExpression(property, propertyPath, segmentIndex + 1);
         }
 
-        return NullGuarded(target, segmentExpression);
+        return NullGuarded(current, segmentExpression);
     }
 
     private Expression BuildQuantifierExpression(Expression collection, QuantifierMode quantifier, PropertyPath propertyPath, int segmentIndex)
@@ -84,37 +84,38 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         return ApplyNullSafeComparison(leftOperand, rightOperand);
     }
 
-    private Expression BuildRightHandExpression(Type targetType)
+    private Expression BuildRightHandExpression(Type operandType)
     {
         object? normalizedValue;
+        Type parameterType;
 
         if (_condition.Operator.Type == ComparisonOperatorType.In)
         {
             var rawValues = (IEnumerable)_condition.Value!;
 
-            normalizedValue = NormalizeValuesToArray(rawValues, targetType);
-            targetType = typeof(IEnumerable<>).MakeGenericType(targetType);
+            normalizedValue = NormalizeValuesToArray(rawValues, operandType);
+            parameterType = typeof(IEnumerable<>).MakeGenericType(operandType);
         }
         else
         {
-            normalizedValue = NormalizeRightHandValue(_condition.Value, targetType);
+            normalizedValue = NormalizeRightHandValue(_condition.Value, operandType);
+            parameterType = operandType;
         }
 
-        return ConstantAsParameter(normalizedValue, targetType);
+        return ConstantAsParameter(normalizedValue, parameterType);
     }
 
-    private object? NormalizeRightHandValue(object? value, Type targetType)
+    private object? NormalizeRightHandValue(object? value, Type operandType)
     {
         if (value is null)
         {
             return null;
         }
 
-        targetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+        var effectiveType = Nullable.GetUnderlyingType(operandType) ?? operandType;
+        var typedValue = EnsureValueOfType(value, effectiveType);
 
-        var typedValue = EnsureValueOfType(value, targetType);
-
-        if (targetType == typeof(string)
+        if (effectiveType == typeof(string)
             && _condition.Operator.HasModifier("i")
             && _condition.Operator.Type.SupportedModifiers.Contains("i"))
         {
@@ -124,17 +125,17 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         return typedValue;
     }
 
-    private static object EnsureValueOfType(object value, Type targetType)
+    private static object EnsureValueOfType(object value, Type expectedType)
     {
-        if (!targetType.IsInstanceOfType(value))
+        if (!expectedType.IsInstanceOfType(value))
         {
             try
             {
-                value = Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
+                value = Convert.ChangeType(value, expectedType, CultureInfo.InvariantCulture);
             }
             catch (InvalidCastException)
             {
-                var typeConverter = TypeDescriptor.GetConverter(targetType);
+                var typeConverter = TypeDescriptor.GetConverter(expectedType);
 
                 value = typeConverter.ConvertFrom(context: null, CultureInfo.InvariantCulture, value)!;
             }
@@ -143,9 +144,9 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         return value;
     }
 
-    private Array NormalizeValuesToArray(IEnumerable values, Type elementType)
+    private Array NormalizeValuesToArray(IEnumerable rawValues, Type elementType)
     {
-        var normalizedValues = values.Cast<object?>()
+        var normalizedValues = rawValues.Cast<object?>()
             .Select(value => NormalizeRightHandValue(value, elementType))
             .ToArray();
 
@@ -155,11 +156,11 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         return array;
     }
 
-    private static Expression ConstantAsParameter(object? value, Type targetType)
+    private static Expression ConstantAsParameter(object? value, Type parameterType)
     {
-        LambdaExpression wrapper = () => value; // Wrap in a lambda to force parameterization by EF Core.
+        LambdaExpression wrappedValue = () => value; // Wrap in a lambda to force parameterization by EF Core.
 
-        return Expression.Convert(wrapper.Body, targetType);
+        return Expression.Convert(wrappedValue.Body, parameterType);
     }
 
     private Expression ApplyNullSafeComparison(Expression leftOperand, Expression rightOperand)
