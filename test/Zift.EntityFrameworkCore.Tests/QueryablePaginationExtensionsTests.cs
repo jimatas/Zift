@@ -7,17 +7,6 @@ using SharedFixture.Models;
 public class QueryablePaginationExtensionsTests
 {
     [Fact]
-    public async Task ToPaginatedListAsync_WithNullConfiguration_ThrowsArgumentNullException()
-    {
-        await using var dbContext = await SqliteDbHelper.CreateDatabaseAsync();
-
-        var query = dbContext.Set<Product>().AsQueryable();
-
-        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            await query.ToPaginatedListAsync((Action<PaginationCriteriaBuilder<Product>>)null!));
-    }
-
-    [Fact]
     public async Task ToPaginatedListAsync_WithNullCriteria_ThrowsArgumentNullException()
     {
         await using var dbContext = await SqliteDbHelper.CreateDatabaseAsync();
@@ -25,25 +14,7 @@ public class QueryablePaginationExtensionsTests
         var query = dbContext.Set<Product>().AsQueryable();
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            await query.ToPaginatedListAsync((IPaginationCriteria<Product>)null!));
-    }
-
-    [Fact]
-    public async Task ToPaginatedListAsync_UsesProvidedPaginationCriteria()
-    {
-        await using var dbContext = await SqliteDbHelper.CreateDatabaseAsync(context =>
-        {
-            context.Set<Product>().AddRange(Enumerable.Range(1, 9)
-                .Select(i => new Product { Name = $"Product {i}" }));
-        });
-
-        var result = await dbContext.Set<Product>()
-            .SortBy(sort => sort.Ascending("Name"))
-            .ToPaginatedListAsync(c => c.AtPage(2).WithSize(3));
-
-        Assert.Equal(3, result.Count);
-        Assert.Equal("Product 4", result[0].Name);
-        Assert.Equal("Product 6", result[2].Name);
+            await query.ToPaginatedListAsync(null!));
     }
 
     [Fact]
@@ -67,6 +38,41 @@ public class QueryablePaginationExtensionsTests
     }
 
     [Fact]
+    public async Task ToPaginatedListAsync_WithoutPageNumberAndSize_UsesDefaults()
+    {
+        await using var dbContext = await SqliteDbHelper.CreateDatabaseAsync(context =>
+        {
+            context.Set<Product>().AddRange(Enumerable.Range(1, 100)
+                .Select(i => new Product { Name = $"Product {i:D3}" }));
+        });
+
+        var result = await dbContext.Set<Product>()
+            .SortBy(sort => sort.Ascending("Name"))
+            .ToPaginatedListAsync();
+
+        Assert.Equal(PaginationCriteria<Product>.DefaultPageSize, result.Count);
+        Assert.Equal("Product 001", result[0].Name);
+    }
+
+    [Fact]
+    public async Task ToPaginatedListAsync_WithExplicitPageNumberAndSize_ReturnsCorrectSubset()
+    {
+        await using var dbContext = await SqliteDbHelper.CreateDatabaseAsync(context =>
+        {
+            context.Set<Product>().AddRange(Enumerable.Range(1, 10)
+                .Select(i => new Product { Name = $"Product {i:D2}" }));
+        });
+
+        var result = await dbContext.Set<Product>()
+            .SortBy(sort => sort.Ascending("Name"))
+            .ToPaginatedListAsync(pageNumber: 2, pageSize: 3);
+
+        Assert.Equal(3, result.Count);
+        Assert.Equal("Product 04", result[0].Name);
+        Assert.Equal("Product 06", result[2].Name);
+    }
+
+    [Fact]
     public async Task ToPaginatedListAsync_SinglePage_ReturnsAllItems()
     {
         await using var dbContext = await SqliteDbHelper.CreateDatabaseAsync(context =>
@@ -77,7 +83,7 @@ public class QueryablePaginationExtensionsTests
 
         var result = await dbContext.Set<Product>()
             .SortBy(sort => sort.Ascending("Name"))
-            .ToPaginatedListAsync(c => c.AtPage(1).WithSize(5));
+            .ToPaginatedListAsync(pageNumber: 1, pageSize: 5);
 
         Assert.Equal(2, result.Count);
         Assert.Equal("Product 1", result[0].Name);
@@ -90,7 +96,7 @@ public class QueryablePaginationExtensionsTests
         await using var dbContext = await SqliteDbHelper.CreateDatabaseAsync();
 
         var result = await dbContext.Set<Product>()
-            .ToPaginatedListAsync(c => c.AtPage(1).WithSize(5));
+            .ToPaginatedListAsync(pageNumber: 1, pageSize: 5);
 
         Assert.Empty(result);
     }

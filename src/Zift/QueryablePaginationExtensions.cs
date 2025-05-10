@@ -21,13 +21,9 @@ public static class QueryablePaginationExtensions
     }
 
     public static Pagination.IPaginatedList<T> ToPaginatedList<T>(this IQueryable<T> query,
-        Action<Pagination.PaginationCriteriaBuilder<T>> configurePagination)
+        int pageNumber = 1,
+        int pageSize = Pagination.PaginationCriteria<T>.DefaultPageSize)
     {
-        configurePagination.ThrowIfNull();
-
-        var pagination = new Pagination.PaginationCriteria<T>();
-        configurePagination(new Pagination.PaginationCriteriaBuilder<T>(pagination));
-
-        return query.ToPaginatedList(pagination);
+        return query.ToPaginatedList(new Pagination.PaginationCriteria<T>(pageNumber, pageSize));
     }
 }
