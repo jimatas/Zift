@@ -25,6 +25,14 @@ var categories = await dbContext.Categories
     .ToListAsync(cancellationToken);
 ```
 
+You can also use the `Filter` overload that takes the string expression directly:
+
+```csharp
+var categories = await dbContext.Categories
+    .Filter("Name ^= 'Gaming' && Products:count > 0")
+    .ToListAsync(cancellationToken);
+```
+
 ## 3. Expression Examples
 
 ### 3.1. Scalar Filtering
