@@ -33,12 +33,17 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         else
         {
             var isLastSegment = segmentIndex == propertyPath.Count - 1;
+
             segmentExpression = isLastSegment
                 ? BuildComparison(property)
                 : BuildSegmentExpression(property, propertyPath, segmentIndex + 1);
         }
 
-        return NullGuarded(current, segmentExpression);
+        var isFirstSegment = segmentIndex == 0;
+
+        return isFirstSegment
+            ? segmentExpression // No null guard needed for the root parameter.
+            : NullGuarded(current, segmentExpression);
     }
 
     private Expression BuildQuantifierExpression(Expression collection, QuantifierMode quantifier, PropertyPath propertyPath, int segmentIndex)
@@ -46,12 +51,12 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         var elementType = collection.Type.GetCollectionElementType()!;
         var isLastSegment = segmentIndex == propertyPath.Count - 1;
 
-        var method = quantifier.GetLinqMethod(withPredicate: !isLastSegment).MakeGenericMethod(elementType);
+        var quantifierMethod = quantifier.GetLinqMethod(withPredicate: !isLastSegment).MakeGenericMethod(elementType);
         Expression methodCall;
 
         if (isLastSegment)
         {
-            methodCall = Expression.Call(method, collection);
+            methodCall = Expression.Call(quantifierMethod, collection);
         }
         else
         {
@@ -59,7 +64,7 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
             var lambdaBody = BuildSegmentExpression(parameter, propertyPath, segmentIndex + 1);
             var lambda = Expression.Lambda(lambdaBody, parameter);
 
-            methodCall = Expression.Call(method, collection, lambda);
+            methodCall = Expression.Call(quantifierMethod, collection, lambda);
         }
 
         return NullGuarded(collection, methodCall);
@@ -70,8 +75,8 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         var segment = propertyPath[segmentIndex];
         var elementType = collection.Type.GetCollectionElementType()!;
 
-        var method = segment.Projection!.Value.GetLinqMethod().MakeGenericMethod(elementType);
-        var methodCall = Expression.Call(method, collection);
+        var projectionMethod = segment.Projection!.Value.GetLinqMethod().MakeGenericMethod(elementType);
+        var methodCall = Expression.Call(projectionMethod, collection);
         var comparison = BuildComparison(methodCall);
 
         return NullGuarded(collection, comparison);
@@ -119,7 +124,7 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
             && _condition.Operator.HasModifier("i")
             && _condition.Operator.Type.SupportedModifiers.Contains("i"))
         {
-            return typedValue.ToString()!.ToLowerInvariant();
+            return typedValue.ToString()!.ToLower();
         }
 
         return typedValue;
@@ -191,10 +196,12 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
 
     private static bool IsDirectComparisonOperator(ComparisonOperatorType @operator)
     {
-        return @operator != ComparisonOperatorType.In
-            && @operator != ComparisonOperatorType.Contains
-            && @operator != ComparisonOperatorType.StartsWith
-            && @operator != ComparisonOperatorType.EndsWith;
+        return @operator == ComparisonOperatorType.Equal
+            || @operator == ComparisonOperatorType.NotEqual
+            || @operator == ComparisonOperatorType.GreaterThan
+            || @operator == ComparisonOperatorType.GreaterThanOrEqual
+            || @operator == ComparisonOperatorType.LessThan
+            || @operator == ComparisonOperatorType.LessThanOrEqual;
     }
 
     private static Expression WrapInNullSafeToLower(Expression operand)
