@@ -12,8 +12,8 @@ public static class QueryableFilteringExtensions
         return query.Filter(new Filtering.PredicateFilterCriteria<T>(predicate));
     }
 
-    public static IQueryable<T> Filter<T>(this IQueryable<T> query, string expression)
+    public static IQueryable<T> Filter<T>(this IQueryable<T> query, string expression, Filtering.Dynamic.FilterOptions? options = null)
     {
-        return query.Filter(new Filtering.DynamicFilterCriteria<T>(expression));
+        return query.Filter(new Filtering.DynamicFilterCriteria<T>(expression, options));
     }
 }

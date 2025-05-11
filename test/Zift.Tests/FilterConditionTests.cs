@@ -110,7 +110,7 @@ public class FilterConditionTests
         var value = DateTime.UtcNow;
         var condition = new FilterCondition(property, @operator, value);
 
-        var ex = Assert.Throws<NotSupportedException>(condition.ToExpression<Category>);
+        var ex = Assert.Throws<NotSupportedException>(() => condition.ToExpression<Category>());
 
         Assert.Equal("Quantifier modes cannot be applied to scalar properties.", ex.Message);
     }
@@ -123,8 +123,45 @@ public class FilterConditionTests
         var value = DateTime.UtcNow;
         var condition = new FilterCondition(property, @operator, value);
 
-        var ex = Assert.Throws<NotSupportedException>(condition.ToExpression<Category>);
+        var ex = Assert.Throws<NotSupportedException>(() => condition.ToExpression<Category>());
 
         Assert.Equal("Collection projections cannot be applied to scalar properties.", ex.Message);
+    }
+
+    [Fact]
+    public void ToExpression_WhenParameterizeValuesDisabled_UsesConstantExpression()
+    {
+        var property = PropertyPathFactory.Create("Price");
+        var @operator = new ComparisonOperator(ComparisonOperatorType.Equal);
+        var condition = new FilterCondition(property, @operator, 123.45);
+        var options = new FilterOptions
+        {
+            ParameterizeValues = false,
+            EnableNullGuards = false // Disable null guards for this test.
+        };
+
+        var expression = condition.ToExpression<Product>(options);
+
+        var binaryExpr = Assert.IsType<BinaryExpression>(expression.Body, exactMatch: false);
+        Assert.IsType<ConstantExpression>(binaryExpr.Right);
+    }
+
+    [Fact]
+    public void ToExpression_WhenParameterizeValuesEnabled_UsesWrappedValueExpression()
+    {
+        var property = PropertyPathFactory.Create("Price");
+        var @operator = new ComparisonOperator(ComparisonOperatorType.Equal);
+        var condition = new FilterCondition(property, @operator, 123.45);
+        var options = new FilterOptions
+        {
+            ParameterizeValues = true,
+            EnableNullGuards = false // Disable null guards for this test.
+        };
+
+        var expression = condition.ToExpression<Product>(options);
+
+        var binaryExpr = Assert.IsType<BinaryExpression>(expression.Body, exactMatch: false);
+        var convertExpr = Assert.IsType<UnaryExpression>(binaryExpr.Right);
+        Assert.IsType<MemberExpression>(convertExpr.Operand, exactMatch: false);
     }
 }

@@ -1,6 +1,7 @@
 ﻿namespace Zift.Tests;
 
 using Filtering;
+using Filtering.Dynamic;
 using SharedFixture.Models;
 
 public class DynamicFilterCriteriaNullSafetyTests
@@ -29,7 +30,8 @@ public class DynamicFilterCriteriaNullSafetyTests
             }
         };
 
-        var filter = new DynamicFilterCriteria<Product>("Reviews.Author.Name == 'John Doe'");
+        var options = new FilterOptions { EnableNullGuards = true };
+        var filter = new DynamicFilterCriteria<Product>("Reviews.Author.Name == 'John Doe'", options);
 
         var result = products.AsQueryable().Filter(filter).ToList();
 
@@ -49,7 +51,8 @@ public class DynamicFilterCriteriaNullSafetyTests
             }
         };
 
-        var filter = new DynamicFilterCriteria<Product>("Reviews.Author.Name == 'Anyone'");
+        var options = new FilterOptions { EnableNullGuards = true };
+        var filter = new DynamicFilterCriteria<Product>("Reviews.Author.Name == 'Anyone'", options);
 
         var result = products.AsQueryable().Filter(filter).ToList();
 
@@ -65,7 +68,8 @@ public class DynamicFilterCriteriaNullSafetyTests
             new Review { Rating = 5 }
         };
 
-        var filter = new DynamicFilterCriteria<Review>("Rating >= 4");
+        var options = new FilterOptions { EnableNullGuards = true };
+        var filter = new DynamicFilterCriteria<Review>("Rating >= 4", options);
 
         var result = reviews.AsQueryable().Filter(filter).ToList();
 
@@ -82,7 +86,8 @@ public class DynamicFilterCriteriaNullSafetyTests
             new Review { Rating = 5 }
         };
 
-        var filter = new DynamicFilterCriteria<Review>("Rating == null");
+        var options = new FilterOptions { EnableNullGuards = true };
+        var filter = new DynamicFilterCriteria<Review>("Rating == null", options);
 
         var result = reviews.AsQueryable().Filter(filter).ToList();
 
@@ -99,7 +104,8 @@ public class DynamicFilterCriteriaNullSafetyTests
             new Review { Rating = 4 }
         };
 
-        var filter = new DynamicFilterCriteria<Review>("Rating != null");
+        var options = new FilterOptions { EnableNullGuards = true };
+        var filter = new DynamicFilterCriteria<Review>("Rating != null", options);
 
         var result = reviews.AsQueryable().Filter(filter).ToList();
 
@@ -116,7 +122,8 @@ public class DynamicFilterCriteriaNullSafetyTests
             new Product { Name = "Smartphone" }
         };
 
-        var filter = new DynamicFilterCriteria<Product>("Name ^= 'S'");
+        var options = new FilterOptions { EnableNullGuards = true };
+        var filter = new DynamicFilterCriteria<Product>("Name ^= 'S'", options);
 
         var result = products.AsQueryable().Filter(filter).ToList();
 
@@ -133,7 +140,8 @@ public class DynamicFilterCriteriaNullSafetyTests
             new Product { Name = "Smartphone" }
         };
 
-        var filter = new DynamicFilterCriteria<Product>("Name $= 'phone'");
+        var options = new FilterOptions { EnableNullGuards = true };
+        var filter = new DynamicFilterCriteria<Product>("Name $= 'phone'", options);
 
         var result = products.AsQueryable().Filter(filter).ToList();
 
@@ -150,7 +158,8 @@ public class DynamicFilterCriteriaNullSafetyTests
             new Product { Name = "Laptop" }
         };
 
-        var filter = new DynamicFilterCriteria<Product>("Name == null");
+        var options = new FilterOptions { EnableNullGuards = true };
+        var filter = new DynamicFilterCriteria<Product>("Name == null", options);
 
         var result = products.AsQueryable().Filter(filter).ToList();
 
@@ -167,7 +176,8 @@ public class DynamicFilterCriteriaNullSafetyTests
             new Product { Name = "Tablet" }
         };
 
-        var filter = new DynamicFilterCriteria<Product>("Name ^= null");
+        var options = new FilterOptions { EnableNullGuards = true };
+        var filter = new DynamicFilterCriteria<Product>("Name ^= null", options);
 
         var result = products.AsQueryable().Filter(filter).ToList();
 
@@ -186,7 +196,8 @@ public class DynamicFilterCriteriaNullSafetyTests
             }
         };
 
-        var filter = new DynamicFilterCriteria<Category>("Products:any.Price > 10");
+        var options = new FilterOptions { EnableNullGuards = true };
+        var filter = new DynamicFilterCriteria<Category>("Products:any.Price > 10", options);
 
         var result = categories.AsQueryable().Filter(filter).ToList();
 
@@ -205,7 +216,8 @@ public class DynamicFilterCriteriaNullSafetyTests
             }
         };
 
-        var filter = new DynamicFilterCriteria<Category>("Products:all.Price > 0");
+        var options = new FilterOptions { EnableNullGuards = true };
+        var filter = new DynamicFilterCriteria<Category>("Products:all.Price > 0", options);
 
         var result = categories.AsQueryable().Filter(filter).ToList();
 
@@ -225,7 +237,8 @@ public class DynamicFilterCriteriaNullSafetyTests
             }
         };
 
-        var filter = new DynamicFilterCriteria<Category>("Products:any.Price > 500");
+        var options = new FilterOptions { EnableNullGuards = true };
+        var filter = new DynamicFilterCriteria<Category>("Products:any.Price > 500", options);
 
         var result = categories.AsQueryable().Filter(filter).ToList();
 
@@ -242,7 +255,8 @@ public class DynamicFilterCriteriaNullSafetyTests
             new Product { Name = "Tablet" }
         };
 
-        var filter = new DynamicFilterCriteria<Product>("Name in ['Tablet', 'Phone']");
+        var options = new FilterOptions { EnableNullGuards = true };
+        var filter = new DynamicFilterCriteria<Product>("Name in ['Tablet', 'Phone']", options);
 
         var result = products.AsQueryable().Filter(filter).ToList();
 
@@ -259,11 +273,50 @@ public class DynamicFilterCriteriaNullSafetyTests
             new Product { Name = "Tablet" }
         };
 
-        var filter = new DynamicFilterCriteria<Product>("Name in:i ['TABLET', null]");
+        var options = new FilterOptions { EnableNullGuards = true };
+        var filter = new DynamicFilterCriteria<Product>("Name in:i ['TABLET', null]", options);
 
         var result = products.AsQueryable().Filter(filter).ToList();
 
         Assert.Single(result);
         Assert.Equal("Tablet", result[0].Name);
+    }
+
+    [Fact]
+    public void Filter_ByCollectionProjectionWithNullCollection_DoesNotThrowAndReturnsEmpty()
+    {
+        var categories = new[]
+        {
+            new Category
+            {
+                Name = "Test",
+                Products = null!
+            }
+        };
+
+        var options = new FilterOptions { EnableNullGuards = true };
+        var filter = new DynamicFilterCriteria<Category>("Products:count == 0", options);
+
+        var result = categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void Filter_ByValueTypeOperandWithInOperator_FiltersCorrectly()
+    {
+        var products = new[]
+        {
+            new Product { Name = "Smartphone", Price = 100 },
+            new Product { Name = "Tablet", Price = 200 }
+        };
+
+        var options = new FilterOptions { EnableNullGuards = true };
+        var filter = new DynamicFilterCriteria<Product>("Price in [100, 300]", options);
+
+        var result = products.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Smartphone", result[0].Name);
     }
 }

@@ -15,9 +15,9 @@ public class FilterCondition : FilterTerm
     public ComparisonOperator Operator { get; }
     public object? Value { get; }
 
-    public override Expression<Func<T, bool>> ToExpression<T>()
+    public override Expression<Func<T, bool>> ToExpression<T>(FilterOptions? options = null)
     {
-        return new FilterExpressionBuilder<T>(this).BuildExpression();
+        return new FilterExpressionBuilder<T>(this, options).BuildExpression();
     }
 
     private static void ValidateValueMultiplicity(ComparisonOperator @operator, object? value)

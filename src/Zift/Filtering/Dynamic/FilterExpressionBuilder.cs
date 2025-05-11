@@ -1,18 +1,19 @@
 ﻿namespace Zift.Filtering.Dynamic;
 
-internal class FilterExpressionBuilder<T>(FilterCondition condition)
+internal class FilterExpressionBuilder<T>(FilterCondition condition, FilterOptions? options)
 {
     private readonly FilterCondition _condition = condition;
+    private readonly FilterOptions _options = options ?? new();
 
     public Expression<Func<T, bool>> BuildExpression()
     {
         var parameter = Expression.Parameter(typeof(T), ParameterNameGenerator.FromType<T>());
-        var lambdaBody = BuildSegmentExpression(parameter, _condition.Property, segmentIndex: 0);
+        var lambdaBody = BuildPathSegmentExpression(parameter, _condition.Property, segmentIndex: 0);
 
         return Expression.Lambda<Func<T, bool>>(lambdaBody, parameter);
     }
 
-    private Expression BuildSegmentExpression(Expression current, PropertyPath propertyPath, int segmentIndex)
+    private Expression BuildPathSegmentExpression(Expression current, PropertyPath propertyPath, int segmentIndex)
     {
         var segment = propertyPath[segmentIndex];
         var property = Expression.Property(current, segment.Name);
@@ -36,14 +37,16 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
 
             segmentExpression = isLastSegment
                 ? BuildComparison(property)
-                : BuildSegmentExpression(property, propertyPath, segmentIndex + 1);
+                : BuildPathSegmentExpression(property, propertyPath, segmentIndex + 1);
         }
 
         var isFirstSegment = segmentIndex == 0;
+        var isNullable = current.Type.IsNullableType();
+        var requiresNullGuard = _options.EnableNullGuards && !isFirstSegment && isNullable;
 
-        return isFirstSegment
-            ? segmentExpression // No null guard needed for the root parameter.
-            : NullGuarded(current, segmentExpression);
+        return requiresNullGuard
+            ? NullGuarded(current, segmentExpression)
+            : segmentExpression;
     }
 
     private Expression BuildQuantifierExpression(Expression collection, QuantifierMode quantifier, PropertyPath propertyPath, int segmentIndex)
@@ -52,22 +55,24 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         var isLastSegment = segmentIndex == propertyPath.Count - 1;
 
         var quantifierMethod = quantifier.GetLinqMethod(withPredicate: !isLastSegment).MakeGenericMethod(elementType);
-        Expression methodCall;
+        Expression quantifierExpression;
 
         if (isLastSegment)
         {
-            methodCall = Expression.Call(quantifierMethod, collection);
+            quantifierExpression = Expression.Call(quantifierMethod, collection);
         }
         else
         {
             var parameter = Expression.Parameter(elementType, ParameterNameGenerator.FromType(elementType));
-            var lambdaBody = BuildSegmentExpression(parameter, propertyPath, segmentIndex + 1);
+            var lambdaBody = BuildPathSegmentExpression(parameter, propertyPath, segmentIndex + 1);
             var lambda = Expression.Lambda(lambdaBody, parameter);
 
-            methodCall = Expression.Call(quantifierMethod, collection, lambda);
+            quantifierExpression = Expression.Call(quantifierMethod, collection, lambda);
         }
 
-        return NullGuarded(collection, methodCall);
+        return _options.EnableNullGuards
+            ? NullGuarded(collection, quantifierExpression)
+            : quantifierExpression;
     }
 
     private Expression BuildProjectionExpression(Expression collection, PropertyPath propertyPath, int segmentIndex)
@@ -76,38 +81,54 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         var elementType = collection.Type.GetCollectionElementType()!;
 
         var projectionMethod = segment.Projection!.Value.GetLinqMethod().MakeGenericMethod(elementType);
-        var methodCall = Expression.Call(projectionMethod, collection);
-        var comparison = BuildComparison(methodCall);
+        var projectedValue = Expression.Call(projectionMethod, collection);
+        var projectionExpression = BuildComparison(projectedValue);
 
-        return NullGuarded(collection, comparison);
+        return _options.EnableNullGuards
+            ? NullGuarded(collection, projectionExpression)
+            : projectionExpression;
     }
 
     private Expression BuildComparison(Expression leftOperand)
     {
         var rightOperand = BuildRightHandExpression(leftOperand.Type);
 
-        return ApplyNullSafeComparison(leftOperand, rightOperand);
+        if (IsCaseInsensitiveComparison(leftOperand))
+        {
+            leftOperand = ConvertToLowercase(leftOperand);
+        }
+
+        var comparison = _condition.Operator.Type.ToComparisonExpression(leftOperand, rightOperand);
+
+        if (!_options.EnableNullGuards || IsDirectComparisonOperator(_condition.Operator.Type))
+        {
+            return comparison;
+        }
+
+        var nullGuard = Expression.AndAlso(IsNonNull(leftOperand), IsNonNull(rightOperand));
+
+        return Expression.Condition(nullGuard, comparison, Expression.Constant(false));
     }
 
     private Expression BuildRightHandExpression(Type operandType)
     {
         object? normalizedValue;
-        Type parameterType;
+        Type targetType;
 
         if (_condition.Operator.Type == ComparisonOperatorType.In)
         {
             var rawValues = (IEnumerable)_condition.Value!;
 
             normalizedValue = NormalizeValuesToArray(rawValues, operandType);
-            parameterType = typeof(IEnumerable<>).MakeGenericType(operandType);
+            targetType = typeof(IEnumerable<>).MakeGenericType(operandType);
         }
         else
         {
             normalizedValue = NormalizeRightHandValue(_condition.Value, operandType);
-            parameterType = operandType;
+            targetType = operandType;
         }
 
-        return ConstantAsParameter(normalizedValue, parameterType);
+        return BuildValueExpression(normalizedValue, targetType);
     }
 
     private object? NormalizeRightHandValue(object? value, Type operandType)
@@ -130,6 +151,19 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         return typedValue;
     }
 
+    private Array NormalizeValuesToArray(IEnumerable rawValues, Type elementType)
+    {
+        var normalizedValues = rawValues.Cast<object?>()
+            .Select(value => NormalizeRightHandValue(value, elementType))
+            .ToArray();
+
+        var array = Array.CreateInstance(elementType, normalizedValues.Length);
+
+        normalizedValues.CopyTo(array, 0);
+
+        return array;
+    }
+
     private static object EnsureValueOfType(object value, Type expectedType)
     {
         if (!expectedType.IsInstanceOfType(value))
@@ -149,45 +183,19 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
         return value;
     }
 
-    private Array NormalizeValuesToArray(IEnumerable rawValues, Type elementType)
+    private Expression BuildValueExpression(object? value, Type expectedType)
     {
-        var normalizedValues = rawValues.Cast<object?>()
-            .Select(value => NormalizeRightHandValue(value, elementType))
-            .ToArray();
-
-        var array = Array.CreateInstance(elementType, normalizedValues.Length);
-        normalizedValues.CopyTo(array, 0);
-
-        return array;
-    }
-
-    private static Expression ConstantAsParameter(object? value, Type parameterType)
-    {
-        LambdaExpression wrappedValue = () => value; // Wrap in a lambda to force parameterization by EF Core.
-
-        return Expression.Convert(wrappedValue.Body, parameterType);
-    }
-
-    private Expression ApplyNullSafeComparison(Expression leftOperand, Expression rightOperand)
-    {
-        if (IsCaseInsensitiveStringComparison(leftOperand))
+        if (!_options.ParameterizeValues)
         {
-            leftOperand = WrapInNullSafeToLower(leftOperand);
+            return Expression.Constant(value, expectedType);
         }
 
-        var comparison = _condition.Operator.Type.ToComparisonExpression(leftOperand, rightOperand);
+        LambdaExpression wrappedValue = () => value; // Force EF Core to parameterize the value.
 
-        if (IsDirectComparisonOperator(_condition.Operator.Type))
-        {
-            return comparison;
-        }
-
-        var nullGuard = Expression.AndAlso(IsNonNull(leftOperand), IsNonNull(rightOperand));
-
-        return Expression.Condition(nullGuard, comparison, Expression.Constant(false));
+        return Expression.Convert(wrappedValue.Body, expectedType);
     }
 
-    private bool IsCaseInsensitiveStringComparison(Expression leftOperand)
+    private bool IsCaseInsensitiveComparison(Expression leftOperand)
     {
         return leftOperand.Type == typeof(string)
             && _condition.Operator.HasModifier("i")
@@ -204,9 +212,14 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition)
             || @operator == ComparisonOperatorType.LessThanOrEqual;
     }
 
-    private static Expression WrapInNullSafeToLower(Expression operand)
+    private Expression ConvertToLowercase(Expression operand)
     {
         var toLower = Expression.Call(operand, nameof(string.ToLower), Type.EmptyTypes);
+
+        if (!_options.EnableNullGuards)
+        {
+            return toLower;
+        }
 
         return Expression.Condition(
             IsNonNull(operand),
