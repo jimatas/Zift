@@ -46,7 +46,7 @@ var options = new FilterOptions
 
 var criteria = new DynamicFilterCriteria<Category>("Products:count > 0", options);
 ```
-Or pass the options directly to the Filter extension method:
+Or pass the options directly to the `Filter` extension method:
 
 ```csharp
 var categories = await dbContext.Categories
