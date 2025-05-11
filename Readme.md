@@ -18,7 +18,7 @@ Designed to work seamlessly with Entity Framework Core and any LINQ-compatible d
 - **Fluent Sorting** — Compose multi-level sorts dynamically or fluently in code.
 - **Dynamic Sorting** — Parse string-based sort clauses like `"Name desc, Price asc"`.
 - **Pagination** — Apply paging to queries and return paginated result sets with metadata.
-- **Seamless IQueryable Extensions** — Integrate filtering, sorting, and pagination directly over any `IQueryable<T>`.
+- **IQueryable Extensions** — Integrate filtering, sorting, and pagination directly over any `IQueryable<T>`.
 - **Entity Framework Core Support** — Async pagination extensions with cancellation support.
 - **Extensible Design** — Implement custom filter, sort, and pagination criteria types when needed.
 
@@ -37,7 +37,7 @@ Install the core Zift package:
 dotnet add package Zift
 ```
 
-If you're using Entity Framework Core and want async pagination support, install the EF Core integration package instead:
+If you're using Entity Framework Core and need async pagination support, install the EF Core integration package instead:
 
 ```bash
 dotnet add package Zift.EntityFrameworkCore
@@ -102,7 +102,7 @@ Queries are composed using standard LINQ patterns and executed only when enumera
 
 - Unified `ICriteria<T>` abstraction.
 - Deferred query execution.
-- Null-safe API validation.
+- Null-safe expression handling.
 - Lightweight, extensible core.
 - Persistence-agnostic — no repository or unit-of-work assumptions.
 
@@ -168,7 +168,7 @@ var filteredCategories = dbContext.Categories
     .Filter("Name ^= 'Gaming' && Products:count > 0");
 ```
 
-> All expressions are null-safe by default — null collections and missing properties will not cause runtime errors.
+> Null-safe expression handling can be enabled via configuration to prevent errors on missing properties or null collections.
 
 ### 5.4. Expression Syntax Overview
 
@@ -258,7 +258,7 @@ var sortedProducts = dbContext.Products
 
 Pagination in Zift is based on `IPaginationCriteria<T>`, applying `.Skip()` and `.Take()` operations.
 
-### 7.2. Pagination with Parameters
+### 7.2. Pagination by Page Number and Size
 
 Use `ToPaginatedList` or `ToPaginatedListAsync` to apply paging by specifying the page number and page size:
 
@@ -279,7 +279,9 @@ Both methods support default parameters:
 - `pageNumber` defaults to 1
 - `pageSize` defaults to `PaginationCriteria<T>.DefaultPageSize`
 
-Alternatively, construct a `PaginationCriteria<T>` object directly:
+### 7.3. Manual Pagination Criteria
+
+Alternatively, manually construct a `PaginationCriteria<T>` object and pass it in:
 
 ```csharp
 var paginationCriteria = new PaginationCriteria<Product> { PageNumber = 1, PageSize = 20 };
@@ -288,7 +290,7 @@ var paginatedProducts = await dbContext.Products
     .ToPaginatedListAsync(paginationCriteria);
 ```
 
-### 7.3. Paginated List Result
+### 7.4. Paginated List Result
 
 Paginated results implement `IPaginatedList<T>`, which exposes:
 
@@ -346,8 +348,8 @@ Zift is under active development and not yet considered stable.
 
 Potential future enhancements:
 
-- **Extensibility for Dynamic Filtering:** Improve parser extensibility.
 - **Expanded Modifier Support:** Extend string modifiers (currently only `:i`) and collection projections (currently only `:count`).
+- **Cursor-Based Pagination:** Look into supporting keyset-style pagination.
 
 ## 11. License
 
