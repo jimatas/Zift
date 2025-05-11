@@ -42,7 +42,7 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition, FilterOptio
 
         var isFirstSegment = segmentIndex == 0;
         var isNullable = current.Type.IsNullableType();
-        var requiresNullGuard = _options.EnableNullGuards && (isFirstSegment || isNullable);
+        var requiresNullGuard = _options.EnableNullGuards && !isFirstSegment && isNullable;
 
         return requiresNullGuard
             ? NullGuarded(current, segmentExpression)
