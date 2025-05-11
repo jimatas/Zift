@@ -1,10 +1,10 @@
 ﻿namespace Zift.Filtering;
 
-public class DynamicFilterCriteria<T>(Dynamic.FilterTerm term)
-    : PredicateFilterCriteria<T>(term.ThrowIfNull().ToExpression<T>())
+public class DynamicFilterCriteria<T>(Dynamic.FilterTerm term, Dynamic.FilterOptions? options = null)
+    : PredicateFilterCriteria<T>(term.ThrowIfNull().ToExpression<T>(options))
 {
-    public DynamicFilterCriteria(string expression)
-        : this(ParseFilterTerm(expression.ThrowIfNullOrEmpty()))
+    public DynamicFilterCriteria(string expression, Dynamic.FilterOptions? options = null)
+        : this(ParseFilterTerm(expression.ThrowIfNullOrEmpty()), options)
     {
     }
 

@@ -1,8 +1,9 @@
 ﻿namespace Zift.Filtering.Dynamic;
 
-internal class GroupedFilterExpressionBuilder<T>(FilterGroup group)
+internal class GroupedFilterExpressionBuilder<T>(FilterGroup group, FilterOptions? options)
 {
     private readonly FilterGroup _group = group;
+    private readonly FilterOptions? _options = options;
 
     public Expression<Func<T, bool>> BuildExpression()
     {
@@ -21,7 +22,7 @@ internal class GroupedFilterExpressionBuilder<T>(FilterGroup group)
         Expression? lambdaBody = null;
         foreach (var term in _group.Terms)
         {
-            var lambda = term.ToExpression<T>();
+            var lambda = term.ToExpression<T>(_options);
             var originalParameter = lambda.Parameters.Single();
 
             lambdaBody = CombineWithLogicalOperator(lambdaBody, lambda.Body.ReplaceParameter(originalParameter, parameter));

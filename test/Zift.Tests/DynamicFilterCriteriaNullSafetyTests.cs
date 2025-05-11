@@ -1,6 +1,7 @@
 ﻿namespace Zift.Tests;
 
 using Filtering;
+using Filtering.Dynamic;
 using SharedFixture.Models;
 
 public class DynamicFilterCriteriaNullSafetyTests
@@ -265,5 +266,99 @@ public class DynamicFilterCriteriaNullSafetyTests
 
         Assert.Single(result);
         Assert.Equal("Tablet", result[0].Name);
+    }
+
+    [Fact]
+    public void Filter_DisabledNullGuards_ThrowsOnNestedNull()
+    {
+        var products = new[]
+        {
+            new Product
+            {
+                Name = "Tablet",
+                Reviews =
+                {
+                    new Review { Author = null, Rating = 5 }
+                }
+            }
+        };
+
+        var options = new FilterOptions { EnableNullGuards = false };
+        var filter = new DynamicFilterCriteria<Product>("Reviews.Author.Name == 'John'", options);
+
+        Assert.Throws<NullReferenceException>(() => products.AsQueryable().Filter(filter).ToList());
+    }
+
+    [Fact]
+    public void Filter_DisabledNullGuards_SucceedsWhenNoNulls()
+    {
+        var products = new[]
+        {
+            new Product
+            {
+                Name = "Tablet",
+                Reviews =
+                {
+                    new Review { Author = new User { Name = "John", Email = "x@y.com" }, Rating = 5 }
+                }
+            }
+        };
+
+        var options = new FilterOptions { EnableNullGuards = false };
+        var filter = new DynamicFilterCriteria<Product>("Reviews.Author.Name == 'John'", options);
+
+        var result = products.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Tablet", result[0].Name);
+    }
+
+    [Fact]
+    public void Filter_DisabledNullGuards_SkipsProjectionNullGuard()
+    {
+        var categories = new[]
+        {
+            new Category
+            {
+                Name = "Books",
+                Products =
+                {
+                    new Product
+                    {
+                        Name = "Novel",
+                        Reviews =
+                        {
+                            new Review { Rating = 5 }
+                        }
+                    }
+                }
+            }
+        };
+
+        var options = new FilterOptions { EnableNullGuards = false };
+        var filter = new DynamicFilterCriteria<Category>("Products.Reviews:count == 1", options);
+
+        var result = categories.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("Books", result[0].Name);
+    }
+
+    [Fact]
+    public void Filter_DisabledNullGuards_SkipsToLowerNullGuard()
+    {
+        var products = new[]
+        {
+            new Product { Name = "SMARTPHONE" },
+            new Product { Name = "Tablet" }
+        };
+
+        var options = new FilterOptions { EnableNullGuards = false };
+        var filter = new DynamicFilterCriteria<Product>("Name %=:i 'phone'", options);
+
+        var result = products.AsQueryable().Filter(filter).ToList();
+
+        Assert.Single(result);
+        Assert.Equal("SMARTPHONE", result[0].Name);
     }
 }
