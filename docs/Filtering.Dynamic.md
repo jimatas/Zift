@@ -33,6 +33,32 @@ var categories = await dbContext.Categories
     .ToListAsync(cancellationToken);
 ```
 
+### 2.1. Configuring Behavior
+
+You can optionally pass a `FilterOptions` object to control behavior such as null safety and value parameterization:
+
+```csharp
+var options = new FilterOptions
+{
+    EnableNullGuards = true,     // Add null guards to avoid runtime exceptions
+    ParameterizeValues = false   // Use constants instead of query parameters
+};
+
+var criteria = new DynamicFilterCriteria<Category>("Products:count > 0", options);
+```
+Or pass the options directly to the Filter extension method:
+
+```csharp
+var categories = await dbContext.Categories
+    .Filter("Products:count > 0", new FilterOptions { EnableNullGuards = true })
+    .ToListAsync(cancellationToken);
+```
+
+By default:
+
+- `EnableNullGuards` is `false` (optimized for EF Core queries).
+- `ParameterizeValues` is `true` (enables query parameterization).
+
 ## 3. Expression Examples
 
 ### 3.1. Scalar Filtering

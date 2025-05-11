@@ -260,7 +260,7 @@ Pagination in Zift is based on `IPaginationCriteria<T>`, applying `.Skip()` and 
 
 ### 7.2. Pagination with Parameters
 
-Use `ToPaginatedList` or `ToPaginatedListAsync` to apply paging by specifying the page number and page size directly:
+Use `ToPaginatedList` or `ToPaginatedListAsync` to apply paging by specifying the page number and page size:
 
 ```csharp
 var paginatedProducts = await dbContext.Products
