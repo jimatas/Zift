@@ -4,8 +4,9 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IsPackable>true</IsPackable>
-    <Version>0.6.0</Version>
+    <Version>0.6.1</Version>
     <Authors>Jim Atas</Authors>
     <Description>Lightweight, composable .NET library for filtering, sorting, and paginating IQueryable&lt;T&gt; using expression- or string-based criteria.</Description>
     <PackageTags>filtering sorting pagination queryable expressions linq</PackageTags>

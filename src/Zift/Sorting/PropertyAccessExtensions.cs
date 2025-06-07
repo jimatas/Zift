@@ -2,6 +2,12 @@
 
 internal static class PropertyAccessExtensions
 {
+    /// <summary>
+    /// Builds a property selector expression for the given property path.
+    /// </summary>
+    /// <typeparam name="T">The declaring type of the property.</typeparam>
+    /// <param name="property">The dot-separated property path (e.g., "Customer.Name").</param>
+    /// <returns>A lambda expression representing the property selector.</returns>
     public static LambdaExpression ToPropertySelector<T>(this string property)
     {
         var type = typeof(T);
@@ -22,6 +28,11 @@ internal static class PropertyAccessExtensions
         return Expression.Lambda(expression, parameter);
     }
 
+    /// <summary>
+    /// Extracts a dot-separated property path from a lambda expression.
+    /// </summary>
+    /// <param name="property">The property selector expression.</param>
+    /// <returns>The extracted property path, or <see langword="null"/> if it cannot be determined.</returns>
     public static string? ToPropertyPath(this LambdaExpression property)
     {
         return BuildPropertyPath(property.Body);
