@@ -5,6 +5,10 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition, FilterOptio
     private readonly FilterCondition _condition = condition;
     private readonly FilterOptions _options = options ?? new();
 
+    /// <summary>
+    /// Builds a LINQ expression representing the current filter condition.
+    /// </summary>
+    /// <returns>An expression that evaluates the filter condition against elements of type <typeparamref name="T"/>.</returns>
     public Expression<Func<T, bool>> BuildExpression()
     {
         var parameter = Expression.Parameter(typeof(T), ParameterNameGenerator.FromType<T>());

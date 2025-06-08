@@ -1,9 +1,18 @@
 ﻿namespace Zift.Filtering.Dynamic.Parsing;
 
+/// <summary>
+/// Parses dynamic filter expressions into a <see cref="FilterGroup"/> syntax tree.
+/// </summary>
+/// <param name="tokenizer">The tokenizer providing the input tokens.</param>
 public class ExpressionParser(ExpressionTokenizer tokenizer)
 {
     private readonly ExpressionTokenizer _tokenizer = tokenizer;
 
+    /// <summary>
+    /// Parses the entire expression and returns the root filter group.
+    /// </summary>
+    /// <returns>The parsed <see cref="FilterGroup"/> representing the expression.</returns>
+    /// <exception cref="SyntaxErrorException">Thrown if the expression is empty or malformed.</exception>
     public FilterGroup Parse()
     {
         var rootGroup = ParseGroup();

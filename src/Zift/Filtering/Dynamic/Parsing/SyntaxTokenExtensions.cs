@@ -1,7 +1,16 @@
 ﻿namespace Zift.Filtering.Dynamic.Parsing;
 
+/// <summary>
+/// Provides extension methods for interpreting syntax tokens as typed values or operators.
+/// </summary>
 public static class SyntaxTokenExtensions
 {
+    /// <summary>
+    /// Converts the token value to a <see cref="LogicalOperator"/>.
+    /// </summary>
+    /// <param name="token">The logical operator token (e.g., <c>"&amp;&amp;"</c> or <c>"||"</c>).</param>
+    /// <returns>The corresponding <see cref="LogicalOperator"/>.</returns>
+    /// <exception cref="SyntaxErrorException">Thrown if the token value is not a valid logical operator.</exception>
     public static LogicalOperator ToLogicalOperator(this SyntaxToken token)
     {
         return token.Value switch
@@ -12,6 +21,12 @@ public static class SyntaxTokenExtensions
         };
     }
 
+    /// <summary>
+    /// Converts the token value to a <see cref="ComparisonOperatorType"/>.
+    /// </summary>
+    /// <param name="token">The comparison operator token (e.g., <c>"=="</c>, <c>"in"</c>).</param>
+    /// <returns>The corresponding <see cref="ComparisonOperatorType"/>.</returns>
+    /// <exception cref="SyntaxErrorException">Thrown if the token value is not a valid comparison operator.</exception>
     public static ComparisonOperatorType ToComparisonOperator(this SyntaxToken token)
     {
         if (ComparisonOperatorType.TryParse(token.Value, out var @operator))
@@ -22,6 +37,12 @@ public static class SyntaxTokenExtensions
         throw new SyntaxErrorException($"Expected a comparison operator, but got: {token.Value}", token);
     }
 
+    /// <summary>
+    /// Converts a keyword, string literal, or numeric literal token to its typed value.
+    /// </summary>
+    /// <param name="token">The token to convert.</param>
+    /// <returns>A typed representation of the token’s value.</returns>
+    /// <exception cref="SyntaxErrorException">Thrown if the token type is invalid or cannot be parsed.</exception>
     public static object? ToTypedValue(this SyntaxToken token)
     {
         return token.Type switch

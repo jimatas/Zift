@@ -1,7 +1,12 @@
 ﻿namespace Zift.Sorting.Dynamic;
 
+/// <summary>
+/// Default implementation of <see cref="ISortDirectiveParser{T}"/> using SQL-like syntax.
+/// </summary>
+/// <typeparam name="T">The type of elements in the query.</typeparam>
 public class SortDirectiveParser<T> : ISortDirectiveParser<T>
 {
+    /// <inheritdoc/>
     public IEnumerable<ISortCriterion<T>> Parse(string directives)
     {
         directives.ThrowIfNullOrEmpty();

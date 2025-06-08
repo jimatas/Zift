@@ -1,7 +1,13 @@
 ﻿namespace Zift.Filtering.Dynamic.Parsing;
 
+/// <summary>
+/// Provides a collection of predefined syntax rules for tokenizing filter expressions.
+/// </summary>
 public static class SyntaxRules
 {
+    /// <summary>
+    /// All supported syntax rules in evaluation order, used to tokenize dynamic filter expressions.
+    /// </summary>
     public static readonly IReadOnlyList<SyntaxRule> All =
     [
         new(SyntaxTokenType.Whitespace) { Pattern = new(@"^\s+", RegexOptions.Compiled) },
