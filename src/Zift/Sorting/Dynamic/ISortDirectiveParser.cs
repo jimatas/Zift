@@ -9,7 +9,7 @@ public interface ISortDirectiveParser<T>
     /// <summary>
     /// Parses the given directive string into sort criteria.
     /// </summary>
-    /// <param name="directives">The directive string to parse (e.g., "Name ASC, CreatedAt DESC").</param>
+    /// <param name="directives">The directive string to parse (e.g., <c>Name ASC, CreatedAt DESC</c>).</param>
     /// <returns>A sequence of parsed sort criteria.</returns>
     IEnumerable<ISortCriterion<T>> Parse(string directives);
 }

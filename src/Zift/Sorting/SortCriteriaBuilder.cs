@@ -62,7 +62,7 @@ public class SortCriteriaBuilder<T>(SortCriteria<T> criteria)
     /// <summary>
     /// Adds one or more sort criteria from a sort directive string.
     /// </summary>
-    /// <param name="directives">The directive string to parse (e.g., "Name ASC, CreatedAt DESC").</param>
+    /// <param name="directives">The directive string to parse (e.g., <c>Name ASC, CreatedAt DESC</c>).</param>
     /// <returns>The current builder instance.</returns>
     public SortCriteriaBuilder<T> Clause(string directives)
     {
@@ -72,7 +72,7 @@ public class SortCriteriaBuilder<T>(SortCriteria<T> criteria)
     /// <summary>
     /// Adds one or more sort criteria using a custom sort directive parser.
     /// </summary>
-    /// <param name="directives">The directive string to parse (e.g., "Name ASC, CreatedAt DESC").</param>
+    /// <param name="directives">The directive string to parse (e.g., <c>Name ASC, CreatedAt DESC</c>).</param>
     /// <param name="parser">The parser used to interpret the directives.</param>
     /// <returns>The current builder instance.</returns>
     public SortCriteriaBuilder<T> Clause(string directives, Dynamic.ISortDirectiveParser<T> parser)
