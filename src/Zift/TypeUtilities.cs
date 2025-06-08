@@ -21,8 +21,7 @@ internal static class TypeUtilities
     /// Determines whether the type is a nullable reference or value type.
     /// </summary>
     /// <param name="type">The type to check.</param>
-    /// <returns><see langword="true"/> if the type is nullable;
-    /// otherwise, <see langword="false"/>.</returns>
+    /// <returns><see langword="true"/> if the type is nullable; otherwise, <see langword="false"/>.</returns>
     public static bool IsNullableType(this Type type)
     {
         return !type.IsValueType || Nullable.GetUnderlyingType(type) is not null;
@@ -32,8 +31,7 @@ internal static class TypeUtilities
     /// Determines whether the type is a (non-string) collection.
     /// </summary>
     /// <param name="type">The type to check.</param>
-    /// <returns><see langword="true"/> if the type is a collection;
-    /// otherwise, <see langword="false"/>.</returns>
+    /// <returns><see langword="true"/> if the type is a collection; otherwise, <see langword="false"/>.</returns>
     public static bool IsCollectionType(this Type type)
     {
         return type.GetInterfacesIncludingSelf().Contains(typeof(IEnumerable)) && type != typeof(string);
