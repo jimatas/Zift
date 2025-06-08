@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IsPackable>true</IsPackable>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Version>0.6.1</Version>
     <Authors>Jim Atas</Authors>
     <Description>Entity Framework Core integration for Zift. Enables async query execution and pagination for IQueryable&lt;T&gt; using Zift's filtering, sorting, and pagination criteria.</Description>
@@ -22,7 +24,7 @@
     <None Include="../../Readme.md" Pack="true" PackagePath="" />
     <None Include="../../docs/assets/Zift_Logo_128x128.png" Pack="true" PackagePath="" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.15" />
   </ItemGroup>
