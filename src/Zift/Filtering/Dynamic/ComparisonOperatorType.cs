@@ -1,18 +1,61 @@
 ﻿namespace Zift.Filtering.Dynamic;
 
+/// <summary>
+/// Represents a type of comparison operator used in filter expressions.
+/// </summary>
+/// <param name="Symbol">The symbolic representation of the operator (e.g., <c>"=="</c>, <c>"in"</c>).</param>
 public readonly record struct ComparisonOperatorType(string Symbol)
 {
     private static readonly IReadOnlySet<string> _ignoreCase = new HashSet<string>(["i"], StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Represents the equality operator (<c>==</c>).
+    /// </summary>
     public static readonly ComparisonOperatorType Equal = new("==") { SupportedModifiers = _ignoreCase };
+
+    /// <summary>
+    /// Represents the inequality operator (<c>!=</c>).
+    /// </summary>
     public static readonly ComparisonOperatorType NotEqual = new("!=") { SupportedModifiers = _ignoreCase };
+
+    /// <summary>
+    /// Represents the greater-than operator (<c>&gt;</c>).
+    /// </summary>
     public static readonly ComparisonOperatorType GreaterThan = new(">");
+
+    /// <summary>
+    /// Represents the greater-than-or-equal operator (<c>&gt;=</c>).
+    /// </summary>
     public static readonly ComparisonOperatorType GreaterThanOrEqual = new(">=");
+
+    /// <summary>
+    /// Represents the less-than operator (<c>&lt;</c>).
+    /// </summary>
     public static readonly ComparisonOperatorType LessThan = new("<");
+
+    /// <summary>
+    /// Represents the less-than-or-equal operator (<c>&lt;=</c>).
+    /// </summary>
     public static readonly ComparisonOperatorType LessThanOrEqual = new("<=");
+
+    /// <summary>
+    /// Represents a contains operation (<c>%=</c>) on string values.
+    /// </summary>
     public static readonly ComparisonOperatorType Contains = new("%=") { SupportedModifiers = _ignoreCase };
+
+    /// <summary>
+    /// Represents a starts-with operation (<c>^=</c>) on string values.
+    /// </summary>
     public static readonly ComparisonOperatorType StartsWith = new("^=") { SupportedModifiers = _ignoreCase };
+
+    /// <summary>
+    /// Represents an ends-with operation (<c>$=</c>) on string values.
+    /// </summary>
     public static readonly ComparisonOperatorType EndsWith = new("$=") { SupportedModifiers = _ignoreCase };
+
+    /// <summary>
+    /// Represents an inclusion check (<c>in</c>) for values in a collection.
+    /// </summary>
     public static readonly ComparisonOperatorType In = new("in") { SupportedModifiers = _ignoreCase };
 
     private static readonly Dictionary<string, MethodInfo> _stringComparisonMethods = new()
@@ -36,15 +79,31 @@ public readonly record struct ComparisonOperatorType(string Symbol)
         [In.Symbol] = In
     };
 
+    /// <summary>
+    /// Attempts to parse a symbol into a <see cref="ComparisonOperatorType"/>.
+    /// </summary>
+    /// <param name="symbol">The symbol to parse (e.g., <c>"=="</c>, <c>"%="</c>).</param>
+    /// <param name="result">The parsed operator type.</param>
+    /// <returns><see langword="true"/> if parsing was successful; otherwise, <see langword="false"/>.</returns>
     public static bool TryParse(string symbol, out ComparisonOperatorType result)
     {
         return _bySymbol.TryGetValue(symbol, out result);
     }
 
+    /// <summary>
+    /// The set of supported modifiers for this operator.
+    /// </summary>
     public IReadOnlySet<string> SupportedModifiers { get; init; } = EmptySet<string>.Instance;
 
+    /// <inheritdoc/>
     public override string ToString() => Symbol;
 
+    /// <summary>
+    /// Builds a comparison expression for the given operands.
+    /// </summary>
+    /// <param name="leftOperand">The left-hand operand.</param>
+    /// <param name="rightOperand">The right-hand operand.</param>
+    /// <returns>An expression representing the comparison.</returns>
     public Expression ToComparisonExpression(Expression leftOperand, Expression rightOperand)
     {
         return this switch

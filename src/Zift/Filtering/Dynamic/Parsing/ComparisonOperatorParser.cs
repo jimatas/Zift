@@ -1,9 +1,18 @@
 ﻿namespace Zift.Filtering.Dynamic.Parsing;
 
+/// <summary>
+/// Parses a comparison operator and any associated modifiers from the token stream.
+/// </summary>
+/// <param name="tokenizer">The tokenizer providing the input tokens.</param>
 internal class ComparisonOperatorParser(ExpressionTokenizer tokenizer)
 {
     private readonly ExpressionTokenizer _tokenizer = tokenizer;
 
+    /// <summary>
+    /// Parses a comparison operator with optional modifiers.
+    /// </summary>
+    /// <returns>The parsed <see cref="ComparisonOperator"/>.</returns>
+    /// <exception cref="SyntaxErrorException">Thrown if the operator or modifiers are invalid.</exception>
     public ComparisonOperator Parse()
     {
         var token = _tokenizer.NextNonWhitespaceToken();

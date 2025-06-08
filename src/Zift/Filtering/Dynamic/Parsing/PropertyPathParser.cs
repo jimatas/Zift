@@ -1,9 +1,19 @@
 ﻿namespace Zift.Filtering.Dynamic.Parsing;
 
+/// <summary>
+/// Parses a dotted property path with optional quantifiers or projections (e.g., <c>Product.Reviews:count</c>).
+/// </summary>
+/// <param name="tokenizer">The tokenizer providing the input tokens.</param>
 internal class PropertyPathParser(ExpressionTokenizer tokenizer)
 {
     private readonly ExpressionTokenizer _tokenizer = tokenizer;
 
+    /// <summary>
+    /// Parses a property path starting from the specified token.
+    /// </summary>
+    /// <param name="firstToken">The initial identifier token of the path.</param>
+    /// <returns>The parsed <see cref="PropertyPath"/>.</returns>
+    /// <exception cref="SyntaxErrorException">Thrown if the path syntax is invalid.</exception>
     public PropertyPath Parse(SyntaxToken firstToken)
     {
         var segments = new List<PropertyPathSegment>();

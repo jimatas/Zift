@@ -1,11 +1,18 @@
 ﻿namespace Zift.Filtering.Dynamic.Parsing;
 
+/// <summary>
+/// Tokenizes a dynamic filter expression into a sequence of <see cref="SyntaxToken"/> values.
+/// </summary>
+/// <param name="expression">The filter expression to tokenize.</param>
 public class ExpressionTokenizer(string expression)
 {
     private readonly string _expression = expression;
     private int _position;
     private SyntaxToken? _lookaheadToken;
 
+    /// <summary>
+    /// Retrieves the next token in the expression.
+    /// </summary>
     public SyntaxToken NextToken()
     {
         if (TryGetLookaheadToken(out var token))
@@ -29,6 +36,9 @@ public class ExpressionTokenizer(string expression)
         return HandleUnknownOrEndToken();
     }
 
+    /// <summary>
+    /// Returns the next token without advancing the tokenizer.
+    /// </summary>
     public SyntaxToken PeekToken()
     {
         if (!_lookaheadToken.HasValue)

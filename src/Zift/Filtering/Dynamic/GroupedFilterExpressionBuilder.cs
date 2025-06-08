@@ -5,6 +5,10 @@ internal class GroupedFilterExpressionBuilder<T>(FilterGroup group, FilterOption
     private readonly FilterGroup _group = group;
     private readonly FilterOptions? _options = options;
 
+    /// <summary>
+    /// Builds a LINQ expression that evaluates the logical combination of filter terms in the group.
+    /// </summary>
+    /// <returns>An expression that evaluates the filter group against elements of type <typeparamref name="T"/>.</returns>
     public Expression<Func<T, bool>> BuildExpression()
     {
         var parameter = Expression.Parameter(typeof(T), ParameterNameGenerator.FromType<T>());
