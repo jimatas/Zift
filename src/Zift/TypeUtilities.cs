@@ -7,8 +7,7 @@ internal static class TypeUtilities
     /// </summary>
     /// <param name="type">The type to inspect.</param>
     /// <param name="propertyName">The name of the property to find.</param>
-    /// <returns>The matching <see cref="PropertyInfo"/>,
-    /// or <see langword="null"/> if none is found.</returns>
+    /// <returns>The matching <see cref="PropertyInfo"/>, or <see langword="null"/> if none is found.</returns>
     public static PropertyInfo? GetPropertyIgnoreCase(this Type type, string propertyName)
     {
         var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
