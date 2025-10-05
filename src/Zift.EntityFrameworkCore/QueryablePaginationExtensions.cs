@@ -27,6 +27,9 @@ public static class QueryablePaginationExtensions
 
         var list = await query.ToListAsync(cancellationToken).ConfigureAwait(false);
 
+        // Correct for stale count if data changed between count and fetch.
+        totalCount = Math.Max(totalCount, list.Count);
+
         return new Pagination.PaginatedList<T>(
             pagination.PageNumber,
             pagination.PageSize,

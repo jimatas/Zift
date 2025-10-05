@@ -23,6 +23,9 @@ public static class QueryablePaginationExtensions
 
         var list = query.ToList();
 
+        // Correct for stale count if data changed between count and fetch.
+        totalCount = Math.Max(totalCount, list.Count);
+
         return new Pagination.PaginatedList<T>(
             pagination.PageNumber,
             pagination.PageSize,
