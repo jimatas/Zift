@@ -14,6 +14,17 @@ public class SyntaxErrorExceptionTests
     }
 
     [Fact]
+    public void Constructor_WithLongTokenValue_TruncatesInMessage()
+    {
+        var tokenValue = new string('a', SyntaxErrorException.MaxTokenValueLength * 2);
+        var token = new SyntaxToken(SyntaxTokenType.Identifier, tokenValue, 0);
+        var ex = new SyntaxErrorException("A parse error occurred.", token);
+
+        Assert.Contains("aaa...", ex.Message);
+        Assert.DoesNotContain(tokenValue, ex.Message);
+    }
+
+    [Fact]
     public void Constructor_WithMessageOnly_TokenIsNull()
     {
         var ex = new SyntaxErrorException("A parse error occurred.");

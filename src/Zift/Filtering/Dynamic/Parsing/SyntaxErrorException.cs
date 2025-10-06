@@ -5,7 +5,7 @@
 /// </summary>
 public class SyntaxErrorException : FormatException
 {
-    private const int MaxTokenValueLength = 100;
+    internal const int MaxTokenValueLength = 100;
 
     /// <summary>
     /// Initializes a new instance of <see cref="SyntaxErrorException"/> with a specified error message.
