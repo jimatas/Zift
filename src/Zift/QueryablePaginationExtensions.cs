@@ -12,7 +12,8 @@ public static class QueryablePaginationExtensions
     /// <param name="query">The source query.</param>
     /// <param name="pagination">The pagination criteria to apply.</param>
     /// <returns>A paginated list of results.</returns>
-    public static Pagination.IPaginatedList<T> ToPaginatedList<T>(this IQueryable<T> query,
+    public static Pagination.IPaginatedList<T> ToPaginatedList<T>(
+        this IQueryable<T> query,
         Pagination.IPaginationCriteria<T> pagination)
     {
         pagination.ThrowIfNull();
@@ -23,14 +24,11 @@ public static class QueryablePaginationExtensions
 
         var list = query.ToList();
 
-        // Correct for stale count if data changed between count and fetch.
-        totalCount = Math.Max(totalCount, list.Count);
-
         return new Pagination.PaginatedList<T>(
             pagination.PageNumber,
             pagination.PageSize,
             list,
-            totalCount);
+            Math.Max(totalCount, list.Count)); // Correct for stale count between count & fetch.
     }
 
     /// <summary>
@@ -41,10 +39,9 @@ public static class QueryablePaginationExtensions
     /// <param name="pageNumber">The 1-based page number.</param>
     /// <param name="pageSize">The number of items per page.</param>
     /// <returns>A paginated list of results.</returns>
-    public static Pagination.IPaginatedList<T> ToPaginatedList<T>(this IQueryable<T> query,
+    public static Pagination.IPaginatedList<T> ToPaginatedList<T>(
+        this IQueryable<T> query,
         int pageNumber = 1,
-        int pageSize = Pagination.PaginationCriteria<T>.DefaultPageSize)
-    {
-        return query.ToPaginatedList(new Pagination.PaginationCriteria<T>(pageNumber, pageSize));
-    }
+        int pageSize = Pagination.PaginationCriteria<T>.DefaultPageSize) =>
+        query.ToPaginatedList(new Pagination.PaginationCriteria<T>(pageNumber, pageSize));
 }

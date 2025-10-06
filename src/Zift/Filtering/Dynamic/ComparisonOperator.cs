@@ -19,8 +19,6 @@ public readonly record struct ComparisonOperator(ComparisonOperatorType Type)
     public bool HasModifier(string modifier) => Modifiers.Contains(modifier);
 
     /// <inheritdoc/>
-    public override string ToString()
-    {
-        return Type + (Modifiers.Count > 0 ? ":" + string.Join(":", Modifiers) : string.Empty);
-    }
+    public override string ToString() =>
+        Type + (Modifiers.Count > 0 ? ":" + string.Join(":", Modifiers) : string.Empty);
 }

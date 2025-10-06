@@ -49,8 +49,6 @@ public class PaginatedList<T>(int pageNumber, int pageSize, IReadOnlyList<T> ite
     /// </summary>
     protected IReadOnlyList<T> Items { get; } = items.ThrowIfNull();
 
-    private static int CalculatePageCount(int totalCount, int pageSize)
-    {
-        return (int)Math.Ceiling((double)totalCount / pageSize);
-    }
+    private static int CalculatePageCount(int totalCount, int pageSize) =>
+        (int)Math.Ceiling((double)totalCount / pageSize);
 }

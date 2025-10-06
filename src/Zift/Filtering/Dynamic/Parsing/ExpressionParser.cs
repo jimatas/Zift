@@ -4,7 +4,7 @@
 /// Parses dynamic filter expressions into a <see cref="FilterGroup"/> syntax tree.
 /// </summary>
 /// <param name="tokenizer">The tokenizer providing the input tokens.</param>
-public class ExpressionParser(ExpressionTokenizer tokenizer)
+public sealed class ExpressionParser(ExpressionTokenizer tokenizer)
 {
     private readonly ExpressionTokenizer _tokenizer = tokenizer;
 
@@ -73,10 +73,9 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
 
     private static void ValidateTokenExpectation(bool expectLogicalOperator, SyntaxToken token)
     {
-        if (expectLogicalOperator
-            && token.Type is
-                not SyntaxTokenType.LogicalOperator
-                and not SyntaxTokenType.ParenthesisClose)
+        if (expectLogicalOperator &&
+            token.Type is not SyntaxTokenType.LogicalOperator
+            and not SyntaxTokenType.ParenthesisClose)
         {
             throw new SyntaxErrorException("Expected a logical operator between terms.", token);
         }
@@ -130,22 +129,14 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
         return new(property, @operator, value);
     }
 
-    private PropertyPath ParsePropertyPath(SyntaxToken token)
-    {
-        return new PropertyPathParser(_tokenizer).Parse(token);
-    }
+    private PropertyPath ParsePropertyPath(SyntaxToken token) =>
+        new PropertyPathParser(_tokenizer).Parse(token);
 
-    private ComparisonOperator ParseComparisonOperator()
-    {
-        return new ComparisonOperatorParser(_tokenizer).Parse();
-    }
+    private ComparisonOperator ParseComparisonOperator() =>
+        new ComparisonOperatorParser(_tokenizer).Parse();
 
-    private object? ParseValue()
-    {
-        var token = _tokenizer.NextNonWhitespaceToken();
-
-        return token.ToTypedValue();
-    }
+    private object? ParseValue() =>
+        _tokenizer.NextNonWhitespaceToken().ToTypedValue();
 
     private IReadOnlyList<object?> ParseValueList()
     {
@@ -166,6 +157,7 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
                 }
 
                 _tokenizer.NextNonWhitespaceToken();
+                
                 break;
             }
 
@@ -178,6 +170,7 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
 
                 _tokenizer.NextNonWhitespaceToken();
                 expectingValue = true;
+                
                 continue;
             }
 
@@ -215,8 +208,7 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
         groupBuilder.SetOperator(newOperator);
 
         token = _tokenizer.PeekNonWhitespaceToken();
-        if (token.Type is
-            not SyntaxTokenType.UnaryLogicalOperator
+        if (token.Type is not SyntaxTokenType.UnaryLogicalOperator
             and not SyntaxTokenType.ParenthesisOpen
             and not SyntaxTokenType.Identifier)
         {
@@ -224,10 +216,10 @@ public class ExpressionParser(ExpressionTokenizer tokenizer)
         }
     }
 
-    private class FilterGroupBuilder
+    private sealed class FilterGroupBuilder
     {
         private LogicalOperator? _operator;
-        private readonly List<FilterTerm> _terms = new();
+        private readonly List<FilterTerm> _terms = [];
 
         public bool IsEmpty => _terms.Count == 0;
 

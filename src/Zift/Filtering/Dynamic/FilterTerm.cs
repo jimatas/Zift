@@ -19,13 +19,11 @@ public abstract class FilterTerm
     /// <returns>A predicate expression for filtering elements.</returns>
     public abstract Expression<Func<T, bool>> ToExpression<T>(FilterOptions? options = null);
 
-    private class NegatedFilterTerm(FilterTerm term) : FilterTerm
+    private sealed class NegatedFilterTerm(FilterTerm term) : FilterTerm
     {
         public override FilterTerm Negate() => term;
 
-        public override Expression<Func<T, bool>> ToExpression<T>(FilterOptions? options = null)
-        {
-            return term.ToExpression<T>(options).Negate();
-        }
+        public override Expression<Func<T, bool>> ToExpression<T>(FilterOptions? options = null) =>
+            term.ToExpression<T>(options).Negate();
     }
 }

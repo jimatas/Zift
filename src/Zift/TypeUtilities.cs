@@ -12,8 +12,16 @@ internal static class TypeUtilities
     {
         var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
-        return properties.FirstOrDefault(prop => string.Equals(prop.Name, propertyName, StringComparison.Ordinal))
-            ?? properties.FirstOrDefault(prop => string.Equals(prop.Name, propertyName, StringComparison.OrdinalIgnoreCase));
+        // Prioritize exact (case-sensitive) matches first.
+        var caseSensitiveMatch = properties.FirstOrDefault(prop => string.Equals(prop.Name, propertyName, StringComparison.Ordinal));
+        if (caseSensitiveMatch is not null)
+        {
+            return caseSensitiveMatch;
+        }
+
+        // Fallback to case-insensitive match if no exact match found.
+        var caseInsensitiveMatch = properties.FirstOrDefault(prop => string.Equals(prop.Name, propertyName, StringComparison.OrdinalIgnoreCase));
+        return caseInsensitiveMatch;
     }
 
     /// <summary>
@@ -21,20 +29,17 @@ internal static class TypeUtilities
     /// </summary>
     /// <param name="type">The type to check.</param>
     /// <returns><see langword="true"/> if the type is nullable; otherwise, <see langword="false"/>.</returns>
-    public static bool IsNullableType(this Type type)
-    {
-        return !type.IsValueType || Nullable.GetUnderlyingType(type) is not null;
-    }
+    public static bool IsNullableType(this Type type) =>
+        !type.IsValueType || Nullable.GetUnderlyingType(type) is not null;
 
     /// <summary>
     /// Determines whether the type is a (non-string) collection.
     /// </summary>
     /// <param name="type">The type to check.</param>
     /// <returns><see langword="true"/> if the type is a collection; otherwise, <see langword="false"/>.</returns>
-    public static bool IsCollectionType(this Type type)
-    {
-        return type.GetInterfacesIncludingSelf().Contains(typeof(IEnumerable)) && type != typeof(string);
-    }
+    public static bool IsCollectionType(this Type type) =>
+        type.GetInterfacesIncludingSelf().Contains(typeof(IEnumerable)) &&
+        type != typeof(string);
 
     /// <summary>
     /// Gets the element type of a collection, if available.
@@ -49,7 +54,9 @@ internal static class TypeUtilities
         }
 
         return collectionType.GetInterfacesIncludingSelf()
-            .FirstOrDefault(iface => iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(IEnumerable<>))?
+            .FirstOrDefault(iface =>
+                iface.IsGenericType &&
+                iface.GetGenericTypeDefinition() == typeof(IEnumerable<>))?
             .GetGenericArguments().Single();
     }
 

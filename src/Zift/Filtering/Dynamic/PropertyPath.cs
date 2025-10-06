@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents a navigable path to a property, including optional quantifiers or projections on collection segments.
 /// </summary>
-public class PropertyPath
+public sealed class PropertyPath
 {
     private readonly IReadOnlyList<PropertyPathSegment> _segments;
 
@@ -36,10 +36,8 @@ public class PropertyPath
     /// </summary>
     /// <param name="includeModifiers">Whether to include quantifier or projection modifiers.</param>
     /// <returns>The formatted property path string.</returns>
-    public string ToString(bool includeModifiers)
-    {
-        return string.Join('.', _segments.Select(segment => segment.ToString(includeModifiers)));
-    }
+    public string ToString(bool includeModifiers) =>
+        string.Join('.', _segments.Select(segment => segment.ToString(includeModifiers)));
 
     /// <inheritdoc/>
     public override string ToString() => ToString(includeModifiers: false);

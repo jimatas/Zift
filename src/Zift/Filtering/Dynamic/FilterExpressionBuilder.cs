@@ -1,6 +1,6 @@
 ﻿namespace Zift.Filtering.Dynamic;
 
-internal class FilterExpressionBuilder<T>(FilterCondition condition, FilterOptions? options)
+internal sealed class FilterExpressionBuilder<T>(FilterCondition condition, FilterOptions? options)
 {
     private readonly FilterCondition _condition = condition;
     private readonly FilterOptions _options = options ?? new();
@@ -145,9 +145,9 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition, FilterOptio
         var effectiveType = Nullable.GetUnderlyingType(operandType) ?? operandType;
         var typedValue = EnsureValueOfType(value, effectiveType);
 
-        if (effectiveType == typeof(string)
-            && _condition.Operator.HasModifier("i")
-            && _condition.Operator.Type.SupportedModifiers.Contains("i"))
+        if (effectiveType == typeof(string) &&
+            _condition.Operator.HasModifier("i") &&
+            _condition.Operator.Type.SupportedModifiers.Contains("i"))
         {
             return typedValue.ToString()!.ToLower();
         }
@@ -170,21 +170,21 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition, FilterOptio
 
     private static object EnsureValueOfType(object value, Type expectedType)
     {
-        if (!expectedType.IsInstanceOfType(value))
+        if (expectedType.IsInstanceOfType(value))
         {
-            try
-            {
-                value = Convert.ChangeType(value, expectedType, CultureInfo.InvariantCulture);
-            }
-            catch (InvalidCastException)
-            {
-                var typeConverter = TypeDescriptor.GetConverter(expectedType);
-
-                value = typeConverter.ConvertFrom(context: null, CultureInfo.InvariantCulture, value)!;
-            }
+            return value;
         }
 
-        return value;
+        try
+        {
+            return Convert.ChangeType(value, expectedType, CultureInfo.InvariantCulture);
+        }
+        catch (InvalidCastException)
+        {
+            var typeConverter = TypeDescriptor.GetConverter(expectedType);
+
+            return typeConverter.ConvertFrom(context: null, CultureInfo.InvariantCulture, value)!;
+        }
     }
 
     private Expression BuildValueExpression(object? value, Type expectedType)
@@ -199,22 +199,18 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition, FilterOptio
         return Expression.Convert(wrappedValue.Body, expectedType);
     }
 
-    private bool IsCaseInsensitiveComparison(Expression leftOperand)
-    {
-        return leftOperand.Type == typeof(string)
-            && _condition.Operator.HasModifier("i")
-            && _condition.Operator.Type.SupportedModifiers.Contains("i");
-    }
+    private bool IsCaseInsensitiveComparison(Expression leftOperand) =>
+        leftOperand.Type == typeof(string) &&
+        _condition.Operator.HasModifier("i") &&
+        _condition.Operator.Type.SupportedModifiers.Contains("i");
 
-    private static bool IsDirectComparisonOperator(ComparisonOperatorType @operator)
-    {
-        return @operator == ComparisonOperatorType.Equal
-            || @operator == ComparisonOperatorType.NotEqual
-            || @operator == ComparisonOperatorType.GreaterThan
-            || @operator == ComparisonOperatorType.GreaterThanOrEqual
-            || @operator == ComparisonOperatorType.LessThan
-            || @operator == ComparisonOperatorType.LessThanOrEqual;
-    }
+    private static bool IsDirectComparisonOperator(ComparisonOperatorType @operator) =>
+        @operator == ComparisonOperatorType.Equal ||
+        @operator == ComparisonOperatorType.NotEqual ||
+        @operator == ComparisonOperatorType.GreaterThan ||
+        @operator == ComparisonOperatorType.GreaterThanOrEqual ||
+        @operator == ComparisonOperatorType.LessThan ||
+        @operator == ComparisonOperatorType.LessThanOrEqual;
 
     private Expression ConvertToLowercase(Expression operand)
     {
@@ -244,15 +240,11 @@ internal class FilterExpressionBuilder<T>(FilterCondition condition, FilterOptio
         }
     }
 
-    private static Expression NullGuarded(Expression subject, Expression innerExpression)
-    {
-        return Expression.AndAlso(IsNonNull(subject), innerExpression);
-    }
+    private static Expression NullGuarded(Expression subject, Expression innerExpression) =>
+        Expression.AndAlso(IsNonNull(subject), innerExpression);
 
-    private static Expression IsNonNull(Expression expression)
-    {
-        return expression.Type.IsNullableType()
+    private static Expression IsNonNull(Expression expression) =>
+        expression.Type.IsNullableType()
             ? Expression.NotEqual(expression, Expression.Constant(null, expression.Type))
             : Expression.Constant(true);
-    }
 }

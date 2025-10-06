@@ -16,8 +16,8 @@ internal static class PropertyAccessExtensions
 
         foreach (var nestedProperty in property.Split('.'))
         {
-            var propertyInfo = type.GetPropertyIgnoreCase(nestedProperty)
-                ?? throw new ArgumentException(
+            var propertyInfo = type.GetPropertyIgnoreCase(nestedProperty) ??
+                throw new ArgumentException(
                     $"No accessible property '{nestedProperty}' defined on type '{type.Name}'.",
                     nameof(property));
 
@@ -33,18 +33,14 @@ internal static class PropertyAccessExtensions
     /// </summary>
     /// <param name="property">The property selector expression.</param>
     /// <returns>The extracted property path, or <see langword="null"/> if it cannot be determined.</returns>
-    public static string? ToPropertyPath(this LambdaExpression property)
-    {
-        return BuildPropertyPath(property.Body);
-    }
+    public static string? ToPropertyPath(this LambdaExpression property) =>
+        BuildPropertyPath(property.Body);
 
-    private static string? BuildPropertyPath(Expression? expression)
-    {
-        return expression switch
+    private static string? BuildPropertyPath(Expression? expression) =>
+        expression switch
         {
             MemberExpression member => $"{BuildPropertyPath(member.Expression)}.{member.Member.Name}".TrimStart('.'),
             UnaryExpression { NodeType: ExpressionType.Convert } unary => BuildPropertyPath(unary.Operand),
             _ => null
         };
-    }
 }

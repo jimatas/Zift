@@ -4,7 +4,7 @@
 /// Tokenizes a dynamic filter expression into a sequence of <see cref="SyntaxToken"/> values.
 /// </summary>
 /// <param name="expression">The filter expression to tokenize.</param>
-public class ExpressionTokenizer(string expression)
+public sealed class ExpressionTokenizer(string expression)
 {
     private readonly string _expression = expression;
     private int _position;
@@ -116,8 +116,8 @@ public class ExpressionTokenizer(string expression)
 
     private static bool IsStartOfAnyToken(char c)
     {
-        return SyntaxRules.All.Any(
-            rule => rule.Symbol is { } symbol && symbol.StartsWith(c)
-                || rule.Pattern is { } pattern && pattern.IsMatch(c.ToString()));
+        return SyntaxRules.All.Any(rule =>
+            rule.Symbol is { } symbol && symbol.StartsWith(c) ||
+            rule.Pattern is { } pattern && pattern.IsMatch(c.ToString()));
     }
 }

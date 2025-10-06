@@ -4,7 +4,7 @@
 /// Parses a dotted property path with optional quantifiers or projections (e.g., <c>Product.Reviews:count</c>).
 /// </summary>
 /// <param name="tokenizer">The tokenizer providing the input tokens.</param>
-internal class PropertyPathParser(ExpressionTokenizer tokenizer)
+internal sealed class PropertyPathParser(ExpressionTokenizer tokenizer)
 {
     private readonly ExpressionTokenizer _tokenizer = tokenizer;
 

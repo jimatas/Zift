@@ -3,7 +3,7 @@
 /// <summary>
 /// A filter term representing a comparison between a property and a value using a specified operator.
 /// </summary>
-public class FilterCondition : FilterTerm
+public sealed class FilterCondition : FilterTerm
 {
     /// <summary>
     /// Initializes a new instance of <see cref="FilterCondition"/> using the specified property path,
@@ -40,10 +40,8 @@ public class FilterCondition : FilterTerm
     public object? Value { get; }
 
     /// <inheritdoc/>
-    public override Expression<Func<T, bool>> ToExpression<T>(FilterOptions? options = null)
-    {
-        return new FilterExpressionBuilder<T>(this, options).BuildExpression();
-    }
+    public override Expression<Func<T, bool>> ToExpression<T>(FilterOptions? options = null) =>
+        new FilterExpressionBuilder<T>(this, options).BuildExpression();
 
     private static void ValidateValueMultiplicity(ComparisonOperator @operator, object? value)
     {

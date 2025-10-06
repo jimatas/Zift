@@ -9,7 +9,8 @@ internal static class ArgumentValidator
     /// <param name="value">The value to check for <see langword="null"/>.</param>
     /// <param name="paramName">The name of the parameter to include in the exception message.</param>
     /// <returns>The value if it is not <see langword="null"/>.</returns>
-    public static T ThrowIfNull<T>([NotNull] this T? value,
+    public static T ThrowIfNull<T>(
+        [NotNull] this T? value,
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         ArgumentNullException.ThrowIfNull(value, paramName);
@@ -23,7 +24,8 @@ internal static class ArgumentValidator
     /// <param name="value">The string to check.</param>
     /// <param name="paramName">The name of the parameter to include in the exception message.</param>
     /// <returns>The string if it is not <see langword="null"/> or empty.</returns>
-    public static string ThrowIfNullOrEmpty([NotNull] this string? value,
+    public static string ThrowIfNullOrEmpty(
+        [NotNull] this string? value,
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(value, paramName);
@@ -39,7 +41,8 @@ internal static class ArgumentValidator
     /// <param name="value">The collection to check.</param>
     /// <param name="paramName">The name of the parameter to include in the exception message.</param>
     /// <returns>The collection if it is not <see langword="null"/> or empty.</returns>
-    public static IEnumerable<T> ThrowIfNullOrEmpty<T>([NotNull] this IEnumerable<T>? value,
+    public static IEnumerable<T> ThrowIfNullOrEmpty<T>(
+        [NotNull] this IEnumerable<T>? value,
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         value.ThrowIfNull(paramName);
@@ -60,7 +63,9 @@ internal static class ArgumentValidator
     /// <param name="other">The value to compare against.</param>
     /// <param name="paramName">The name of the parameter to include in the exception message.</param>
     /// <returns>The value if it is not less than <paramref name="other"/>.</returns>
-    public static T ThrowIfLessThan<T>(this T value, T other,
+    public static T ThrowIfLessThan<T>(
+        this T value,
+        T other,
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
         where T : IComparable<T>
     {

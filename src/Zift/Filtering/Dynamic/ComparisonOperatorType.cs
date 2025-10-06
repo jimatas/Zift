@@ -104,9 +104,8 @@ public readonly record struct ComparisonOperatorType(string Symbol)
     /// <param name="leftOperand">The left-hand operand.</param>
     /// <param name="rightOperand">The right-hand operand.</param>
     /// <returns>An expression representing the comparison.</returns>
-    public Expression ToComparisonExpression(Expression leftOperand, Expression rightOperand)
-    {
-        return this switch
+    public Expression ToComparisonExpression(Expression leftOperand, Expression rightOperand) =>
+        this switch
         {
             var op when op == Equal => Expression.Equal(leftOperand, rightOperand),
             var op when op == NotEqual => Expression.NotEqual(leftOperand, rightOperand),
@@ -124,14 +123,12 @@ public readonly record struct ComparisonOperatorType(string Symbol)
                 Expression.Call(typeof(Enumerable), nameof(Enumerable.Contains), [leftOperand.Type], rightOperand, leftOperand),
             _ => throw new NotSupportedException($"The operator '{this}' is not supported or cannot be applied to the given operands.")
         };
-    }
 
-    private static MethodInfo ResolveStringComparisonMethod(string name)
-    {
-        return typeof(string)
+    private static MethodInfo ResolveStringComparisonMethod(string name) =>
+        typeof(string)
             .GetMethods(BindingFlags.Instance | BindingFlags.Public)
-            .Single(method => method.Name == name
-                && method.GetParameters().Length == 1
-                && method.GetParameters().Single().ParameterType == typeof(string));
-    }
+            .Single(method =>
+                method.Name == name &&
+                method.GetParameters().Length == 1 &&
+                method.GetParameters().Single().ParameterType == typeof(string));
 }

@@ -11,16 +11,17 @@ public static class QuantifierModeExtensions
         [QuantifierMode.All] = "all"
     };
 
-    private static readonly Dictionary<string, QuantifierMode> _bySymbol = _symbols.ToDictionary(
-        pair => pair.Value,
-        pair => pair.Key,
-        StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, QuantifierMode> _bySymbol =
+        _symbols.ToDictionary(
+            kvp => kvp.Value,
+            kvp => kvp.Key,
+            StringComparer.OrdinalIgnoreCase);
 
     private static readonly Dictionary<(QuantifierMode, int), MethodInfo> _linqMethods = new()
     {
-        [(QuantifierMode.Any, 1)] = ResolveLinqMethod(nameof(Enumerable.Any), 1),
-        [(QuantifierMode.Any, 2)] = ResolveLinqMethod(nameof(Enumerable.Any), 2),
-        [(QuantifierMode.All, 2)] = ResolveLinqMethod(nameof(Enumerable.All), 2)
+        [(QuantifierMode.Any, 1)] = ResolveLinqMethod(nameof(Enumerable.Any), parameterCount: 1),
+        [(QuantifierMode.Any, 2)] = ResolveLinqMethod(nameof(Enumerable.Any), parameterCount: 2),
+        [(QuantifierMode.All, 2)] = ResolveLinqMethod(nameof(Enumerable.All), parameterCount: 2)
     };
 
     /// <summary>
@@ -28,10 +29,10 @@ public static class QuantifierModeExtensions
     /// </summary>
     /// <param name="quantifier">The quantifier mode.</param>
     /// <returns>The corresponding symbol string.</returns>
-    public static string ToSymbol(this QuantifierMode quantifier)
-    {
-        return _symbols.TryGetValue(quantifier, out var symbol) ? symbol : quantifier.ToString();
-    }
+    public static string ToSymbol(this QuantifierMode quantifier) =>
+        _symbols.TryGetValue(quantifier, out var symbol)
+            ? symbol
+            : quantifier.ToString();
 
     /// <summary>
     /// Attempts to parse a symbol into a <see cref="QuantifierMode"/>.
@@ -39,10 +40,8 @@ public static class QuantifierModeExtensions
     /// <param name="symbol">The symbol to parse (e.g., <c>"any"</c>).</param>
     /// <param name="result">When this method returns, contains the parsed <see cref="QuantifierMode"/>, if successful.</param>
     /// <returns><see langword="true"/> if parsing succeeded; otherwise, <see langword="false"/>.</returns>
-    public static bool TryParse(string symbol, out QuantifierMode result)
-    {
-        return _bySymbol.TryGetValue(symbol, out result);
-    }
+    public static bool TryParse(string symbol, out QuantifierMode result) =>
+        _bySymbol.TryGetValue(symbol, out result);
 
     /// <summary>
     /// Gets the corresponding LINQ method for the given quantifier and predicate usage.
@@ -60,10 +59,10 @@ public static class QuantifierModeExtensions
             : throw new NotSupportedException($"LINQ method not defined for quantifier mode {quantifier}.");
     }
 
-    private static MethodInfo ResolveLinqMethod(string methodName, int parameterCount)
-    {
-        return typeof(Enumerable)
+    private static MethodInfo ResolveLinqMethod(string methodName, int parameterCount) =>
+        typeof(Enumerable)
             .GetMethods(BindingFlags.Static | BindingFlags.Public)
-            .Single(method => method.Name == methodName && method.GetParameters().Length == parameterCount);
-    }
+            .Single(method =>
+                method.Name == methodName &&
+                method.GetParameters().Length == parameterCount);
 }

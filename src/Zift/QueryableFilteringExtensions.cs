@@ -12,10 +12,8 @@ public static class QueryableFilteringExtensions
     /// <param name="query">The source query.</param>
     /// <param name="filter">The filter criteria to apply.</param>
     /// <returns>The filtered query.</returns>
-    public static IQueryable<T> Filter<T>(this IQueryable<T> query, Filtering.IFilterCriteria<T> filter)
-    {
-        return filter.ThrowIfNull().ApplyTo(query);
-    }
+    public static IQueryable<T> Filter<T>(this IQueryable<T> query, Filtering.IFilterCriteria<T> filter) =>
+        filter.ThrowIfNull().ApplyTo(query);
 
     /// <summary>
     /// Applies the specified predicate to the query.
@@ -24,10 +22,8 @@ public static class QueryableFilteringExtensions
     /// <param name="query">The source query.</param>
     /// <param name="predicate">The predicate to filter by.</param>
     /// <returns>The filtered query.</returns>
-    public static IQueryable<T> Filter<T>(this IQueryable<T> query, Expression<Func<T, bool>> predicate)
-    {
-        return query.Filter(new Filtering.PredicateFilterCriteria<T>(predicate));
-    }
+    public static IQueryable<T> Filter<T>(this IQueryable<T> query, Expression<Func<T, bool>> predicate) =>
+        query.Filter(new Filtering.PredicateFilterCriteria<T>(predicate));
 
     /// <summary>
     /// Applies a dynamic filter expression to the query.
@@ -37,8 +33,9 @@ public static class QueryableFilteringExtensions
     /// <param name="expression">The dynamic filter expression.</param>
     /// <param name="options">Optional filter parsing options.</param>
     /// <returns>The filtered query.</returns>
-    public static IQueryable<T> Filter<T>(this IQueryable<T> query, string expression, Filtering.Dynamic.FilterOptions? options = null)
-    {
-        return query.Filter(new Filtering.DynamicFilterCriteria<T>(expression, options));
-    }
+    public static IQueryable<T> Filter<T>(
+        this IQueryable<T> query,
+        string expression,
+        Filtering.Dynamic.FilterOptions? options = null) =>
+        query.Filter(new Filtering.DynamicFilterCriteria<T>(expression, options));
 }

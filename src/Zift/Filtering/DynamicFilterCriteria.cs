@@ -20,8 +20,6 @@ public class DynamicFilterCriteria<T>(Dynamic.FilterTerm term, Dynamic.FilterOpt
     {
     }
 
-    private static Dynamic.FilterGroup ParseFilterTerm(string expression)
-    {
-        return new Dynamic.Parsing.ExpressionParser(new(expression)).Parse();
-    }
+    private static Dynamic.FilterGroup ParseFilterTerm(string expression) =>
+        new Dynamic.Parsing.ExpressionParser(new(expression)).Parse();
 }

@@ -15,10 +15,7 @@ public class SortCriterion<T> : SortCriterion, ISortCriterion<T>
     /// <param name="property">The name of the property to sort by.</param>
     /// <param name="direction">The sort direction.</param>
     public SortCriterion(string property, SortDirection direction)
-        : base(property, direction)
-    {
-        Property = property.ToPropertySelector<T>();
-    }
+        : base(property, direction) => Property = property.ToPropertySelector<T>();
 
     /// <summary>
     /// Initializes a new instance of <see cref="SortCriterion{T}"/> using a lambda expression and sort direction.
@@ -26,10 +23,7 @@ public class SortCriterion<T> : SortCriterion, ISortCriterion<T>
     /// <param name="property">The lambda expression for the property to sort by.</param>
     /// <param name="direction">The sort direction.</param>
     protected SortCriterion(LambdaExpression property, SortDirection direction)
-        : base(property.ThrowIfNull().ToPropertyPath() ?? NoPropertyName, direction)
-    {
-        Property = property;
-    }
+        : base(property.ThrowIfNull().ToPropertyPath() ?? NoPropertyName, direction) => Property = property;
 
     /// <inheritdoc/>
     public new LambdaExpression Property { get; }
@@ -78,10 +72,10 @@ public class SortCriterion<T> : SortCriterion, ISortCriterion<T>
                 : nameof(Queryable.ThenByDescending);
     }
 
-    private static MethodInfo ResolveSortMethod(string name)
-    {
-        return typeof(Queryable)
+    private static MethodInfo ResolveSortMethod(string name) =>
+        typeof(Queryable)
             .GetMethods()
-            .Single(method => method.Name == name && method.GetParameters().Length == 2);
-    }
+            .Single(method =>
+                method.Name == name &&
+                method.GetParameters().Length == 2);
 }
