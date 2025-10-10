@@ -85,10 +85,8 @@ public readonly record struct ComparisonOperatorType(string Symbol)
     /// <param name="symbol">The symbol to parse (e.g., <c>"=="</c>, <c>"%="</c>).</param>
     /// <param name="result">The parsed operator type.</param>
     /// <returns><see langword="true"/> if parsing was successful; otherwise, <see langword="false"/>.</returns>
-    public static bool TryParse(string symbol, out ComparisonOperatorType result)
-    {
-        return _bySymbol.TryGetValue(symbol, out result);
-    }
+    public static bool TryParse(string symbol, out ComparisonOperatorType result) =>
+        _bySymbol.TryGetValue(symbol, out result);
 
     /// <summary>
     /// The set of supported modifiers for this operator.
