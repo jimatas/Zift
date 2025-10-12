@@ -5,6 +5,8 @@
 /// </summary>
 public class SyntaxErrorException : FormatException
 {
+    internal const int MaxTokenValueLength = 100;
+
     /// <summary>
     /// Initializes a new instance of <see cref="SyntaxErrorException"/> with a specified error message.
     /// </summary>
@@ -20,10 +22,7 @@ public class SyntaxErrorException : FormatException
     /// <param name="message">The error message describing the parsing issue.</param>
     /// <param name="token">The token that caused the error.</param>
     public SyntaxErrorException(string message, SyntaxToken token)
-        : base(FormatMessageWithTokenDetails(message, token))
-    {
-        Token = token;
-    }
+        : base(FormatMessageWithTokenDetails(message, token)) => Token = token;
 
     /// <summary>
     /// The syntax token that caused the error, if available.
@@ -32,6 +31,13 @@ public class SyntaxErrorException : FormatException
 
     private static string FormatMessageWithTokenDetails(string message, SyntaxToken token)
     {
-        return $"{message}\r\n(Token: {token.Type}, Value: {token.Value}, Position: {token.Position})";
+        var value = token.Value ?? string.Empty;
+        if (value.Length > MaxTokenValueLength)
+        {
+            value = $"{value[..(MaxTokenValueLength - 3)]}...";
+        }
+
+        return $"{message}{Environment.NewLine}" +
+            $"(Token: {token.Type}, Value: {value}, Position: {token.Position})";
     }
 }

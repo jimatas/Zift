@@ -4,7 +4,7 @@
 /// Parses a comparison operator and any associated modifiers from the token stream.
 /// </summary>
 /// <param name="tokenizer">The tokenizer providing the input tokens.</param>
-internal class ComparisonOperatorParser(ExpressionTokenizer tokenizer)
+internal sealed class ComparisonOperatorParser(ExpressionTokenizer tokenizer)
 {
     private readonly ExpressionTokenizer _tokenizer = tokenizer;
 

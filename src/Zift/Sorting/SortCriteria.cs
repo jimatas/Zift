@@ -12,10 +12,7 @@ public class SortCriteria<T> : ISortCriteria<T>
     /// Adds a sort criterion to the list.
     /// </summary>
     /// <param name="criterion">The sort criterion to add.</param>
-    public void Add(ISortCriterion<T> criterion)
-    {
-        _criteria.Add(criterion.ThrowIfNull());
-    }
+    public void Add(ISortCriterion<T> criterion) => _criteria.Add(criterion.ThrowIfNull());
 
     /// <inheritdoc/>
     public IEnumerator<ISortCriterion<T>> GetEnumerator() => _criteria.GetEnumerator();

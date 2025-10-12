@@ -12,10 +12,8 @@ public static class QueryableSortExtensions
     /// <param name="query">The source query.</param>
     /// <param name="sort">The sort criteria to apply.</param>
     /// <returns>The sorted query.</returns>
-    public static IQueryable<T> SortBy<T>(this IQueryable<T> query, Sorting.ISortCriteria<T> sort)
-    {
-        return sort.ThrowIfNull().ApplyTo(query);
-    }
+    public static IQueryable<T> SortBy<T>(this IQueryable<T> query, Sorting.ISortCriteria<T> sort) =>
+        sort.ThrowIfNull().ApplyTo(query);
 
     /// <summary>
     /// Applies sort criteria to the query using a configuration delegate.

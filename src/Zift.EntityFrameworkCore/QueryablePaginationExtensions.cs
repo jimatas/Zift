@@ -27,14 +27,11 @@ public static class QueryablePaginationExtensions
 
         var list = await query.ToListAsync(cancellationToken).ConfigureAwait(false);
 
-        // Correct for stale count if data changed between count and fetch.
-        totalCount = Math.Max(totalCount, list.Count);
-
         return new Pagination.PaginatedList<T>(
             pagination.PageNumber,
             pagination.PageSize,
             list,
-            totalCount);
+            Math.Max(totalCount, list.Count)); // Correct for stale count between count & fetch.
     }
 
     /// <summary>
@@ -51,10 +48,8 @@ public static class QueryablePaginationExtensions
         this IQueryable<T> query,
         int pageNumber = 1,
         int pageSize = Pagination.PaginationCriteria<T>.DefaultPageSize,
-        CancellationToken cancellationToken = default)
-    {
-        return query.ToPaginatedListAsync(
+        CancellationToken cancellationToken = default) =>
+        query.ToPaginatedListAsync(
             new Pagination.PaginationCriteria<T>(pageNumber, pageSize),
             cancellationToken);
-    }
 }
