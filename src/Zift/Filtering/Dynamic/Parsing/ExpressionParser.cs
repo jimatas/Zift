@@ -157,7 +157,6 @@ public sealed class ExpressionParser(ExpressionTokenizer tokenizer)
                 }
 
                 _tokenizer.NextNonWhitespaceToken();
-                
                 break;
             }
 
@@ -170,7 +169,6 @@ public sealed class ExpressionParser(ExpressionTokenizer tokenizer)
 
                 _tokenizer.NextNonWhitespaceToken();
                 expectingValue = true;
-                
                 continue;
             }
 
