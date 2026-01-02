@@ -9,6 +9,7 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Version>0.7.0</Version>
     <Authors>Jim Atas</Authors>
+    <Description>Lightweight, composable .NET library for filtering and paginating IQueryable&lt;T&gt;, including cursor-based pagination.</Description>
     <PackageProjectUrl>https://github.com/jimatas/Zift</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jimatas/Zift</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

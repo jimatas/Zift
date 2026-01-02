@@ -10,6 +10,7 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Version>0.7.0</Version>
     <Authors>Jim Atas</Authors>
+    <Description>Entity Framework Core integration for Zift, enabling async execution and pagination of IQueryable&lt;T&gt;.</Description>
     <PackageProjectUrl>https://github.com/jimatas/Zift</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jimatas/Zift</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
