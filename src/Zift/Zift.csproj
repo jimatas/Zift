@@ -1,30 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IsPackable>true</IsPackable>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>0.6.3</Version>
+    <Version>0.7.0</Version>
     <Authors>Jim Atas</Authors>
-    <Description>Lightweight, composable .NET library for filtering, sorting, and paginating IQueryable&lt;T&gt; using expression- or string-based criteria.</Description>
-    <PackageTags>filtering sorting pagination queryable expressions linq</PackageTags>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageReadmeFile>Readme.md</PackageReadmeFile>
-    <PackageIcon>Zift_Logo_128x128.png</PackageIcon>
     <PackageProjectUrl>https://github.com/jimatas/Zift</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jimatas/Zift</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="../../Readme.md" Pack="true" PackagePath="" />
-    <None Include="../../docs/assets/Zift_Logo_128x128.png" Pack="true" PackagePath="" />
-  </ItemGroup>
-
+  
   <ItemGroup>
     <InternalsVisibleTo Include="Zift.EntityFrameworkCore" />
     <InternalsVisibleTo Include="Zift.Tests" />

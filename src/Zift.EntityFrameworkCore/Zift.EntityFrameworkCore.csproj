@@ -1,32 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>Zift</RootNamespace>
     <IsPackable>true</IsPackable>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>0.6.3</Version>
+    <Version>0.7.0</Version>
     <Authors>Jim Atas</Authors>
-    <Description>Entity Framework Core integration for Zift. Enables async query execution and pagination for IQueryable&lt;T&gt; using Zift's filtering, sorting, and pagination criteria.</Description>
-    <PackageTags>efcore entityframeworkcore filtering sorting pagination async queryable linq</PackageTags>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageReadmeFile>Readme.md</PackageReadmeFile>
-    <PackageIcon>Zift_Logo_128x128.png</PackageIcon>
     <PackageProjectUrl>https://github.com/jimatas/Zift</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jimatas/Zift</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="../../Readme.md" Pack="true" PackagePath="" />
-    <None Include="../../docs/assets/Zift_Logo_128x128.png" Pack="true" PackagePath="" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.15" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>
