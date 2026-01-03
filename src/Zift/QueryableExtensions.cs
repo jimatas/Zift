@@ -19,11 +19,15 @@ public static class QueryableExtensions
             return source;
         }
 
-        var predicateNode = new ExpressionParser(
-            new ExpressionTokenizer(whereExpression))
+        var predicateNode =
+            new ExpressionParser(
+                new ExpressionTokenizer(whereExpression))
             .Parse();
 
-        var predicate = new ExpressionBuilder<T>(options).Build(predicateNode);
+        var predicate =
+            new ExpressionBuilder<T>(
+                options ?? new ExpressionBuilderOptions())
+            .Build(predicateNode);
 
         return source.Where(predicate);
     }

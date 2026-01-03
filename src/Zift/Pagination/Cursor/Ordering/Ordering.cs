@@ -59,14 +59,16 @@ internal sealed class Ordering<T>
         return new Ordering<T>(reversedClauses);
     }
 
-    public static Ordering<T> Parse(string orderByClause)
+    public static Ordering<T> Parse(
+        string orderByClause,
+        OrderingOptions options)
     {
         if (string.IsNullOrWhiteSpace(orderByClause))
         {
             return Empty;
         }
 
-        var clauses = OrderingParser<T>.Parse(orderByClause);
+        var clauses = new OrderingParser<T>(options).Parse(orderByClause);
 
         return new Ordering<T>(clauses);
     }

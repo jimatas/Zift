@@ -2,9 +2,11 @@
 
 using Expressions;
 
-internal static class OrderingParser<T>
+internal sealed class OrderingParser<T>(OrderingOptions options)
 {
-    public static IReadOnlyList<OrderingClause<T>> Parse(string orderByClause)
+    private readonly OrderingOptions _options = options;
+
+    public IReadOnlyList<OrderingClause<T>> Parse(string orderByClause)
     {
         var clauses = new List<OrderingClause<T>>();
 
@@ -22,7 +24,7 @@ internal static class OrderingParser<T>
         return clauses;
     }
 
-    private static OrderingClause<T> ParseClause(string clauseText)
+    private OrderingClause<T> ParseClause(string clauseText)
     {
         var clauseParts = clauseText.Split(
             Array.Empty<char>(),
@@ -52,7 +54,7 @@ internal static class OrderingParser<T>
                 $"Invalid order-by direction '{directionText}'. Must be 'ASC' or 'DESC'.")
         };
 
-    private static LambdaExpression BuildKeySelector(string propertyPath)
+    private LambdaExpression BuildKeySelector(string propertyPath)
     {
         var parameter = Expression.Parameter(
             typeof(T),
@@ -60,7 +62,8 @@ internal static class OrderingParser<T>
 
         var propertyAccess = GuardedPropertyAccessBuilder.Build(
             parameter,
-            propertyPath.Split('.'));
+            propertyPath.Split('.'),
+            enableNullGuards: _options.EnableNullGuards);
 
         var body = propertyAccess.NullGuard is { } nullGuard
             ? Expression.Condition(

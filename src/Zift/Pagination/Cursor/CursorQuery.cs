@@ -59,9 +59,13 @@ internal sealed class CursorQuery<T> :
             });
     }
 
-    public IOrderedCursorQuery<T> OrderBy(string orderByClause)
+    public IOrderedCursorQuery<T> OrderBy(
+        string orderByClause,
+        OrderingOptions? options = null)
     {
-        var ordering = Ordering<T>.Parse(orderByClause);
+        var ordering = Ordering<T>.Parse(
+            orderByClause,
+            options ?? new OrderingOptions());
 
         if (ordering.IsEmpty)
         {

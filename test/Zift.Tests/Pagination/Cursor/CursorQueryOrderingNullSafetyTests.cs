@@ -1,7 +1,11 @@
 ﻿namespace Zift.Pagination.Cursor;
 
+using Ordering;
+
 public sealed class CursorQueryOrderingNullSafetyTests
 {
+    private readonly OrderingOptions _withNullGuards = new() { EnableNullGuards = true };
+
     [Fact]
     public void OrderBy_NestedPath_NullAtFirstLevel_DoesNotThrow()
     {
@@ -14,7 +18,7 @@ public sealed class CursorQueryOrderingNullSafetyTests
 
         var ex = Record.Exception(() =>
             source.AsCursorQuery()
-                .OrderBy("L1.L2.Value")
+                .OrderBy("L1.L2.Value", _withNullGuards)
                 .ToCursorPage(pageSize: 10));
 
         Assert.Null(ex);
@@ -32,7 +36,7 @@ public sealed class CursorQueryOrderingNullSafetyTests
 
         var ex = Record.Exception(() =>
             source.AsCursorQuery()
-                .OrderBy("L1.L2.Value")
+                .OrderBy("L1.L2.Value", _withNullGuards)
                 .ToCursorPage(pageSize: 10));
 
         Assert.Null(ex);
@@ -51,7 +55,7 @@ public sealed class CursorQueryOrderingNullSafetyTests
 
         var ordered = source
             .AsCursorQuery()
-            .OrderBy("L1.L2.Value")
+            .OrderBy("L1.L2.Value", _withNullGuards)
             .ToCursorPage(pageSize: 10);
 
         Assert.Equal(
@@ -71,7 +75,7 @@ public sealed class CursorQueryOrderingNullSafetyTests
 
         var ordered = source
             .AsCursorQuery()
-            .OrderBy("L1.L2.Value DESC")
+            .OrderBy("L1.L2.Value DESC", _withNullGuards)
             .ToCursorPage(pageSize: 10);
 
         Assert.Equal(

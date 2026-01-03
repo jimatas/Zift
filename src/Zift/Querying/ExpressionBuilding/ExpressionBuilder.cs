@@ -4,8 +4,7 @@ using Expressions;
 using Model;
 using Types;
 
-internal sealed class ExpressionBuilder<T>(
-    ExpressionBuilderOptions? options = null)
+internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
 {
     private static readonly Dictionary<Type, Func<string, object>> _stringParsers = new()
     {
@@ -29,7 +28,7 @@ internal sealed class ExpressionBuilder<T>(
             nameof(string.CompareTo),
             [typeof(string)])!;
 
-    private readonly ExpressionBuilderOptions _options = options ?? new();
+    private readonly ExpressionBuilderOptions _options = options;
 
     public Expression<Func<T, bool>> Build(PredicateNode node)
     {
