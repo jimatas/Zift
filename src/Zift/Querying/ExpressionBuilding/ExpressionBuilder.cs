@@ -39,7 +39,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
         var body = BuildPredicate(
             node,
             parameter,
-            PropertyAccessContext.RootParameter);
+            PropertyAccessContext.PredicateRoot);
 
         return Expression.Lambda<Func<T, bool>>(body, parameter);
     }
@@ -534,7 +534,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
 
     private enum PropertyAccessContext
     {
-        RootParameter,
+        PredicateRoot,
         QuantifierElement
     }
 }
