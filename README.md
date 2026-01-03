@@ -2,12 +2,12 @@
 
 Zift is a lightweight, composable query library for .NET that adds dynamic filtering and pagination on top of `IQueryable<T>`.
 
-It deliberately avoids being an ORM or query DSL replacement and instead focuses on composing dynamic filtering and pagination over existing `IQueryable<T>` queries using familiar LINQ concepts.
+It builds on existing `IQueryable<T>` queries to provide these capabilities using familiar LINQ operators such as `Where(...)` and `OrderBy(...)`.
 
 The library focuses on two core capabilities:
 
-- **Dynamic querying** – string-based filtering expressions supplied to `Where(...)`
-- **Pagination** – offset-based and cursor-based pagination
+- **Dynamic querying**: string-based filtering via `Where(...)`
+- **Pagination**: offset-based and cursor-based pagination
 
 ## Dynamic Querying
 
@@ -22,27 +22,39 @@ var categories = context.Categories
 ### Supported Syntax
 
 - **Property navigation**
-  `Product.Name`, `Reviews:any(Author.Email $= "@example.com")`
+  `Name`, `Author.Email`
 
 - **Logical operators**
   `&&`, `||`, `!`
 
+  Example: `Price > 100 && Price < 500`
+
 - **Comparison operators**
   `==`, `!=`, `<`, `<=`, `>`, `>=`
+
+  Example: `Rating >= 4`
 
 - **String operators**
   `%=` (contains), `^=` (starts with), `$=` (ends with)
 
+  Example: `Title %= "C#"`
+
 - **`in` operator** with list literals
+
+  Example: `Status in ["Active", "Pending"]`
 
 - **Quantifiers on collections**
   - `:any(predicate)`
   - `:all(predicate)`
   - `:any()` (existence check)
 
+  Example: `Reviews:any(Author.Email $= "@example.com")`
+
 - **Collection projections**
   - `:count`
 
+  Example: `Products:count >= 2`
+  
 ## Pagination
 
 Zift supports two pagination strategies that operate directly on `IQueryable<T>` and can be combined with dynamic querying:
