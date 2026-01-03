@@ -7,8 +7,8 @@ internal static class GuardedPropertyAccessBuilder
     public static GuardedPropertyAccess Build(
         Expression root,
         IReadOnlyList<string> propertyPath,
-        bool guardRoot = false,
-        bool enableNullGuards = true)
+        bool enableNullGuards = true,
+        bool guardRoot = false)
     {
         Expression current = root;
         Expression? nullGuard = null;

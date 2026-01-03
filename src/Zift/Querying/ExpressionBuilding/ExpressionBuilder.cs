@@ -208,8 +208,8 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
         GuardedPropertyAccessBuilder.Build(
             root,
             path.Segments,
-            guardRoot: context == PropertyAccessContext.QuantifierElement,
-            enableNullGuards: _options.EnableNullGuards);
+            _options.EnableNullGuards,
+            guardRoot: context == PropertyAccessContext.QuantifierElement);
 
     private GuardedPropertyAccess BuildProjectionAccess(
         ProjectionNode projection,

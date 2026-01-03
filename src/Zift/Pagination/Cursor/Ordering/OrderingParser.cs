@@ -63,7 +63,7 @@ internal sealed class OrderingParser<T>(OrderingOptions options)
         var propertyAccess = GuardedPropertyAccessBuilder.Build(
             parameter,
             propertyPath.Split('.'),
-            enableNullGuards: _options.EnableNullGuards);
+            _options.EnableNullGuards);
 
         var body = propertyAccess.NullGuard is { } nullGuard
             ? Expression.Condition(
