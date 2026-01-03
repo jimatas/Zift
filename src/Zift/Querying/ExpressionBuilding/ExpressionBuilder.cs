@@ -1,6 +1,8 @@
 ﻿namespace Zift.Querying.ExpressionBuilding;
 
+using Expressions;
 using Model;
+using Types;
 
 internal sealed class ExpressionBuilder<T>(
     ExpressionBuilderOptions? options = null)
@@ -35,27 +37,31 @@ internal sealed class ExpressionBuilder<T>(
             typeof(T),
             ParameterName.FromType<T>());
 
-        var body = BuildPredicate(node, parameter);
+        var body = BuildPredicate(
+            node,
+            parameter,
+            PropertyAccessContext.RootParameter);
 
         return Expression.Lambda<Func<T, bool>>(body, parameter);
     }
 
     private Expression BuildPredicate(
         PredicateNode node,
-        ParameterExpression parameter) =>
+        ParameterExpression parameter,
+        PropertyAccessContext context) =>
         node switch
         {
             LogicalNode logical =>
-                BuildLogical(logical, parameter),
+                BuildLogical(logical, parameter, context),
 
             ComparisonNode comparison =>
-                BuildComparison(comparison, parameter),
+                BuildComparison(comparison, parameter, context),
 
             QuantifierNode quantifier =>
-                BuildQuantifier(quantifier, parameter),
+                BuildQuantifier(quantifier, parameter, context),
 
             NotNode not =>
-                BuildNot(not, parameter),
+                BuildNot(not, parameter, context),
 
             _ => throw new NotSupportedException(
                 $"Unsupported predicate node: '{node.GetType().Name}'.")
@@ -63,7 +69,8 @@ internal sealed class ExpressionBuilder<T>(
 
     private Expression BuildLogical(
         LogicalNode node,
-        ParameterExpression parameter)
+        ParameterExpression parameter,
+        PropertyAccessContext context)
     {
         if (node.Terms.Count == 0)
         {
@@ -72,7 +79,7 @@ internal sealed class ExpressionBuilder<T>(
         }
 
         var expressions = node.Terms
-            .Select(term => BuildPredicate(term, parameter));
+            .Select(term => BuildPredicate(term, parameter, context));
 
         return node.Operator switch
         {
@@ -89,9 +96,10 @@ internal sealed class ExpressionBuilder<T>(
 
     private Expression BuildComparison(
         ComparisonNode node,
-        ParameterExpression parameter)
+        ParameterExpression parameter,
+        PropertyAccessContext context)
     {
-        var propertyAccess = BuildPropertyAccess(node.Left, parameter);
+        var propertyAccess = BuildPropertyAccess(node.Left, parameter, context);
 
         if (node.Right is NullLiteral)
         {
@@ -108,9 +116,10 @@ internal sealed class ExpressionBuilder<T>(
 
     private Expression BuildQuantifier(
         QuantifierNode node,
-        ParameterExpression parameter)
+        ParameterExpression parameter,
+        PropertyAccessContext context)
     {
-        var collectionPropertyAccess = BuildPropertyAccess(node.Source, parameter);
+        var collectionPropertyAccess = BuildPropertyAccess(node.Source, parameter, context);
         var collection = collectionPropertyAccess.Value;
 
         var elementType = collection.Type.GetCollectionElementType()
@@ -138,7 +147,11 @@ internal sealed class ExpressionBuilder<T>(
                 elementType,
                 ParameterName.FromType(elementType));
 
-            var predicateBody = BuildPredicate(node.Predicate, elementParameter);
+            var predicateBody = BuildPredicate(
+                node.Predicate,
+                elementParameter,
+                PropertyAccessContext.QuantifierElement);
+
             var predicate = Expression.Lambda(predicateBody, elementParameter);
 
             var methodName = node.Kind == QuantifierKind.Any
@@ -163,23 +176,27 @@ internal sealed class ExpressionBuilder<T>(
             : Expression.AndAlso(nullGuard, methodCall);
     }
 
-    private UnaryExpression BuildNot(NotNode node, ParameterExpression parameter)
+    private UnaryExpression BuildNot(
+        NotNode node,
+        ParameterExpression parameter,
+        PropertyAccessContext context)
     {
-        var inner = BuildPredicate(node.Inner, parameter);
+        var inner = BuildPredicate(node.Inner, parameter, context);
 
         return Expression.Not(inner);
     }
 
     private GuardedPropertyAccess BuildPropertyAccess(
         PropertyNode property,
-        ParameterExpression parameter) =>
+        ParameterExpression parameter,
+        PropertyAccessContext context) =>
         property switch
         {
             PropertyPathNode path =>
-                BuildPropertyPathAccess(path, parameter),
+                BuildPropertyPathAccess(path, parameter, context),
 
             ProjectionNode projection =>
-                BuildProjectionAccess(projection, parameter),
+                BuildProjectionAccess(projection, parameter, context),
 
             _ => throw new NotSupportedException(
                 $"Unsupported property node: '{property.GetType().Name}'.")
@@ -187,43 +204,20 @@ internal sealed class ExpressionBuilder<T>(
 
     private GuardedPropertyAccess BuildPropertyPathAccess(
         PropertyPathNode path,
-        Expression root)
-    {
-        Expression current = root;
-        Expression? nullGuard = null;
-
-        foreach (var segment in path.Segments)
-        {
-            nullGuard = CombineNullGuard(nullGuard, current);
-            current = Expression.Property(current, segment);
-        }
-
-        nullGuard = CombineNullGuard(nullGuard, current);
-
-        return new GuardedPropertyAccess(current, nullGuard);
-    }
-
-    private Expression? CombineNullGuard(Expression? existingGuard, Expression expression)
-    {
-        if (!_options.EnableNullGuards || !expression.Type.IsNullable())
-        {
-            return existingGuard;
-        }
-
-        var notNull = Expression.NotEqual(
-            expression,
-            Expression.Constant(null, expression.Type));
-
-        return existingGuard is null
-            ? notNull
-            : Expression.AndAlso(existingGuard, notNull);
-    }
+        Expression root,
+        PropertyAccessContext context) =>
+        GuardedPropertyAccessBuilder.Build(
+            root,
+            path.Segments,
+            guardRoot: context == PropertyAccessContext.QuantifierElement,
+            enableNullGuards: _options.EnableNullGuards);
 
     private GuardedPropertyAccess BuildProjectionAccess(
         ProjectionNode projection,
-        ParameterExpression parameter)
+        ParameterExpression parameter,
+        PropertyAccessContext context)
     {
-        var propertyAccess = BuildPropertyAccess(projection.Source, parameter);
+        var propertyAccess = BuildPropertyAccess(projection.Source, parameter, context);
 
         var projectedValue = projection.Projection switch
         {
@@ -537,5 +531,11 @@ internal sealed class ExpressionBuilder<T>(
         LambdaExpression wrapper = () => value;
 
         return Expression.Convert(wrapper.Body, targetType);
+    }
+
+    private enum PropertyAccessContext
+    {
+        RootParameter,
+        QuantifierElement
     }
 }

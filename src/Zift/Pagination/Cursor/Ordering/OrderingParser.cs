@@ -1,5 +1,7 @@
 ﻿namespace Zift.Pagination.Cursor.Ordering;
 
+using Expressions;
+
 internal static class OrderingParser<T>
 {
     public static IReadOnlyList<OrderingClause<T>> Parse(string orderByClause)
@@ -56,13 +58,17 @@ internal static class OrderingParser<T>
             typeof(T),
             ParameterName.FromType<T>());
 
-        Expression current = parameter;
+        var propertyAccess = GuardedPropertyAccessBuilder.Build(
+            parameter,
+            propertyPath.Split('.'));
 
-        foreach (var property in propertyPath.Split('.'))
-        {
-            current = Expression.Property(current, property);
-        }
+        var body = propertyAccess.NullGuard is { } nullGuard
+            ? Expression.Condition(
+                nullGuard,
+                propertyAccess.Value,
+                Expression.Default(propertyAccess.Value.Type))
+            : propertyAccess.Value;
 
-        return Expression.Lambda(current, parameter);
+        return Expression.Lambda(body, parameter);
     }
 }

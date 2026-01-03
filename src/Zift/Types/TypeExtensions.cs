@@ -1,4 +1,4 @@
-﻿namespace Zift.Querying.ExpressionBuilding;
+﻿namespace Zift.Types;
 
 internal static class TypeExtensions
 {

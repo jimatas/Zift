@@ -1,4 +1,4 @@
-﻿namespace Zift.Querying.ExpressionBuilding;
+﻿namespace Zift.Expressions;
 
 internal sealed record GuardedPropertyAccess(
     Expression Value,

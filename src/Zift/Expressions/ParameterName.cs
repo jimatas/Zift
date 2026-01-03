@@ -1,4 +1,4 @@
-﻿namespace Zift;
+﻿namespace Zift.Expressions;
 
 internal static class ParameterName
 {

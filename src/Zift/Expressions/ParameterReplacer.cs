@@ -1,4 +1,4 @@
-﻿namespace Zift.Pagination.Cursor.Execution;
+﻿namespace Zift.Expressions;
 
 internal static class ParameterReplacer
 {
