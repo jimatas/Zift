@@ -134,4 +134,39 @@ public sealed class CursorPaginationBehaviorTests
         Assert.Null(page.NextCursor);
         Assert.Null(page.PreviousCursor);
     }
+
+    [Fact]
+    public void ToCursorPage_WithCompositeOrdering_AppliesEqualityOnPreviousKeys()
+    {
+        var source = new[]
+        {
+            new TestClass { Int32Value = 1, StringValue = "A" },
+            new TestClass { Int32Value = 1, StringValue = "B" },
+            new TestClass { Int32Value = 2, StringValue = "A" },
+            new TestClass { Int32Value = 2, StringValue = "B" }
+        }.AsQueryable();
+
+        var firstPage = source
+            .AsCursorQuery()
+            .OrderBy(e => e.Int32Value)
+            .ThenBy(e => e.StringValue)
+            .ToCursorPage(pageSize: 2);
+
+        var cursor = firstPage.NextCursor!;
+        var decoded = CursorValues.Decode(cursor, [typeof(int), typeof(string)]);
+
+        Assert.Equal(1, decoded.Values[0]);
+        Assert.Equal("B", decoded.Values[1]);
+
+        var secondPage = source
+            .AsCursorQuery()
+            .OrderBy(e => e.Int32Value)
+            .ThenBy(e => e.StringValue)
+            .After(cursor)
+            .ToCursorPage(pageSize: 2);
+
+        Assert.Equal(
+            [(2, "A"), (2, "B")],
+            secondPage.Items.Select(e => (e.Int32Value, e.StringValue!)).ToArray());
+    }
 }
