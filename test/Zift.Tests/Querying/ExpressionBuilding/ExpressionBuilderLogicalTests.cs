@@ -42,7 +42,6 @@ public sealed class ExpressionBuilderLogicalTests
     [Fact]
     public void Build_NestedLogicalExpression_EvaluatesCorrectly()
     {
-        // (x > 5 AND x < 10) OR x == 20
         var predicate = BuildOr(
             new LogicalNode(
                 LogicalOperator.And,
