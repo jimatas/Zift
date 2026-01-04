@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>true</IsPackable>
@@ -23,7 +23,7 @@
     <None Include="../../README.md" Pack="true" PackagePath="" />
     <None Include="../../assets/Zift_Logo_128x128.png" Pack="true" PackagePath="" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <InternalsVisibleTo Include="Zift.EntityFrameworkCore" />
     <InternalsVisibleTo Include="Zift.Tests" />

@@ -35,7 +35,7 @@ internal static class ComparisonBuilder
             }
             else
             {
-                left = Expression.Property(property, nameof(Nullable<>.Value));
+                left = Expression.Property(property, "Value");
                 right = Expression.Constant(value, underlyingType!);
             }
         }
