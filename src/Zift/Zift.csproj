@@ -1,19 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IsPackable>true</IsPackable>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>0.6.3</Version>
+    <Version>0.7.0</Version>
     <Authors>Jim Atas</Authors>
-    <Description>Lightweight, composable .NET library for filtering, sorting, and paginating IQueryable&lt;T&gt; using expression- or string-based criteria.</Description>
-    <PackageTags>filtering sorting pagination queryable expressions linq</PackageTags>
+    <Description>Lightweight, composable .NET library for filtering and paginating IQueryable&lt;T&gt;, including cursor-based pagination.</Description>
+    <PackageTags>linq queryable dynamic-query filtering sorting pagination cursor-pagination offset-pagination</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageReadmeFile>Readme.md</PackageReadmeFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>Zift_Logo_128x128.png</PackageIcon>
     <PackageProjectUrl>https://github.com/jimatas/Zift</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jimatas/Zift</RepositoryUrl>
@@ -21,8 +20,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="../../Readme.md" Pack="true" PackagePath="" />
-    <None Include="../../docs/assets/Zift_Logo_128x128.png" Pack="true" PackagePath="" />
+    <None Include="../../README.md" Pack="true" PackagePath="" />
+    <None Include="../../assets/Zift_Logo_128x128.png" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup>

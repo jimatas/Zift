@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="src/Zift.EntityFrameworkCore/Zift.EntityFrameworkCore.csproj" Id="e540c7ae-816f-492b-b57c-0a5c5eb081ce" />
+  <Project Path="src/Zift/Zift.csproj" />
+  <Project Path="test/Zift.Tests.EntityFrameworkCore/Zift.Tests.EntityFrameworkCore.csproj" Id="9da4a760-5c34-48ef-bdf2-b84362e12b11" />
+  <Project Path="test/Zift.Tests/Zift.Tests.csproj" Id="41466cb0-5c8d-433a-80d0-ae3561b26e5f" />
+</Solution>
