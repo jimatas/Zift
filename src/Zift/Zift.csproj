@@ -10,10 +10,19 @@
     <Version>0.7.0</Version>
     <Authors>Jim Atas</Authors>
     <Description>Lightweight, composable .NET library for filtering and paginating IQueryable&lt;T&gt;, including cursor-based pagination.</Description>
+    <PackageTags>linq queryable dynamic-query filtering sorting pagination cursor-pagination offset-pagination</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>Zift_Logo_128x128.png</PackageIcon>
     <PackageProjectUrl>https://github.com/jimatas/Zift</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jimatas/Zift</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="" />
+    <None Include="../../assets/Zift_Logo_128x128.png" Pack="true" PackagePath="" />
+  </ItemGroup>
   
   <ItemGroup>
     <InternalsVisibleTo Include="Zift.EntityFrameworkCore" />

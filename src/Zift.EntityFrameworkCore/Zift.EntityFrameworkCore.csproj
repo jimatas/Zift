@@ -11,11 +11,20 @@
     <Version>0.7.0</Version>
     <Authors>Jim Atas</Authors>
     <Description>Entity Framework Core integration for Zift, enabling async execution and pagination of IQueryable&lt;T&gt;.</Description>
+    <PackageTags>linq queryable dynamic-query filtering sorting pagination cursor-pagination offset-pagination efcore entityframeworkcore</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>Zift_Logo_128x128.png</PackageIcon>
     <PackageProjectUrl>https://github.com/jimatas/Zift</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jimatas/Zift</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
-
+  
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="assets" />
+    <None Include="../../assets/Zift_Logo_128x128.png" Pack="true" PackagePath="assets" />
+  </ItemGroup>
+  
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
   </ItemGroup>
