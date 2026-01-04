@@ -22,27 +22,27 @@ internal static class ComparisonBuilder
         var underlyingType = Nullable.GetUnderlyingType(declaredType);
         var effectiveType = underlyingType ?? declaredType;
 
-        Expression leftOperand;
-        Expression rightOperand;
+        Expression left;
+        Expression right;
 
         var isNullable = underlyingType is not null;
         if (isNullable)
         {
             if (value is null)
             {
-                leftOperand = property;
-                rightOperand = Expression.Constant(null, declaredType);
+                left = property;
+                right = Expression.Constant(null, declaredType);
             }
             else
             {
-                leftOperand = Expression.Property(property, nameof(Nullable<>.Value));
-                rightOperand = Expression.Constant(value, underlyingType!);
+                left = Expression.Property(property, nameof(Nullable<>.Value));
+                right = Expression.Constant(value, underlyingType!);
             }
         }
         else
         {
-            leftOperand = property;
-            rightOperand = Expression.Constant(value, declaredType);
+            left = property;
+            right = Expression.Constant(value, declaredType);
         }
 
         if (value is null && isNullable)
@@ -53,15 +53,15 @@ internal static class ComparisonBuilder
         var comparison = effectiveType switch
         {
             var type when type == typeof(string) =>
-                BuildStringComparison(leftOperand, rightOperand, direction),
+                BuildStringComparison(left, right, direction),
 
             var type when type == typeof(bool) =>
-                BuildBooleanComparison(leftOperand, rightOperand, direction),
+                BuildBooleanComparison(left, right, direction),
 
             var type when type.IsEnum =>
-                BuildEnumComparison(leftOperand, rightOperand, type, direction),
+                BuildEnumComparison(left, right, type, direction),
 
-            _ => BuildScalarComparison(leftOperand, rightOperand, direction)
+            _ => BuildScalarComparison(left, right, direction)
         };
 
         return isNullable
@@ -86,11 +86,11 @@ internal static class ComparisonBuilder
     }
 
     private static BinaryExpression BuildStringComparison(
-        Expression leftOperand,
-        Expression rightOperand,
+        Expression left,
+        Expression right,
         OrderingDirection direction)
     {
-        var compareCall = Expression.Call(_compareMethods[typeof(string)], leftOperand, rightOperand);
+        var compareCall = Expression.Call(_compareMethods[typeof(string)], left, right);
 
         return direction == OrderingDirection.Ascending
             ? Expression.GreaterThan(compareCall, Expression.Constant(0))
@@ -98,11 +98,11 @@ internal static class ComparisonBuilder
     }
 
     private static BinaryExpression BuildBooleanComparison(
-        Expression leftOperand,
-        Expression rightOperand,
+        Expression left,
+        Expression right,
         OrderingDirection direction)
     {
-        var compareCall = Expression.Call(leftOperand, _compareMethods[typeof(bool)], rightOperand);
+        var compareCall = Expression.Call(left, _compareMethods[typeof(bool)], right);
 
         return direction == OrderingDirection.Ascending
             ? Expression.GreaterThan(compareCall, Expression.Constant(0))
@@ -110,27 +110,27 @@ internal static class ComparisonBuilder
     }
 
     private static BinaryExpression BuildEnumComparison(
-        Expression leftOperand,
-        Expression rightOperand,
+        Expression left,
+        Expression right,
         Type enumType,
         OrderingDirection direction)
     {
         var underlyingType = Enum.GetUnderlyingType(enumType);
 
         return BuildScalarComparison(
-           Expression.Convert(leftOperand, underlyingType),
-           Expression.Convert(rightOperand, underlyingType),
+           Expression.Convert(left, underlyingType),
+           Expression.Convert(right, underlyingType),
            direction);
     }
 
     private static BinaryExpression BuildScalarComparison(
-        Expression leftOperand,
-        Expression rightOperand,
+        Expression left,
+        Expression right,
         OrderingDirection direction)
     {
         return direction == OrderingDirection.Ascending
-            ? Expression.GreaterThan(leftOperand, rightOperand)
-            : Expression.LessThan(leftOperand, rightOperand);
+            ? Expression.GreaterThan(left, right)
+            : Expression.LessThan(left, right);
     }
 
     private static BinaryExpression ApplyNullOrdering(

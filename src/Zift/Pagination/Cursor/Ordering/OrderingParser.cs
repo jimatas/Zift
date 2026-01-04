@@ -60,17 +60,17 @@ internal sealed class OrderingParser<T>(OrderingOptions options)
             typeof(T),
             ParameterName.FromType<T>());
 
-        var propertyAccess = GuardedPropertyAccessBuilder.Build(
+        var (property, nullGuard) = GuardedPropertyAccessBuilder.Build(
             parameter,
             propertyPath.Split('.'),
             _options.EnableNullGuards);
 
-        var body = propertyAccess.NullGuard is { } nullGuard
+        var body = nullGuard is not null
             ? Expression.Condition(
                 nullGuard,
-                propertyAccess.Value,
-                Expression.Default(propertyAccess.Value.Type))
-            : propertyAccess.Value;
+                property,
+                Expression.Default(property.Type))
+            : property;
 
         return Expression.Lambda(body, parameter);
     }

@@ -29,20 +29,20 @@ internal static class GuardedPropertyAccessBuilder
 
     private static Expression? CombineNullGuard(
         Expression? existingGuard,
-        Expression expression,
+        Expression guardedExpression,
         bool enableNullGuards)
     {
-        if (!enableNullGuards || !expression.Type.IsNullable())
+        if (!enableNullGuards || !guardedExpression.Type.IsNullable())
         {
             return existingGuard;
         }
 
-        var notNull = Expression.NotEqual(
-            expression,
-            Expression.Constant(null, expression.Type));
+        var isNotNull = Expression.NotEqual(
+            guardedExpression,
+            Expression.Constant(null, guardedExpression.Type));
 
         return existingGuard is null
-            ? notNull
-            : Expression.AndAlso(existingGuard, notNull);
+            ? isNotNull
+            : Expression.AndAlso(existingGuard, isNotNull);
     }
 }

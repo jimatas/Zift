@@ -79,25 +79,25 @@ internal static class CursorPaginationExecutor<T>
                     rootParameter))
             .ToArray();
 
-        Expression? filter = null;
+        Expression? predicate = null;
 
         for (var i = 0; i < clauses.Count; i++)
         {
-            var predicate = BuildKeysetPredicate(i);
+            var keysetPredicate = BuildKeysetPredicate(i);
 
-            filter = filter is null
-                ? predicate
-                : Expression.OrElse(filter, predicate);
+            predicate = predicate is null
+                ? keysetPredicate
+                : Expression.OrElse(predicate, keysetPredicate);
         }
 
-        return Expression.Lambda<Func<T, bool>>(filter!, rootParameter);
+        return Expression.Lambda<Func<T, bool>>(predicate!, rootParameter);
 
         Expression BuildKeysetPredicate(int index)
         {
             var clause = clauses[index];
             var selectorBody = normalizedSelectorBodies[index];
 
-            Expression comparison =
+            var condition =
                 ComparisonBuilder.BuildComparison(
                     selectorBody,
                     cursor.Values[index],
@@ -110,10 +110,10 @@ internal static class CursorPaginationExecutor<T>
                         normalizedSelectorBodies[j],
                         cursor.Values[j]);
 
-                comparison = Expression.AndAlso(equality, comparison);
+                condition = Expression.AndAlso(equality, condition);
             }
 
-            return comparison;
+            return condition;
         }
     }
 

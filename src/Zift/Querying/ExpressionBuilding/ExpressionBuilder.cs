@@ -118,11 +118,11 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
         ParameterExpression parameter,
         PropertyAccessContext context)
     {
-        var collectionPropertyAccess = BuildPropertyAccess(node.Source, parameter, context);
-        var collection = collectionPropertyAccess.Value;
+        var (collection, nullGuard) = BuildPropertyAccess(node.Source, parameter, context);
 
         var elementType = collection.Type.GetCollectionElementType()
-            ?? throw new InvalidOperationException("Quantifiers can only be applied to collections.");
+            ?? throw new InvalidOperationException(
+                "Quantifiers can only be applied to collections.");
 
         MethodCallExpression methodCall;
 
@@ -165,7 +165,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
                 predicate);
         }
 
-        if (collectionPropertyAccess.NullGuard is not { } nullGuard)
+        if (nullGuard is null)
         {
             return methodCall;
         }
@@ -216,18 +216,18 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
         ParameterExpression parameter,
         PropertyAccessContext context)
     {
-        var propertyAccess = BuildPropertyAccess(projection.Source, parameter, context);
+        var (collection, nullGuard) = BuildPropertyAccess(projection.Source, parameter, context);
 
-        var projectedValue = projection.Projection switch
+        var projected = projection.Projection switch
         {
             CollectionProjection.Count =>
-                BuildCountProjection(propertyAccess.Value),
+                BuildCountProjection(collection),
 
             _ => throw new NotSupportedException(
                 $"Unsupported projection: '{projection.Projection}'.")
         };
 
-        return new GuardedPropertyAccess(projectedValue, propertyAccess.NullGuard);
+        return new GuardedPropertyAccess(projected, nullGuard);
     }
 
     private static MethodCallExpression BuildCountProjection(Expression collection)
@@ -247,17 +247,17 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
         GuardedPropertyAccess propertyAccess,
         ComparisonOperator comparisonOperator)
     {
-        var propertyValue = propertyAccess.Value;
+        var property = propertyAccess.Value;
 
-        if (!propertyValue.Type.IsNullable())
+        if (!property.Type.IsNullable())
         {
             throw new InvalidOperationException(
-                $"Null cannot be used for '{propertyValue.Type.Name}'.");
+                $"Null cannot be used for '{property.Type.Name}'.");
         }
 
         var isNull = Expression.Equal(
-            propertyValue,
-            Expression.Constant(null, propertyValue.Type));
+            property,
+            Expression.Constant(null, property.Type));
 
         Expression comparison = comparisonOperator switch
         {
@@ -283,38 +283,38 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
         ComparisonOperator comparisonOperator,
         LiteralNode literal)
     {
-        var propertyValue = propertyAccess.Value;
-        var propertyType = propertyValue.Type.GetEffectiveType();
+        var property = propertyAccess.Value;
+        var propertyType = property.Type.GetEffectiveType();
 
-        var comparisonValue = CreateLiteralExpression(literal, propertyValue.Type);
+        var comparisonValue = CreateLiteralExpression(literal, property.Type);
 
         Expression comparison;
 
         if (propertyType == typeof(string))
         {
-            comparison = BuildStringComparison(comparisonOperator, propertyValue, comparisonValue);
+            comparison = BuildStringComparison(comparisonOperator, property, comparisonValue);
         }
         else
         {
             comparison = comparisonOperator switch
             {
                 ComparisonOperator.Equal =>
-                    Expression.Equal(propertyValue, comparisonValue),
+                    Expression.Equal(property, comparisonValue),
 
                 ComparisonOperator.NotEqual =>
-                    Expression.NotEqual(propertyValue, comparisonValue),
+                    Expression.NotEqual(property, comparisonValue),
 
                 ComparisonOperator.LessThan when propertyType.IsOrderable() =>
-                    Expression.LessThan(propertyValue, comparisonValue),
+                    Expression.LessThan(property, comparisonValue),
 
                 ComparisonOperator.LessThanOrEqual when propertyType.IsOrderable() =>
-                    Expression.LessThanOrEqual(propertyValue, comparisonValue),
+                    Expression.LessThanOrEqual(property, comparisonValue),
 
                 ComparisonOperator.GreaterThan when propertyType.IsOrderable() =>
-                    Expression.GreaterThan(propertyValue, comparisonValue),
+                    Expression.GreaterThan(property, comparisonValue),
 
                 ComparisonOperator.GreaterThanOrEqual when propertyType.IsOrderable() =>
-                    Expression.GreaterThanOrEqual(propertyValue, comparisonValue),
+                    Expression.GreaterThanOrEqual(property, comparisonValue),
 
                 _ => throw new NotSupportedException(
                     $"Operator '{comparisonOperator}' is not supported for type '{propertyType.Name}'.")
@@ -328,56 +328,56 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
 
     private static Expression BuildStringComparison(
         ComparisonOperator comparisonOperator,
-        Expression propertyValue,
+        Expression property,
         Expression comparisonValue) =>
         comparisonOperator switch
         {
             ComparisonOperator.Contains =>
                 Expression.Call(
-                    propertyValue,
+                    property,
                     nameof(string.Contains),
                     Type.EmptyTypes,
                     comparisonValue),
 
             ComparisonOperator.StartsWith =>
                 Expression.Call(
-                    propertyValue,
+                    property,
                     nameof(string.StartsWith),
                     Type.EmptyTypes,
                     comparisonValue),
 
             ComparisonOperator.EndsWith =>
                 Expression.Call(
-                    propertyValue,
+                    property,
                     nameof(string.EndsWith),
                     Type.EmptyTypes,
                     comparisonValue),
 
             ComparisonOperator.GreaterThan =>
                 Expression.GreaterThan(
-                    Expression.Call(propertyValue, _stringCompareTo, comparisonValue),
+                    Expression.Call(property, _stringCompareTo, comparisonValue),
                     Expression.Constant(0)),
 
             ComparisonOperator.GreaterThanOrEqual =>
                 Expression.GreaterThanOrEqual(
-                    Expression.Call(propertyValue, _stringCompareTo, comparisonValue),
+                    Expression.Call(property, _stringCompareTo, comparisonValue),
                     Expression.Constant(0)),
 
             ComparisonOperator.LessThan =>
                 Expression.LessThan(
-                    Expression.Call(propertyValue, _stringCompareTo, comparisonValue),
+                    Expression.Call(property, _stringCompareTo, comparisonValue),
                     Expression.Constant(0)),
 
             ComparisonOperator.LessThanOrEqual =>
                 Expression.LessThanOrEqual(
-                    Expression.Call(propertyValue, _stringCompareTo, comparisonValue),
+                    Expression.Call(property, _stringCompareTo, comparisonValue),
                     Expression.Constant(0)),
 
             ComparisonOperator.Equal =>
-                Expression.Equal(propertyValue, comparisonValue),
+                Expression.Equal(property, comparisonValue),
 
             ComparisonOperator.NotEqual =>
-                Expression.NotEqual(propertyValue, comparisonValue),
+                Expression.NotEqual(property, comparisonValue),
 
             _ => throw new NotSupportedException(
                 $"Operator '{comparisonOperator}' is not supported for string.")
@@ -392,13 +392,13 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
             throw new NotSupportedException("The 'in' operator requires a list literal.");
         }
 
-        var propertyValue = propertyAccess.Value;
+        var property = propertyAccess.Value;
 
         var containsNull = list.Items.Any(i => i is NullLiteral);
-        if (containsNull && !propertyValue.Type.IsNullable())
+        if (containsNull && !property.Type.IsNullable())
         {
             throw new InvalidOperationException(
-                $"Null cannot be used for '{propertyValue.Type.Name}'.");
+                $"Null cannot be used for '{property.Type.Name}'.");
         }
 
         var nonNullItems = list.Items
@@ -409,31 +409,31 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
 
         if (nonNullItems.Count == 0)
         {
-            comparison = propertyValue.Type.IsNullable()
+            comparison = property.Type.IsNullable()
                 ? Expression.Equal(
-                    propertyValue,
-                    Expression.Constant(null, propertyValue.Type))
+                    property,
+                    Expression.Constant(null, property.Type))
                 : Expression.Constant(false);
         }
         else
         {
             var candidateValues = CreateListLiteralExpression(
                 new ListLiteral(nonNullItems),
-                propertyValue.Type);
+                property.Type);
 
             comparison = Expression.Call(
                 typeof(Enumerable),
                 nameof(Enumerable.Contains),
-                [propertyValue.Type],
+                [property.Type],
                 candidateValues,
-                propertyValue);
+                property);
 
             if (containsNull)
             {
                 comparison = Expression.OrElse(
                     Expression.Equal(
-                        propertyValue,
-                        Expression.Constant(null, propertyValue.Type)),
+                        property,
+                        Expression.Constant(null, property.Type)),
                     comparison);
             }
         }
