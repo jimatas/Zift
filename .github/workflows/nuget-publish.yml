@@ -17,16 +17,16 @@ jobs:
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'
+        dotnet-version: '10.0.x'
         
     - name: Restore dependencies
       run: dotnet restore
       
     - name: Build solution
-      run: dotnet build Zift.sln --configuration Release --no-restore
+      run: dotnet build Zift.slnx --configuration Release --no-restore
       
     - name: Pack solution projects
-      run: dotnet pack Zift.sln --configuration Release --no-build --output ./nupkg
+      run: dotnet pack Zift.slnx --configuration Release --no-build --output ./nupkg
       
     - name: Push packages to NuGet
       run: dotnet nuget push "nupkg/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
