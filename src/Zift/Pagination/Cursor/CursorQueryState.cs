@@ -2,7 +2,7 @@
 
 using Ordering;
 
-internal record CursorQueryState<T>(
+internal sealed record CursorQueryState<T>(
     Ordering<T> Ordering,
     string? Cursor,
     CursorDirection Direction)
