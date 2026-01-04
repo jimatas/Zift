@@ -2,7 +2,7 @@
 
 Zift is a lightweight, composable query library for .NET that adds dynamic filtering and pagination on top of `IQueryable<T>`.
 
-It builds on existing `IQueryable<T>` queries to provide these capabilities using familiar LINQ operators such as `Where(...)` and `OrderBy(...)`.
+It builds on existing `IQueryable<T>` queries using familiar LINQ operators such as `Where(...)` and `OrderBy(...)`.
 
 The library focuses on two core capabilities:
 
@@ -28,6 +28,11 @@ var categories = context.Categories
   `&&`, `||`, `!`
 
   Example: `Price > 100 && Price < 500`
+
+- **Grouping**
+  `(...)` for evaluation order
+
+  Example: `(Price > 100 && Price < 500) || IsFeatured == true`
 
 - **Comparison operators**
   `==`, `!=`, `<`, `<=`, `>`, `>=`
@@ -103,10 +108,10 @@ Cursor pagination requires at least one ordering clause to be provided; otherwis
 To continue navigation from a previously retrieved page, use the cursor values returned by that page.
 
 ```csharp
-// Forward
+// Forward traversal
 query.After(page.NextCursor);
 
-// Backward
+// Backward traversal
 query.Before(page.PreviousCursor);
 ```
 
@@ -116,6 +121,6 @@ query.Before(page.PreviousCursor);
 page.Items
 page.HasNext
 page.HasPrevious
-page.NextCursor      // opaque cursor for forward traversal
-page.PreviousCursor  // opaque cursor for backward traversal
+page.NextCursor
+page.PreviousCursor
 ```
