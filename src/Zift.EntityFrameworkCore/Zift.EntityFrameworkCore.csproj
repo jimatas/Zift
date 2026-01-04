@@ -21,8 +21,8 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <None Include="../../README.md" Pack="true" PackagePath="assets" />
-    <None Include="../../assets/Zift_Logo_128x128.png" Pack="true" PackagePath="assets" />
+    <None Include="../../README.md" Pack="true" PackagePath="" />
+    <None Include="../../assets/Zift_Logo_128x128.png" Pack="true" PackagePath="" />
   </ItemGroup>
   
   <ItemGroup>
