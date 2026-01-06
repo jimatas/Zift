@@ -3,7 +3,7 @@
 using Fixture;
 using Ordering;
 
-public sealed class CursorQueryOrderingTests
+public sealed class CursorQueryTests
 {
     [Fact]
     public void AsCursorQuery_NullSource_ThrowsArgumentNullException()
@@ -77,15 +77,18 @@ public sealed class CursorQueryOrderingTests
         Assert.Equal(typeof(int), clause.KeySelector.ReturnType);
     }
 
-    [Fact]
-    public void OrderBy_EmptyString_ThrowsInvalidOperationException()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void OrderBy_NullOrWhiteSpaceClause_ThrowsArgumentException(string? orderBy)
     {
         var source = Array.Empty<TestClass>().AsQueryable();
         var query = source.AsCursorQuery();
 
-        var ex = Assert.Throws<InvalidOperationException>(() => query.OrderBy(string.Empty));
+        var ex = Assert.Throws<ArgumentException>(() => query.OrderBy(orderBy!));
 
-        Assert.Contains("Order-by expression must contain at least one clause", ex.Message);
+        Assert.Contains("The order-by expression must contain at least one ordering clause.", ex.Message);
     }
 
     [Fact]
@@ -106,7 +109,7 @@ public sealed class CursorQueryOrderingTests
 
         Assert.Same(source, src);
         Assert.Equal(2, state.Ordering.Clauses.Count);
-        
+
         Assert.Equal(OrderingDirection.Ascending, state.Ordering.Clauses[0].Direction);
         Assert.Equal(typeof(int), state.Ordering.Clauses[0].KeySelector.ReturnType);
 
@@ -138,6 +141,72 @@ public sealed class CursorQueryOrderingTests
 
         Assert.Equal(OrderingDirection.Descending, state.Ordering.Clauses[1].Direction);
         Assert.Equal(typeof(string), state.Ordering.Clauses[1].KeySelector.ReturnType);
+    }
+
+    [Fact]
+    public void After_WithCursor_SetsDirectionAndCursor()
+    {
+        var source = Array.Empty<TestClass>().AsQueryable();
+
+        var ordered = source
+            .AsCursorQuery()
+            .OrderBy(e => e.Int32Value);
+
+        var executable = ordered.After("cursor-1");
+
+        var (state, src) = GetState<TestClass>(executable);
+
+        Assert.Same(source, src);
+        Assert.Equal(CursorDirection.After, state.Direction);
+        Assert.Equal("cursor-1", state.Cursor);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void After_NullOrWhiteSpaceCursor_ThrowsArgumentException(string? cursor)
+    {
+        var source = Array.Empty<TestClass>().AsQueryable();
+
+        var ordered = source
+            .AsCursorQuery()
+            .OrderBy(e => e.Int32Value);
+
+        Assert.ThrowsAny<ArgumentException>(() => ordered.After(cursor!));
+    }
+
+    [Fact]
+    public void Before_WithCursor_SetsDirectionAndCursor()
+    {
+        var source = Array.Empty<TestClass>().AsQueryable();
+
+        var ordered = source
+            .AsCursorQuery()
+            .OrderBy(e => e.Int32Value);
+
+        var executable = ordered.Before("cursor-1");
+
+        var (state, src) = GetState<TestClass>(executable);
+
+        Assert.Same(source, src);
+        Assert.Equal(CursorDirection.Before, state.Direction);
+        Assert.Equal("cursor-1", state.Cursor);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Before_NullOrWhiteSpaceCursor_ThrowsArgumentException(string? cursor)
+    {
+        var source = Array.Empty<TestClass>().AsQueryable();
+
+        var ordered = source
+            .AsCursorQuery()
+            .OrderBy(e => e.Int32Value);
+
+        Assert.ThrowsAny<ArgumentException>(() => ordered.Before(cursor!));
     }
 
     private static (CursorQueryState<T> State, IQueryable<T> Source) GetState<T>(object query)

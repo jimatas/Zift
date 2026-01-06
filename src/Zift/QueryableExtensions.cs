@@ -57,8 +57,8 @@ public static class QueryableExtensions
 
         return new Page<T>(
             items,
-            totalItemCount,
             pageNumber,
-            pageSize);
+            pageSize,
+            totalItemCount);
     }
 }

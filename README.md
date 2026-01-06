@@ -88,8 +88,9 @@ page.Items
 page.PageNumber
 page.PageSize
 page.PageCount
-page.HasNext
-page.HasPrevious
+page.HasNextPage
+page.HasPreviousPage
+page.TotalItemCount
 ```
 
 ### Cursor Pagination
@@ -109,22 +110,32 @@ var page = context.Products
 
 Cursor pagination requires at least one ordering clause to be provided; otherwise execution fails.
 
-To continue navigation from a previously retrieved page, use the cursor values returned by that page.
+To continue navigation from a previously retrieved page, use the cursor values exposed by that page as anchors for further traversal.
 
 ```csharp
 // Forward traversal
-query.After(page.NextCursor);
+if (page.HasNextPage)
+{
+    var nextPage = query
+        .After(page.EndCursor)
+        .ToCursorPage(pageSize: 25);
+}
 
 // Backward traversal
-query.Before(page.PreviousCursor);
+if (page.HasPreviousPage)
+{
+    var previousPage = query
+        .Before(page.StartCursor)
+        .ToCursorPage(pageSize: 25);
+}
 ```
 
 #### Result shape
 
 ```csharp
 page.Items
-page.HasNext
-page.HasPrevious
-page.NextCursor
-page.PreviousCursor
+page.StartCursor
+page.EndCursor
+page.HasNextPage
+page.HasPreviousPage
 ```

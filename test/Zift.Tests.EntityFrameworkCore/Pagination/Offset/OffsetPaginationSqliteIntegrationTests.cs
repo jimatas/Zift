@@ -21,8 +21,8 @@ public sealed class OffsetPaginationSqliteIntegrationTests
         Assert.Equal(1, page.PageSize);
         Assert.Equal(2, page.PageCount);
 
-        Assert.True(page.HasNext);
-        Assert.False(page.HasPrevious);
+        Assert.True(page.HasNextPage);
+        Assert.False(page.HasPreviousPage);
     }
 
     [Fact]
@@ -41,8 +41,8 @@ public sealed class OffsetPaginationSqliteIntegrationTests
         Assert.Equal(2, page.PageNumber);
         Assert.Equal(2, page.PageCount);
 
-        Assert.False(page.HasNext);
-        Assert.True(page.HasPrevious);
+        Assert.False(page.HasNextPage);
+        Assert.True(page.HasPreviousPage);
     }
 
     [Fact]
@@ -62,8 +62,8 @@ public sealed class OffsetPaginationSqliteIntegrationTests
         Assert.Equal(1, page.PageSize);
         Assert.Equal(2, page.PageCount);
 
-        Assert.True(page.HasNext);
-        Assert.False(page.HasPrevious);
+        Assert.True(page.HasNextPage);
+        Assert.False(page.HasPreviousPage);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public sealed class OffsetPaginationSqliteIntegrationTests
         Assert.Equal(2, page.PageNumber);
         Assert.Equal(2, page.PageCount);
 
-        Assert.False(page.HasNext);
-        Assert.True(page.HasPrevious);
+        Assert.False(page.HasNextPage);
+        Assert.True(page.HasPreviousPage);
     }
 }

@@ -4,22 +4,26 @@ public sealed class CursorPage<T> : IPagedResult<T>
 {
     internal CursorPage(
         IReadOnlyList<T> items,
-        string? nextCursor,
-        string? previousCursor)
+        string? startCursor,
+        string? endCursor,
+        bool hasNextPage,
+        bool hasPreviousPage)
     {
         Items = items;
-        NextCursor = nextCursor;
-        PreviousCursor = previousCursor;
+        StartCursor = startCursor;
+        EndCursor = endCursor;
+        HasNextPage = hasNextPage;
+        HasPreviousPage = hasPreviousPage;
     }
 
     public IReadOnlyList<T> Items { get; }
 
-    public string? NextCursor { get; }
-    public string? PreviousCursor { get; }
+    public string? StartCursor { get; }
+    public string? EndCursor { get; }
 
-    [MemberNotNullWhen(true, nameof(NextCursor))]
-    public bool HasNext => NextCursor is not null;
+    [MemberNotNullWhen(true, nameof(EndCursor))]
+    public bool HasNextPage { get; }
 
-    [MemberNotNullWhen(true, nameof(PreviousCursor))]
-    public bool HasPrevious => PreviousCursor is not null;
+    [MemberNotNullWhen(true, nameof(StartCursor))]
+    public bool HasPreviousPage { get; }
 }

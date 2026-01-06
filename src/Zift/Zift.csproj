@@ -7,7 +7,7 @@
     <IsPackable>true</IsPackable>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>0.7.0</Version>
+    <Version>0.8.0</Version>
     <Authors>Jim Atas</Authors>
     <Description>Lightweight, composable .NET library for filtering and paginating IQueryable&lt;T&gt;, including cursor-based pagination.</Description>
     <PackageTags>linq queryable dynamic-query filtering sorting pagination cursor-pagination offset-pagination</PackageTags>
