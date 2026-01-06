@@ -127,12 +127,6 @@ internal static class CursorPaginationExecutor<T>
         var isBackward = state.Direction == CursorDirection.Before;
         var isExplicitForward = state.Direction == CursorDirection.After;
 
-        string? startCursor = null;
-        string? endCursor = null;
-
-        var hasNextPage = false;
-        var hasPreviousPage = false;
-
         if (hasExtraItem)
         {
             items.RemoveAt(items.Count - 1);
@@ -142,6 +136,12 @@ internal static class CursorPaginationExecutor<T>
         {
             items.Reverse();
         }
+
+        string? startCursor = null;
+        string? endCursor = null;
+
+        var hasNextPage = false;
+        var hasPreviousPage = false;
 
         if (items.Count > 0)
         {
