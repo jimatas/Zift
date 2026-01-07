@@ -34,27 +34,25 @@ public sealed class CursorValuesTests
     }
 
     [Fact]
-    public void Decode_NullCursor_ThrowsArgumentException()
-    {
-        Assert.ThrowsAny<ArgumentException>(
-            () => CursorValues.Decode(null!, [typeof(int)]));
-    }
-
-    [Fact]
     public void Decode_JsonNull_ThrowsFormatException()
     {
         var encoded = Convert.ToBase64String(
             Encoding.UTF8.GetBytes("null"));
 
-        Assert.ThrowsAny<FormatException>(
-            () => CursorValues.Decode(encoded, [typeof(int)]));
+        var ex = Assert.ThrowsAny<FormatException>(() =>
+            CursorValues.Decode(encoded, [typeof(int)]));
+
+        var inner = Assert.IsType<FormatException>(ex.InnerException);
+        Assert.Contains("Cursor is not a valid JSON array.", inner.Message);
     }
 
     [Fact]
     public void Decode_InvalidBase64_ThrowsFormatException()
     {
-        Assert.Throws<FormatException>(
-            () => CursorValues.Decode("not-base64", [typeof(int)]));
+        var ex = Assert.Throws<FormatException>(() =>
+            CursorValues.Decode("not-base64", [typeof(int)]));
+
+        Assert.IsType<FormatException>(ex.InnerException);
     }
 
     [Fact]
@@ -63,7 +61,10 @@ public sealed class CursorValuesTests
         var original = new CursorValues([1, 2]);
         var encoded = original.Encode();
 
-        Assert.Throws<FormatException>(
-            () => CursorValues.Decode(encoded, [typeof(int)]));
+        var ex = Assert.Throws<FormatException>(() =>
+            CursorValues.Decode(encoded, [typeof(int)]));
+
+        var inner = Assert.IsType<FormatException>(ex.InnerException);
+        Assert.Contains("Cursor contains 2 element(s), expected 1.", inner.Message);
     }
 }

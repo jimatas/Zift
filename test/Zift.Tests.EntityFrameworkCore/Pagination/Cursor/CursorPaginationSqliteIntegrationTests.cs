@@ -2,7 +2,6 @@
 
 using Fixture;
 using Microsoft.EntityFrameworkCore;
-using Zift.Pagination.Offset;
 
 public sealed class CursorPaginationSqliteIntegrationTests
 {

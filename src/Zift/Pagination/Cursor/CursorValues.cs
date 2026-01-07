@@ -18,27 +18,35 @@ internal sealed class CursorValues(IReadOnlyList<object?> values)
 
     public static CursorValues Decode(string cursor, IReadOnlyList<Type> cursorValueTypes)
     {
-        var bytes = Convert.FromBase64String(cursor);
-
-        var elements = JsonSerializer.Deserialize<JsonElement[]>(bytes, _serializerOptions)
-            ?? throw new FormatException("Cursor is not a valid JSON array.");
-
-        if (elements.Length != cursorValueTypes.Count)
+        try
         {
-            throw new FormatException(
-                $"Cursor contains {elements.Length} element(s), expected {cursorValueTypes.Count}.");
+            var bytes = Convert.FromBase64String(cursor);
+
+            var elements = JsonSerializer.Deserialize<JsonElement[]>(bytes, _serializerOptions)
+                ?? throw new FormatException("Cursor is not a valid JSON array.");
+
+            if (elements.Length != cursorValueTypes.Count)
+            {
+                throw new FormatException(
+                    $"Cursor contains {elements.Length} element(s), expected {cursorValueTypes.Count}.");
+            }
+
+            var values = new object?[elements.Length];
+
+            for (var i = 0; i < elements.Length; i++)
+            {
+                var element = elements[i];
+                var type = cursorValueTypes[i];
+
+                values[i] = element.Deserialize(type, _serializerOptions);
+            }
+
+            return new CursorValues(values);
         }
-
-        var values = new object?[elements.Length];
-
-        for (var i = 0; i < elements.Length; i++)
+        catch (Exception ex)
+            when (ex is FormatException or JsonException or NotSupportedException)
         {
-            var element = elements[i];
-            var type = cursorValueTypes[i];
-
-            values[i] = element.Deserialize(type, _serializerOptions);
+            throw new FormatException("Cursor is malformed or contains invalid data.", ex);
         }
-
-        return new CursorValues(values);
     }
 }

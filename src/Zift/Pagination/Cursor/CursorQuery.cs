@@ -37,6 +37,8 @@ internal sealed class CursorQuery<T> :
         string orderByClause,
         OrderingOptions? options = null)
     {
+        ArgumentNullException.ThrowIfNull(orderByClause);
+
         var ordering = Ordering<T>.Parse(
             orderByClause,
             options ?? new OrderingOptions());
@@ -44,7 +46,7 @@ internal sealed class CursorQuery<T> :
         if (ordering.IsEmpty)
         {
             throw new ArgumentException(
-                "The order-by expression must contain at least one ordering clause.",
+                "Order-by expression must contain at least one ordering clause.",
                 nameof(orderByClause));
         }
 
@@ -62,10 +64,10 @@ internal sealed class CursorQuery<T> :
         Expression<Func<T, TKey>> keySelector) =>
         WithOrdering(keySelector, OrderingDirection.Descending);
 
-    public IExecutableCursorQuery<T> After(string cursor) =>
+    public IExecutableCursorQuery<T> After(string? cursor) =>
         WithCursor(cursor, CursorDirection.After);
 
-    public IExecutableCursorQuery<T> Before(string cursor) =>
+    public IExecutableCursorQuery<T> Before(string? cursor) =>
         WithCursor(cursor, CursorDirection.Before);
 
     private CursorQuery<T> WithOrdering<TKey>(
@@ -87,13 +89,22 @@ internal sealed class CursorQuery<T> :
         string? cursor,
         CursorDirection direction)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(cursor);
+        if (cursor is null)
+        {
+            direction = CursorDirection.None;
+        }
+        else if (string.IsNullOrWhiteSpace(cursor))
+        {
+            throw new ArgumentException(
+                "Cursor cannot be empty or whitespace.",
+                nameof(cursor));
+        }
 
         return WithState(
             State with
             {
-                Direction = direction,
-                Cursor = cursor
+                Cursor = cursor,
+                Direction = direction
             });
     }
 
