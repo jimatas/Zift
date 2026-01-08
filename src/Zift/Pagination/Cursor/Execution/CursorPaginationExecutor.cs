@@ -137,20 +137,19 @@ internal static class CursorPaginationExecutor<T>
             items.Reverse();
         }
 
+        var hasItems = items.Count > 0;
+
         string? startCursor = null;
         string? endCursor = null;
 
-        var hasNextPage = false;
-        var hasPreviousPage = false;
-
-        if (items.Count > 0)
+        if (hasItems)
         {
             startCursor = ExtractCursorValues(items[0], state.Ordering).Encode();
             endCursor = ExtractCursorValues(items[^1], state.Ordering).Encode();
-
-            hasNextPage = isBackward || hasExtraItem;
-            hasPreviousPage = isExplicitForward || (isBackward && hasExtraItem);
         }
+
+        var hasNextPage = hasItems && (isBackward || hasExtraItem);
+        var hasPreviousPage = hasItems && (isExplicitForward || (isBackward && hasExtraItem));
 
         return new CursorPage<T>(
             items,
