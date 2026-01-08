@@ -37,18 +37,11 @@ internal sealed class CursorQuery<T> :
         string orderByClause,
         OrderingOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(orderByClause);
+        ArgumentException.ThrowIfNullOrWhiteSpace(orderByClause);
 
         var ordering = Ordering<T>.Parse(
             orderByClause,
             options ?? new OrderingOptions());
-
-        if (ordering.IsEmpty)
-        {
-            throw new ArgumentException(
-                "Order-by expression must contain at least one ordering clause.",
-                nameof(orderByClause));
-        }
 
         return WithState(State with
         {
@@ -93,11 +86,9 @@ internal sealed class CursorQuery<T> :
         {
             direction = CursorDirection.None;
         }
-        else if (string.IsNullOrWhiteSpace(cursor))
+        else
         {
-            throw new ArgumentException(
-                "Cursor cannot be empty or whitespace.",
-                nameof(cursor));
+            ArgumentException.ThrowIfNullOrWhiteSpace(cursor);
         }
 
         return WithState(

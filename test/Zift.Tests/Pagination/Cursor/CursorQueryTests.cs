@@ -77,26 +77,16 @@ public sealed class CursorQueryTests
         Assert.Equal(typeof(int), clause.KeySelector.ReturnType);
     }
 
-    [Fact]
-    public void OrderBy_NullClause_ThrowsArgumentNullException()
-    {
-        var source = Array.Empty<TestClass>().AsQueryable();
-        var query = source.AsCursorQuery();
-
-        Assert.Throws<ArgumentNullException>(() => query.OrderBy(null!));
-    }
-
     [Theory]
+    [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void OrderBy_EmptyOrWhiteSpaceClause_ThrowsArgumentException(string orderBy)
+    public void OrderBy_NullOrEmptyOrWhiteSpace_ThrowsArgumentException(string? orderBy)
     {
         var source = Array.Empty<TestClass>().AsQueryable();
         var query = source.AsCursorQuery();
 
-        var ex = Assert.Throws<ArgumentException>(() => query.OrderBy(orderBy));
-
-        Assert.Contains("Order-by expression must contain at least one ordering clause.", ex.Message);
+        Assert.ThrowsAny<ArgumentException>(() => query.OrderBy(orderBy!));
     }
 
     [Fact]
