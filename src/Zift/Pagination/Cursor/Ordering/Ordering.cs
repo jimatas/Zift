@@ -61,15 +61,6 @@ internal sealed class Ordering<T>
 
     public static Ordering<T> Parse(
         string orderByClause,
-        OrderingOptions options)
-    {
-        if (string.IsNullOrWhiteSpace(orderByClause))
-        {
-            return Empty;
-        }
-
-        var clauses = new OrderingParser<T>(options).Parse(orderByClause);
-
-        return new Ordering<T>(clauses);
-    }
+        OrderingOptions options) =>
+        new(new OrderingParser<T>(options).Parse(orderByClause));
 }

@@ -13,11 +13,7 @@ public static class QueryableExtensions
         ExpressionBuilderOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(source);
-
-        if (string.IsNullOrWhiteSpace(whereExpression))
-        {
-            return source;
-        }
+        ArgumentException.ThrowIfNullOrWhiteSpace(whereExpression);
 
         var predicateNode =
             new ExpressionParser(
@@ -57,8 +53,8 @@ public static class QueryableExtensions
 
         return new Page<T>(
             items,
-            totalItemCount,
             pageNumber,
-            pageSize);
+            pageSize,
+            totalItemCount);
     }
 }

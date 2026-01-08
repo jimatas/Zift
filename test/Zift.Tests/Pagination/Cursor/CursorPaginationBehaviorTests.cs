@@ -5,7 +5,7 @@ using Fixture;
 public sealed class CursorPaginationBehaviorTests
 {
     [Fact]
-    public void ToCursorPage_FirstPageForward_HasNextOnly_WithNextCursorAtLastItem()
+    public void FirstPage_ReturnsFirstItems_WithAnchors_AndNextPageOnly()
     {
         var source = Enumerable.Range(1, 10)
             .Select(i => new TestClass { Int32Value = i })
@@ -16,20 +16,23 @@ public sealed class CursorPaginationBehaviorTests
             .OrderBy(e => e.Int32Value)
             .ToCursorPage(pageSize: 3);
 
-        Assert.Equal([1, 2, 3], page.Items.Select(i => i.Int32Value).ToArray());
+        Assert.Equal([1, 2, 3], page.Items.Select(i => i.Int32Value));
 
-        Assert.True(page.HasNext);
-        Assert.False(page.HasPrevious);
+        Assert.True(page.HasNextPage);
+        Assert.False(page.HasPreviousPage);
 
-        Assert.NotNull(page.NextCursor);
-        Assert.Null(page.PreviousCursor);
+        Assert.NotNull(page.StartCursor);
+        Assert.NotNull(page.EndCursor);
 
-        var decoded = CursorValues.Decode(page.NextCursor!, [typeof(int)]);
-        Assert.Equal(3, (int)decoded.Values[0]!);
+        var start = CursorValues.Decode(page.StartCursor!, [typeof(int)]);
+        var end = CursorValues.Decode(page.EndCursor!, [typeof(int)]);
+
+        Assert.Equal(1, (int)start.Values[0]!);
+        Assert.Equal(3, (int)end.Values[0]!);
     }
 
     [Fact]
-    public void ToCursorPage_SecondPageAfter_HasNextAndPrevious_WithCursorsAtBounds()
+    public void AfterEndCursor_ReturnsNextItems_WithAnchors_AndBothDirectionsAvailable()
     {
         var source = Enumerable.Range(1, 10)
             .Select(i => new TestClass { Int32Value = i })
@@ -40,28 +43,29 @@ public sealed class CursorPaginationBehaviorTests
             .OrderBy(e => e.Int32Value)
             .ToCursorPage(pageSize: 3);
 
-        var after = first.NextCursor;
-
         var second = source
             .AsCursorQuery()
             .OrderBy(e => e.Int32Value)
-            .After(after!)
+            .After(first.EndCursor)
             .ToCursorPage(pageSize: 3);
 
-        Assert.Equal([4, 5, 6], second.Items.Select(i => i.Int32Value).ToArray());
+        Assert.Equal([4, 5, 6], second.Items.Select(i => i.Int32Value));
 
-        Assert.True(second.HasNext);
-        Assert.True(second.HasPrevious);
+        Assert.True(second.HasNextPage);
+        Assert.True(second.HasPreviousPage);
 
-        var decoded = CursorValues.Decode(second.NextCursor!, [typeof(int)]);
-        Assert.Equal(6, (int)decoded.Values[0]!);
+        Assert.NotNull(second.StartCursor);
+        Assert.NotNull(second.EndCursor);
 
-        decoded = CursorValues.Decode(second.PreviousCursor!, [typeof(int)]);
-        Assert.Equal(4, (int)decoded.Values[0]!);
+        var start = CursorValues.Decode(second.StartCursor!, [typeof(int)]);
+        var end = CursorValues.Decode(second.EndCursor!, [typeof(int)]);
+
+        Assert.Equal(4, (int)start.Values[0]!);
+        Assert.Equal(6, (int)end.Values[0]!);
     }
 
     [Fact]
-    public void ToCursorPage_LastPageAfter_HasPreviousOnly_WithoutNextCursor()
+    public void AfterEndCursor_OnLastPage_ReturnsFinalItems_WithPreviousPageOnly()
     {
         var source = Enumerable.Range(1, 10)
             .Select(i => new TestClass { Int32Value = i })
@@ -75,19 +79,23 @@ public sealed class CursorPaginationBehaviorTests
             .After(cursor)
             .ToCursorPage(pageSize: 3);
 
-        Assert.Equal([8, 9, 10], page.Items.Select(i => i.Int32Value).ToArray());
+        Assert.Equal([8, 9, 10], page.Items.Select(i => i.Int32Value));
 
-        Assert.False(page.HasNext);
-        Assert.True(page.HasPrevious);
+        Assert.False(page.HasNextPage);
+        Assert.True(page.HasPreviousPage);
 
-        Assert.Null(page.NextCursor);
+        Assert.NotNull(page.StartCursor);
+        Assert.NotNull(page.EndCursor);
 
-        var decoded = CursorValues.Decode(page.PreviousCursor!, [typeof(int)]);
-        Assert.Equal(8, (int)decoded.Values[0]!);
+        var start = CursorValues.Decode(page.StartCursor!, [typeof(int)]);
+        var end = CursorValues.Decode(page.EndCursor!, [typeof(int)]);
+
+        Assert.Equal(8, (int)start.Values[0]!);
+        Assert.Equal(10, (int)end.Values[0]!);
     }
 
     [Fact]
-    public void ToCursorPage_BeforeCursor_ReturnsPreviousItems_WithBothCursors()
+    public void BeforeStartCursor_ReturnsPreviousItems_WithAnchors_AndBothDirectionsAvailable()
     {
         var source = Enumerable.Range(1, 10)
             .Select(i => new TestClass { Int32Value = i })
@@ -101,20 +109,23 @@ public sealed class CursorPaginationBehaviorTests
             .Before(cursor)
             .ToCursorPage(pageSize: 3);
 
-        Assert.Equal([5, 6, 7], page.Items.Select(i => i.Int32Value).ToArray());
+        Assert.Equal([5, 6, 7], page.Items.Select(i => i.Int32Value));
 
-        Assert.True(page.HasNext);
-        Assert.True(page.HasPrevious);
+        Assert.True(page.HasNextPage);
+        Assert.True(page.HasPreviousPage);
 
-        var decoded = CursorValues.Decode(page.NextCursor!, [typeof(int)]);
-        Assert.Equal(7, (int)decoded.Values[0]!);
+        Assert.NotNull(page.StartCursor);
+        Assert.NotNull(page.EndCursor);
 
-        decoded = CursorValues.Decode(page.PreviousCursor!, [typeof(int)]);
-        Assert.Equal(5, (int)decoded.Values[0]!);
+        var start = CursorValues.Decode(page.StartCursor!, [typeof(int)]);
+        var end = CursorValues.Decode(page.EndCursor!, [typeof(int)]);
+
+        Assert.Equal(5, (int)start.Values[0]!);
+        Assert.Equal(7, (int)end.Values[0]!);
     }
 
     [Fact]
-    public void ToCursorPage_BeforeFirstItem_ReturnsEmptyPage_WithoutCursors()
+    public void BeforeFirstItem_ReturnsEmptyPage_WithoutAnchors_AndNoNavigation()
     {
         var source = Enumerable.Range(1, 10)
             .Select(i => new TestClass { Int32Value = i })
@@ -129,14 +140,16 @@ public sealed class CursorPaginationBehaviorTests
             .ToCursorPage(pageSize: 3);
 
         Assert.Empty(page.Items);
-        Assert.False(page.HasNext);
-        Assert.False(page.HasPrevious);
-        Assert.Null(page.NextCursor);
-        Assert.Null(page.PreviousCursor);
+
+        Assert.False(page.HasNextPage);
+        Assert.False(page.HasPreviousPage);
+
+        Assert.Null(page.StartCursor);
+        Assert.Null(page.EndCursor);
     }
 
     [Fact]
-    public void ToCursorPage_WithCompositeOrdering_AppliesEqualityOnPreviousKeys()
+    public void CompositeOrdering_AnchorsEncodeAllOrderingKeys()
     {
         var source = new[]
         {
@@ -152,21 +165,32 @@ public sealed class CursorPaginationBehaviorTests
             .ThenBy(e => e.StringValue)
             .ToCursorPage(pageSize: 2);
 
-        var cursor = firstPage.NextCursor!;
-        var decoded = CursorValues.Decode(cursor, [typeof(int), typeof(string)]);
+        Assert.NotNull(firstPage.StartCursor);
+        Assert.NotNull(firstPage.EndCursor);
 
-        Assert.Equal(1, decoded.Values[0]);
-        Assert.Equal("B", decoded.Values[1]);
+        var start = CursorValues.Decode(
+            firstPage.StartCursor!,
+            [typeof(int), typeof(string)]);
+
+        var end = CursorValues.Decode(
+            firstPage.EndCursor!,
+            [typeof(int), typeof(string)]);
+
+        Assert.Equal(1, start.Values[0]);
+        Assert.Equal("A", start.Values[1]);
+
+        Assert.Equal(1, end.Values[0]);
+        Assert.Equal("B", end.Values[1]);
 
         var secondPage = source
             .AsCursorQuery()
             .OrderBy(e => e.Int32Value)
             .ThenBy(e => e.StringValue)
-            .After(cursor)
+            .After(firstPage.EndCursor)
             .ToCursorPage(pageSize: 2);
 
         Assert.Equal(
             [(2, "A"), (2, "B")],
-            secondPage.Items.Select(e => (e.Int32Value, e.StringValue!)).ToArray());
+            secondPage.Items.Select(e => (e.Int32Value, e.StringValue!)));
     }
 }

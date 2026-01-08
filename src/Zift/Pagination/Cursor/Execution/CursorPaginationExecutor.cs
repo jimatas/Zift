@@ -122,55 +122,44 @@ internal static class CursorPaginationExecutor<T>
         CursorQueryState<T> state,
         int pageSize)
     {
-        var hasMore = items.Count > pageSize;
-        if (hasMore)
+        var hasExtraItem = items.Count > pageSize;
+
+        var isBackward = state.Direction == CursorDirection.Before;
+        var isExplicitForward = state.Direction == CursorDirection.After;
+
+        if (hasExtraItem)
         {
             items.RemoveAt(items.Count - 1);
         }
 
-        var isBackward = state.Direction == CursorDirection.Before;
         if (isBackward)
         {
             items.Reverse();
         }
 
-        CursorValues? nextCursor = null;
-        CursorValues? previousCursor = null;
+        var hasItems = items.Count > 0;
 
-        if (items.Count > 0)
+        string? startCursor = null;
+        string? endCursor = null;
+
+        if (hasItems)
         {
-            var firstItem = items[0];
-            var lastItem = items[^1];
-
-            var isForward = !isBackward;
-            if (isForward)
-            {
-                if (hasMore)
-                {
-                    nextCursor = ExtractCursorValues(lastItem, state.Ordering);
-                }
-
-                var hasPreviousPage = state.Direction == CursorDirection.After;
-                if (hasPreviousPage)
-                {
-                    previousCursor = ExtractCursorValues(firstItem, state.Ordering);
-                }
-            }
-            else
-            {
-                nextCursor = ExtractCursorValues(lastItem, state.Ordering);
-
-                if (hasMore)
-                {
-                    previousCursor = ExtractCursorValues(firstItem, state.Ordering);
-                }
-            }
+            startCursor = ExtractCursorValues(items[0], state.Ordering).Encode();
+            endCursor = ExtractCursorValues(items[^1], state.Ordering).Encode();
         }
+
+        var hasNextPage = hasItems &&
+            (isBackward || hasExtraItem);
+
+        var hasPreviousPage = hasItems &&
+            (isExplicitForward || (isBackward && hasExtraItem));
 
         return new CursorPage<T>(
             items,
-            nextCursor?.Encode(),
-            previousCursor?.Encode());
+            startCursor,
+            endCursor,
+            hasNextPage,
+            hasPreviousPage);
     }
 
     private static CursorValues ExtractCursorValues(T item, Ordering<T> ordering)

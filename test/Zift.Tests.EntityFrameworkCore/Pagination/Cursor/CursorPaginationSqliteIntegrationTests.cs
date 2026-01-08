@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 public sealed class CursorPaginationSqliteIntegrationTests
 {
     [Fact]
-    public async Task ToCursorPage_FirstPageByNameAscending_ReturnsBooksWithNextCursor()
+    public async Task ToCursorPage_FirstPageByNameAscending_ReturnsBooks_WithAnchors_AndNextPageOnly()
     {
         await using var fixture = new SqliteTestFixture();
         await fixture.SeedAsync(CatalogFixture.Create());
@@ -19,14 +19,14 @@ public sealed class CursorPaginationSqliteIntegrationTests
         var category = Assert.Single(page.Items);
         Assert.Equal("Books", category.Name);
 
-        Assert.True(page.HasNext);
-        Assert.False(page.HasPrevious);
-        Assert.NotNull(page.NextCursor);
-        Assert.Null(page.PreviousCursor);
+        Assert.True(page.HasNextPage);
+        Assert.False(page.HasPreviousPage);
+        
+        Assert.Equal(page.StartCursor, page.EndCursor);
     }
 
     [Fact]
-    public async Task ToCursorPage_SecondPageAfter_ReturnsElectronicsWithPreviousCursor()
+    public async Task ToCursorPage_SecondPageAfter_ReturnsElectronics_WithAnchors_AndPreviousPageOnly()
     {
         await using var fixture = new SqliteTestFixture();
         await fixture.SeedAsync(CatalogFixture.Create());
@@ -36,25 +36,23 @@ public sealed class CursorPaginationSqliteIntegrationTests
             .OrderBy(c => c.Name!)
             .ToCursorPage(pageSize: 1);
 
-        var after = firstPage.NextCursor;
-
         var secondPage = fixture.Context.Categories
             .AsCursorQuery()
             .OrderBy(c => c.Name!)
-            .After(after!)
+            .After(firstPage.EndCursor)
             .ToCursorPage(pageSize: 1);
 
         var category = Assert.Single(secondPage.Items);
         Assert.Equal("Electronics", category.Name);
 
-        Assert.False(secondPage.HasNext);
-        Assert.True(secondPage.HasPrevious);
-        Assert.Null(secondPage.NextCursor);
-        Assert.NotNull(secondPage.PreviousCursor);
+        Assert.False(secondPage.HasNextPage);
+        Assert.True(secondPage.HasPreviousPage);
+
+        Assert.Equal(secondPage.StartCursor, secondPage.EndCursor);
     }
 
     [Fact]
-    public async Task ToCursorPageAsync_FirstPageByNameAscending_ReturnsBooksWithNextCursor()
+    public async Task ToCursorPageAsync_FirstPageByNameAscending_ReturnsBooks_WithAnchors_AndNextPageOnly()
     {
         await using var fixture = new SqliteTestFixture();
         await fixture.SeedAsync(CatalogFixture.Create());
@@ -67,14 +65,14 @@ public sealed class CursorPaginationSqliteIntegrationTests
         var category = Assert.Single(page.Items);
         Assert.Equal("Books", category.Name);
 
-        Assert.True(page.HasNext);
-        Assert.False(page.HasPrevious);
-        Assert.NotNull(page.NextCursor);
-        Assert.Null(page.PreviousCursor);
+        Assert.True(page.HasNextPage);
+        Assert.False(page.HasPreviousPage);
+
+        Assert.Equal(page.StartCursor, page.EndCursor);
     }
 
     [Fact]
-    public async Task ToCursorPageAsync_SecondPageAfter_ReturnsElectronicsWithPreviousCursor()
+    public async Task ToCursorPageAsync_SecondPageAfter_ReturnsElectronics_WithAnchors_AndPreviousPageOnly()
     {
         await using var fixture = new SqliteTestFixture();
         await fixture.SeedAsync(CatalogFixture.Create());
@@ -84,20 +82,18 @@ public sealed class CursorPaginationSqliteIntegrationTests
             .OrderBy(c => c.Name!)
             .ToCursorPageAsync(pageSize: 1);
 
-        var after = firstPage.NextCursor;
-
         var secondPage = await fixture.Context.Categories
             .AsCursorQuery()
             .OrderBy(c => c.Name!)
-            .After(after!)
+            .After(firstPage.EndCursor)
             .ToCursorPageAsync(pageSize: 1);
 
         var category = Assert.Single(secondPage.Items);
         Assert.Equal("Electronics", category.Name);
 
-        Assert.False(secondPage.HasNext);
-        Assert.True(secondPage.HasPrevious);
-        Assert.Null(secondPage.NextCursor);
-        Assert.NotNull(secondPage.PreviousCursor);
+        Assert.False(secondPage.HasNextPage);
+        Assert.True(secondPage.HasPreviousPage);
+
+        Assert.Equal(secondPage.StartCursor, secondPage.EndCursor);
     }
 }

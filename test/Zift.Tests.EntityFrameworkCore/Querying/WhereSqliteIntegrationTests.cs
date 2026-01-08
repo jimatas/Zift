@@ -273,16 +273,15 @@ public sealed class WhereSqliteIntegrationTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task Where_NullOrWhiteSpaceExpression_ReturnsAllCategories(string? whereExpression)
+    public async Task Where_NullOrEmptyOrWhiteSpace_ThrowsArgumentException(string? whereExpression)
     {
         await using var fixture = new SqliteTestFixture();
         await fixture.SeedAsync(CatalogFixture.Create());
 
-        var categories = await fixture.Context.Categories
-            .Where(whereExpression!)
-            .ToListAsync();
-
-        Assert.Equal(2, categories.Count);
+        await Assert.ThrowsAnyAsync<ArgumentException>(() =>
+            fixture.Context.Categories
+                .Where(whereExpression!)
+                .ToListAsync());
     }
 
     [Fact]
