@@ -63,7 +63,62 @@ var categories = context.Categories
   - `:count`
 
   Example: `Products:count >= 2`
-  
+
+### Literals
+
+- **Strings** use single or double quotes: `"Active"` or `'Active'`. Supported escapes are `\\`, `\"` and `\'`.
+- **Numbers** include integers, decimals and exponents: `42`, `-1.5`, `1e3`. A leading `+` or `-` is optional.
+- **Booleans and null** use `true`, `false` and `null`.
+- **Dates, times and GUIDs** use quoted strings: `"2024-03-05T10:20:30Z"`, `"2024-03-05"` or `"10:20:30"`, depending on the property type. All standard GUID formats are supported.
+- **Enums** use quoted, case-sensitive member names: `Status == "Active"`. Numeric strings aren't supported. For `[Flags]` enums, separate names with commas.
+
+Numbers must fit the property's type. For an `int` property, `1.0` and `1e3` are valid; `1.5` and `3000000000` (exceeds `int.MaxValue`) aren't. Fractional values aren't rounded to integers.
+
+### Null and empty lists
+
+Use `== null` or `!= null` to check for null. Other direct comparisons with null aren't supported.
+
+Lists can include null when the property is nullable:
+
+```csharp
+items.Where("Rating in [4, 5, null]");
+```
+
+An empty list matches nothing; negating it matches everything. A list containing only null matches null values.
+
+### Options and limits
+
+Pass options to `Where(...)` to change the defaults:
+
+```csharp
+var options = new ExpressionBuilderOptions
+{
+    EnableNullGuards = true,
+    MaxExpressionLength = 8192
+};
+
+var products = items.Where("Category.Name == \"Books\"", options);
+```
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `EnableNullGuards` | `false` | Checks for null during property navigation. Useful for in-memory queries. |
+| `ParameterizeValues` | `true` | Captures values so providers such as EF Core can parameterize queries and reuse query plans. |
+| `MaxExpressionLength` | `4096` | Filter length limit, in characters. |
+| `MaxNestingDepth` | `64` | Nesting limit for groups, `!` and quantifier predicates. |
+| `MaxListItems` | `1000` | List size limit. |
+
+Limits must be at least 1. Keep them bounded when accepting filters from users.
+
+### Errors
+
+| Exception | Cause |
+| --- | --- |
+| `SyntaxErrorException`, `LexicalErrorException` | Invalid filter syntax, nesting too deep or too many list items. Both derive from `FormatException`. |
+| `ArgumentException` | Blank or overlong filter, or an invalid enum name. |
+| `InvalidOperationException` | A value can't be converted to the property's type, including out-of-range numbers. |
+| `FormatException` | Invalid GUID, date or time text. |
+
 ## Pagination
 
 Zift supports two pagination strategies that operate directly on `IQueryable<T>` and can be combined with dynamic querying:
@@ -90,6 +145,10 @@ var page = categories
     .ToPage(pageNumber: 1, pageSize: 25);
 ```
 
+Use a consistent ordering to avoid skipped or repeated rows between pages. `pageNumber` and `pageSize` must be at least 1. An offset greater than `int.MaxValue` throws `ArgumentOutOfRangeException`.
+
+The count and items come from separate queries, so changes between them can leave the count out of sync with the items.
+
 #### Result shape
 
 ```csharp
@@ -100,6 +159,12 @@ page.PageCount
 page.HasNextPage
 page.HasPreviousPage
 page.TotalItemCount
+```
+
+Use `page.Map(...)` to convert the items while keeping the paging information, and `Page<T>.Empty(pageSize)` for an empty first page:
+
+```csharp
+var dtoPage = page.Map(category => new CategoryDto(category));
 ```
 
 ### Cursor Pagination
@@ -126,13 +191,31 @@ var page = await query.ToCursorPageAsync(pageSize: 25);
 
 Cursor pagination requires at least one ordering clause to be provided; otherwise execution fails.
 
-The combined ordering keys must uniquely identify each row, so end the ordering with a unique key such as `Id`. Rows that tie on every key can be skipped between pages.
+#### Ordering
 
-Null keys are assumed to sort first when ascending (SQL Server, SQLite, MySQL). For sources that sort nulls last, such as PostgreSQL and Oracle, pass `new CursorQueryOptions { NullOrdering = NullOrdering.NullsCompareHigher }` to `AsCursorQuery()`.
+Besides the string syntax, you can order with key selectors. `ThenBy` and `ThenByDescending` add more keys, and `ThenBy(string)` adds the keys from an order-by string:
 
-Cursors are URL-safe tokens tied to the ordering that produced them; using one with a different ordering throws `InvalidCursorException`. They are not encrypted or signed.
+```csharp
+var query = context.Products
+    .AsCursorQuery()
+    .OrderBy(p => p.Name)
+    .ThenByDescending(p => p.Price)
+    .ThenBy(p => p.Id);
+```
 
-To continue navigation from a previously retrieved page, reuse the same ordered `query` and pass the cursors exposed by that page as anchors for further traversal.
+In the string syntax, use dots for nested paths (`Category.Title`). Names aren't case-sensitive. Each entry is `Property [ASC|DESC]`. A bad entry or unknown property throws `InvalidOrderingClauseException`. For in-memory sources, pass `new OrderingOptions { EnableNullGuards = true }` to guard nested paths against null.
+
+Keys can be strings, numbers, booleans, enums, or any type with comparison operators or `IComparable<T>` (`Guid`, `DateTime`, `DateTimeOffset`). Other types throw `NotSupportedException` when you navigate, not on the first page.
+
+The ordering must uniquely identify each row, so end it with a unique key such as `Id`. Rows that tie on every key can be skipped between pages.
+
+Nulls are assumed to sort first when ascending (SQL Server, SQLite, MySQL). If your database sorts them last (PostgreSQL, Oracle), pass `new CursorQueryOptions { NullOrdering = NullOrdering.NullsCompareHigher }` to `AsCursorQuery()`.
+
+#### Navigating
+
+Cursors are URL-safe tokens tied to the ordering that produced them. Using one with a different ordering throws `InvalidCursorException`. They aren't encrypted or signed.
+
+To move between pages, reuse the same ordered `query` and pass in the cursors from the current page. A `null` cursor selects the first page.
 
 ```csharp
 // Forward traversal
@@ -152,6 +235,12 @@ if (page.HasPreviousPage)
 }
 ```
 
+The page you came from is assumed to still exist: `HasPreviousPage` is assumed `true` after `After(...)`, and `HasNextPage` after `Before(...)`, with no extra query to check. Changes between requests can make them wrong.
+
+#### Page size
+
+`pageSize` must be between 1 and `int.MaxValue - 1`. Public APIs should enforce a much smaller maximum of their own.
+
 #### Result shape
 
 ```csharp
@@ -161,3 +250,5 @@ page.EndCursor
 page.HasNextPage
 page.HasPreviousPage
 ```
+
+Use `page.Map(...)` to convert the items and keep the cursors. `CursorPage<T>.Empty` is a page without items.
