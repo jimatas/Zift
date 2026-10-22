@@ -216,40 +216,53 @@ internal sealed class ExpressionTokenizer(string text)
     {
         _position++;
 
+        var value = new StringBuilder();
+
         while (_position < _text.Length)
         {
-            if (_text[_position] == quoteChar && IsUnescapedQuote(startPosition))
+            var currentChar = _text[_position];
+
+            if (currentChar == quoteChar)
             {
-                break;
+                _position++;
+
+                return CreateToken(SyntaxTokenType.StringLiteral, value.ToString(), startPosition);
             }
 
+            if (currentChar == '\\')
+            {
+                value.Append(ReadEscapeSequence(startPosition));
+                continue;
+            }
+
+            value.Append(currentChar);
             _position++;
         }
 
-        if (_position >= _text.Length)
-        {
-            throw new LexicalErrorException("Unterminated string literal.", startPosition);
-        }
-
-        _position++;
-
-        var value = _text[(startPosition + 1)..(_position - 1)];
-
-        return CreateToken(SyntaxTokenType.StringLiteral, value, startPosition);
+        throw new LexicalErrorException("Unterminated string literal.", startPosition);
     }
 
-    private bool IsUnescapedQuote(int openingQuotePosition)
+    private char ReadEscapeSequence(int literalStartPosition)
     {
-        var backslashCount = 0;
-        var i = _position - 1;
+        var escapePosition = _position;
 
-        while (i > openingQuotePosition && _text[i] == '\\')
+        if (escapePosition + 1 >= _text.Length)
         {
-            backslashCount++;
-            i--;
+            throw new LexicalErrorException("Unterminated string literal.", literalStartPosition);
         }
 
-        return (backslashCount & 1) == 0;
+        var escapedChar = _text[escapePosition + 1];
+
+        if (escapedChar is not ('\\' or '"' or '\''))
+        {
+            throw new LexicalErrorException(
+                $"Invalid escape sequence '\\{escapedChar}'; only '\\\\', '\\\"' and '\\'' are supported.",
+                escapePosition);
+        }
+
+        _position += 2;
+
+        return escapedChar;
     }
 
     private bool IsNumberStart()
@@ -400,9 +413,13 @@ internal sealed class ExpressionTokenizer(string text)
         }
     }
 
-    private SyntaxToken CreateToken(SyntaxTokenType type, int startPosition) =>
-        CreateToken(type, _text[startPosition.._position], startPosition);
+    private SyntaxToken CreateToken(SyntaxTokenType type, int startPosition)
+    {
+        return CreateToken(type, _text[startPosition.._position], startPosition);
+    }
 
-    private SyntaxToken CreateToken(SyntaxTokenType type, string value, int startPosition) =>
-        new(type, value, startPosition, _position - startPosition);
+    private SyntaxToken CreateToken(SyntaxTokenType type, string value, int startPosition)
+    {
+        return new(type, value, startPosition, _position - startPosition);
+    }
 }

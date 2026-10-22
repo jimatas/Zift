@@ -154,12 +154,12 @@ public sealed class ExpressionParserTests
         }
 
         [Fact]
-        public void Parse_StringLiteralWithEscapedQuote_PreservesEscapedQuote()
+        public void Parse_StringLiteralWithEscapedQuote_DecodesEscapedQuote()
         {
             var str = Assert.IsType<StringLiteral>(
                 ParseLiteral("a == \"a \\\" b\""));
 
-            Assert.Equal("a \\\" b", str.Value);
+            Assert.Equal("a \" b", str.Value);
         }
 
         [Fact]
