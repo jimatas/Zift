@@ -53,6 +53,93 @@ public sealed class ExpressionBuilderInOperatorTests
         Assert.True(predicate(entity));
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Build_InComparisonWithNullableInt32_EmptyList_MatchesNothing(bool enableNullGuards)
+    {
+        var predicate = BuildIn(nameof(TestClass.NullableInt32Value), [], enableNullGuards);
+
+        Assert.False(predicate(new TestClass { NullableInt32Value = null }));
+        Assert.False(predicate(new TestClass { NullableInt32Value = 0 }));
+        Assert.False(predicate(new TestClass { NullableInt32Value = 1 }));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Build_InComparisonWithString_EmptyList_MatchesNothing(bool enableNullGuards)
+    {
+        var predicate = BuildIn(nameof(TestClass.StringValue), [], enableNullGuards);
+
+        Assert.False(predicate(new TestClass { StringValue = null }));
+        Assert.False(predicate(new TestClass { StringValue = string.Empty }));
+        Assert.False(predicate(new TestClass { StringValue = "a" }));
+    }
+
+    [Theory]
+    [InlineData(nameof(TestClass.NullableBooleanValue))]
+    [InlineData(nameof(TestClass.NullableEnumValue))]
+    [InlineData(nameof(TestClass.NullableGuidValue))]
+    public void Build_InComparisonWithNullableValueType_EmptyList_DoesNotMatchNull(string property)
+    {
+        foreach (var enableNullGuards in new[] { true, false })
+        {
+            var predicate = BuildIn(property, [], enableNullGuards);
+
+            Assert.False(predicate(new TestClass()));
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Build_InComparisonWithNestedNullableProperty_EmptyList_MatchesNothing(bool enableNullGuards)
+    {
+        var predicate = BuildIn(
+            [nameof(TestClass.NestedEntity), nameof(TestClass.NullableInt32Value)],
+            [],
+            enableNullGuards);
+
+        Assert.False(predicate(new TestClass { NestedEntity = new TestClass { NullableInt32Value = null } }));
+        Assert.False(predicate(new TestClass { NestedEntity = new TestClass { NullableInt32Value = 1 } }));
+
+        if (enableNullGuards)
+        {
+            Assert.False(predicate(new TestClass { NestedEntity = null }));
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Build_InComparisonWithNullableString_ListContainsOnlyNull_MatchesOnlyNull(bool enableNullGuards)
+    {
+        var predicate = BuildIn(nameof(TestClass.StringValue), [new NullLiteral()], enableNullGuards);
+
+        Assert.True(predicate(new TestClass { StringValue = null }));
+        Assert.False(predicate(new TestClass { StringValue = string.Empty }));
+        Assert.False(predicate(new TestClass { StringValue = "a" }));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Build_NegatedInComparison_EmptyList_MatchesEverything(bool enableNullGuards)
+    {
+        var builder = CreateBuilder(enableNullGuards);
+
+        var predicate = builder.Build(
+            new NotNode(
+                new ComparisonNode(
+                    new PropertyPathNode([nameof(TestClass.NullableInt32Value)]),
+                    ComparisonOperator.In,
+                    new ListLiteral([])))).Compile();
+
+        Assert.True(predicate(new TestClass { NullableInt32Value = null }));
+        Assert.True(predicate(new TestClass { NullableInt32Value = 1 }));
+    }
+
     [Fact]
     public void Build_InComparisonWithNullableInt32_PropertyIsNull_ReturnsFalse()
     {
@@ -111,10 +198,32 @@ public sealed class ExpressionBuilderInOperatorTests
         return expr.Compile();
     }
 
-    private static ExpressionBuilder<TestClass> CreateBuilder() =>
+    private static Func<TestClass, bool> BuildIn(
+        string property,
+        IReadOnlyList<LiteralNode> items,
+        bool enableNullGuards) =>
+        BuildIn([property], items, enableNullGuards);
+
+    private static Func<TestClass, bool> BuildIn(
+        string[] path,
+        IReadOnlyList<LiteralNode> items,
+        bool enableNullGuards)
+    {
+        var builder = CreateBuilder(enableNullGuards);
+
+        var expr = builder.Build(
+            new ComparisonNode(
+                new PropertyPathNode(path),
+                ComparisonOperator.In,
+                new ListLiteral(items)));
+
+        return expr.Compile();
+    }
+
+    private static ExpressionBuilder<TestClass> CreateBuilder(bool enableNullGuards = true) =>
         new(new ExpressionBuilderOptions
         {
-            EnableNullGuards = true,
+            EnableNullGuards = enableNullGuards,
             ParameterizeValues = false
         });
 }

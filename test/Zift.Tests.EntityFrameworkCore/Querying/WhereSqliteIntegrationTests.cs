@@ -350,4 +350,35 @@ public sealed class WhereSqliteIntegrationTests
         Assert.Equal("Smartphone", productNames[1]);
         Assert.Equal("The Great Gatsby", productNames[2]);
     }
+
+    [Fact]
+    public async Task Where_NullableColumnInEmptyList_ReturnsNoRows()
+    {
+        await using var fixture = new SqliteTestFixture();
+        await fixture.SeedAsync(CatalogFixture.Create());
+
+        var reviews = fixture.Context.Reviews;
+        var total = await reviews.CountAsync();
+        var withoutRating = await reviews.CountAsync(r => r.Rating == null);
+
+        Assert.True(withoutRating > 0);
+        Assert.True(withoutRating < total);
+
+        Assert.Empty(await reviews.Where("Rating in []").ToListAsync());
+        Assert.Equal(total, await reviews.Where("!(Rating in [])").CountAsync());
+        Assert.Equal(withoutRating, await reviews.Where("Rating in [null]").CountAsync());
+        Assert.Equal(total - withoutRating, await reviews.Where("Rating in [1, 2, 3, 4, 5]").CountAsync());
+    }
+
+    [Fact]
+    public async Task Where_NullableNavigationColumnInEmptyList_ReturnsNoRows()
+    {
+        await using var fixture = new SqliteTestFixture();
+        await fixture.SeedAsync(CatalogFixture.Create());
+
+        var reviews = fixture.Context.Reviews;
+
+        Assert.True(await reviews.AnyAsync(r => r.Author == null));
+        Assert.Empty(await reviews.Where("Author.Name in []").ToListAsync());
+    }
 }
