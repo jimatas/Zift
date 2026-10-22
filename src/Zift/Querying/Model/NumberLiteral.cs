@@ -1,9 +1,14 @@
 ﻿namespace Zift.Querying.Model;
 
-internal sealed record NumberLiteral : LiteralNode
+internal sealed record NumberLiteral(string Text) : LiteralNode
 {
-    public NumberLiteral(int value) => Value = value;
-    public NumberLiteral(double value) => Value = value;
+    public NumberLiteral(int value)
+        : this(value.ToString(CultureInfo.InvariantCulture))
+    {
+    }
 
-    public object Value { get; }
+    public NumberLiteral(double value)
+        : this(value.ToString("R", CultureInfo.InvariantCulture))
+    {
+    }
 }

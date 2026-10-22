@@ -1,5 +1,6 @@
 ﻿namespace Zift.Pagination.Cursor.Execution;
 
+using Expressions;
 using Ordering;
 
 internal static class ComparisonBuilder
@@ -57,7 +58,7 @@ internal static class ComparisonBuilder
             ? key
             : Expression.Property(key, nameof(Nullable<>.Value));
 
-        var right = CaptureValue(cursorValue, effectiveType);
+        var right = CapturedValue.Create(cursorValue, effectiveType);
 
         var equality = effectiveType switch
         {
@@ -105,18 +106,18 @@ internal static class ComparisonBuilder
         var comparison = effectiveType switch
         {
             var type when type == typeof(string) =>
-                BuildStringComparison(left, CaptureValue(cursorValue, type), direction, inclusive),
+                BuildStringComparison(left, CapturedValue.Create(cursorValue, type), direction, inclusive),
 
             var type when type == typeof(bool) =>
-                BuildBooleanComparison(left, CaptureValue(cursorValue, type), direction),
+                BuildBooleanComparison(left, CapturedValue.Create(cursorValue, type), direction),
 
             var type when type.IsEnum =>
                 BuildEnumComparison(left, cursorValue, type, direction, inclusive),
 
             var type when HasComparisonOperators(type) =>
-                BuildScalarComparison(left, CaptureValue(cursorValue, type), direction, inclusive),
+                BuildScalarComparison(left, CapturedValue.Create(cursorValue, type), direction, inclusive),
 
-            _ => BuildComparableComparison(left, CaptureValue(cursorValue, effectiveType), effectiveType, direction, inclusive)
+            _ => BuildComparableComparison(left, CapturedValue.Create(cursorValue, effectiveType), effectiveType, direction, inclusive)
         };
 
         return isNullable
@@ -163,7 +164,7 @@ internal static class ComparisonBuilder
         bool inclusive)
     {
         var underlyingType = Enum.GetUnderlyingType(enumType);
-        var right = CaptureValue(Convert.ChangeType(value, underlyingType), underlyingType);
+        var right = CapturedValue.Create(Convert.ChangeType(value, underlyingType), underlyingType);
 
         return BuildScalarComparison(Expression.Convert(left, underlyingType), right, direction, inclusive);
     }
@@ -225,13 +226,6 @@ internal static class ComparisonBuilder
         return direction == OrderingDirection.Ascending
             ? nullOrdering == NullOrdering.NullsCompareLower
             : nullOrdering == NullOrdering.NullsCompareHigher;
-    }
-
-    private static UnaryExpression CaptureValue(object value, Type type)
-    {
-        Expression<Func<object>> accessor = () => value;
-
-        return Expression.Convert(accessor.Body, type);
     }
 
     private static MethodCallExpression? BuildCompareToCall(Expression left, Expression right, Type type)

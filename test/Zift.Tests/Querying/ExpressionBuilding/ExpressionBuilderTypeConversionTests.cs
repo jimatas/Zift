@@ -155,6 +155,41 @@ public sealed class ExpressionBuilderTypeConversionTests
                 new StringLiteral("123")));
     }
 
+    [Theory]
+    [InlineData(nameof(TestClass.Int32Value), "Int32")]
+    [InlineData(nameof(TestClass.StringValue), "String")]
+    [InlineData(nameof(TestClass.GuidValue), "Guid")]
+    [InlineData(nameof(TestClass.EnumValue), "TestEnum")]
+    public void Build_BooleanLiteral_ToNonBooleanProperty_ThrowsInvalidOperationException(
+        string property,
+        string expectedTypeName)
+    {
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            BuildExpression(property, new BooleanLiteral(true)));
+
+        Assert.Contains("Boolean", ex.Message);
+        Assert.Contains(expectedTypeName, ex.Message);
+    }
+
+    [Fact]
+    public void Build_BooleanLiteral_ToBooleanProperties_EvaluatesCorrectly()
+    {
+        var required = Build(
+            nameof(TestClass.BooleanValue),
+            ComparisonOperator.Equal,
+            new BooleanLiteral(true));
+
+        var optional = Build(
+            nameof(TestClass.NullableBooleanValue),
+            ComparisonOperator.Equal,
+            new BooleanLiteral(true));
+
+        Assert.True(required(new TestClass { BooleanValue = true }));
+        Assert.False(required(new TestClass { BooleanValue = false }));
+        Assert.True(optional(new TestClass { NullableBooleanValue = true }));
+        Assert.False(optional(new TestClass { NullableBooleanValue = null }));
+    }
+
     [Fact]
     public void Build_NumberLiteral_ToEnum_ThrowsInvalidOperationException()
     {

@@ -256,17 +256,9 @@ internal sealed class ExpressionParser
             SyntaxTokenType.True => new BooleanLiteral(true),
             SyntaxTokenType.False => new BooleanLiteral(false),
             SyntaxTokenType.Null => new NullLiteral(),
-            SyntaxTokenType.NumberLiteral => ParseNumber(token),
+            SyntaxTokenType.NumberLiteral => new NumberLiteral(token.Text),
             _ => throw new SyntaxErrorException($"Expected literal, found {token.Type}.", token)
         };
-    }
-
-    private static NumberLiteral ParseNumber(SyntaxToken token)
-    {
-        return token.Text.Contains('.') ||
-            token.Text.Contains('e', StringComparison.OrdinalIgnoreCase)
-                ? new NumberLiteral(double.Parse(token.Text, CultureInfo.InvariantCulture))
-                : new NumberLiteral(int.Parse(token.Text, CultureInfo.InvariantCulture));
     }
 
     private void EnterNesting()
