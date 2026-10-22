@@ -6,23 +6,6 @@ using Types;
 
 internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
 {
-    private static readonly Dictionary<Type, Func<string, object>> _stringParsers = new()
-    {
-        [typeof(DateTime)] = s =>
-            DateTime.Parse(s, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
-
-        [typeof(DateTimeOffset)] = s =>
-            DateTimeOffset.Parse(s, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
-
-        [typeof(Guid)] = s => Guid.Parse(s),
-
-        [typeof(DateOnly)] = s =>
-            DateOnly.Parse(s, CultureInfo.InvariantCulture),
-
-        [typeof(TimeOnly)] = s =>
-            TimeOnly.Parse(s, CultureInfo.InvariantCulture)
-    };
-
     private static readonly MethodInfo _stringCompareTo =
         typeof(string).GetMethod(
             nameof(string.CompareTo),
@@ -47,8 +30,9 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
     private Expression BuildPredicate(
         PredicateNode node,
         ParameterExpression parameter,
-        PropertyAccessContext context) =>
-        node switch
+        PropertyAccessContext context)
+    {
+        return node switch
         {
             LogicalNode logical =>
                 BuildLogical(logical, parameter, context),
@@ -65,6 +49,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
             _ => throw new NotSupportedException(
                 $"Unsupported predicate node: '{node.GetType().Name}'.")
         };
+    }
 
     private Expression BuildLogical(
         LogicalNode node,
@@ -188,8 +173,9 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
     private GuardedPropertyAccess BuildPropertyAccess(
         PropertyNode property,
         ParameterExpression parameter,
-        PropertyAccessContext context) =>
-        property switch
+        PropertyAccessContext context)
+    {
+        return property switch
         {
             PropertyPathNode path =>
                 BuildPropertyPathAccess(path, parameter, context),
@@ -200,16 +186,19 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
             _ => throw new NotSupportedException(
                 $"Unsupported property node: '{property.GetType().Name}'.")
         };
+    }
 
     private GuardedPropertyAccess BuildPropertyPathAccess(
         PropertyPathNode path,
         Expression root,
-        PropertyAccessContext context) =>
-        GuardedPropertyAccessBuilder.Build(
+        PropertyAccessContext context)
+    {
+        return GuardedPropertyAccessBuilder.Build(
             root,
             path.Segments,
             _options.EnableNullGuards,
             guardRoot: context == PropertyAccessContext.QuantifierElement);
+    }
 
     private GuardedPropertyAccess BuildProjectionAccess(
         ProjectionNode projection,
@@ -329,8 +318,9 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
     private static Expression BuildStringComparison(
         ComparisonOperator comparisonOperator,
         Expression property,
-        Expression comparisonValue) =>
-        comparisonOperator switch
+        Expression comparisonValue)
+    {
+        return comparisonOperator switch
         {
             ComparisonOperator.Contains =>
                 Expression.Call(
@@ -382,6 +372,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
             _ => throw new NotSupportedException(
                 $"Operator '{comparisonOperator}' is not supported for string.")
         };
+    }
 
     private Expression BuildInComparison(
         GuardedPropertyAccess propertyAccess,
@@ -448,57 +439,39 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
             : Expression.AndAlso(nullGuard, comparison);
     }
 
-    private static object ExtractLiteralValue(LiteralNode literal) =>
-        literal switch
+    private static object ConvertLiteralValue(LiteralNode literal, Type targetType)
+    {
+        var effectiveType = targetType.GetEffectiveType();
+
+        return literal switch
         {
-            NumberLiteral n => n.Value,
-            StringLiteral s => s.Value,
-            BooleanLiteral b => b.Value,
+            NumberLiteral number =>
+                NumericLiteralConverter.Convert(number.Text, effectiveType),
+
+            StringLiteral text =>
+                StringLiteralConverter.Convert(text.Value, effectiveType),
+
+            BooleanLiteral boolean =>
+                ConvertBooleanValue(boolean.Value, effectiveType),
 
             _ => throw new NotSupportedException(
                 $"Unsupported literal: '{literal.GetType().Name}'.")
         };
+    }
 
-    private static object ConvertLiteralValue(object value, Type targetType)
+    private static bool ConvertBooleanValue(bool value, Type effectiveType)
     {
-        var effectiveType = targetType.GetEffectiveType();
-
-        if (effectiveType.IsInstanceOfType(value))
-        {
-            return value;
-        }
-
-        if (value.GetType().IsNumeric() && effectiveType.IsNumeric())
-        {
-            return Convert.ChangeType(value, effectiveType, CultureInfo.InvariantCulture);
-        }
-
-        if (value is string s)
-        {
-            if (_stringParsers.TryGetValue(effectiveType, out var parser))
-            {
-                return parser(s);
-            }
-
-            if (effectiveType.IsEnum)
-            {
-                return Enum.Parse(effectiveType, s, ignoreCase: false);
-            }
-
-            throw new InvalidOperationException(
-                $"String values cannot be converted to '{effectiveType.Name}'.");
-        }
-
-        throw new InvalidOperationException(
-            $"Cannot convert value of type '{value.GetType().Name}' to '{effectiveType.Name}'.");
+        return effectiveType.IsInstanceOfType(value)
+            ? value
+            : throw new InvalidOperationException(
+                $"Cannot convert value of type 'Boolean' to '{effectiveType.Name}'.");
     }
 
     private Expression CreateLiteralExpression(
         LiteralNode literal,
         Type targetType)
     {
-        var rawValue = ExtractLiteralValue(literal);
-        var convertedValue = ConvertLiteralValue(rawValue, targetType);
+        var convertedValue = ConvertLiteralValue(literal, targetType);
 
         return CreateValueExpression(convertedValue, targetType);
     }
@@ -511,8 +484,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
 
         for (var i = 0; i < list.Items.Count; i++)
         {
-            var rawValue = ExtractLiteralValue(list.Items[i]);
-            var convertedValue = ConvertLiteralValue(rawValue, elementType);
+            var convertedValue = ConvertLiteralValue(list.Items[i], elementType);
 
             array.SetValue(convertedValue, i);
         }
@@ -522,14 +494,9 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
 
     private Expression CreateValueExpression(object value, Type targetType)
     {
-        if (!_options.ParameterizeValues)
-        {
-            return Expression.Constant(value, targetType);
-        }
-
-        LambdaExpression wrapper = () => value;
-
-        return Expression.Convert(wrapper.Body, targetType);
+        return _options.ParameterizeValues
+            ? CapturedValue.Create(value, targetType)
+            : Expression.Constant(value, targetType);
     }
 
     private enum PropertyAccessContext

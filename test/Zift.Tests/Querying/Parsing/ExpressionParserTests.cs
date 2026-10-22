@@ -113,23 +113,22 @@ public sealed class ExpressionParserTests
     public sealed class Literals
     {
         [Theory]
-        [InlineData("a == 1", typeof(int))]
-        [InlineData("a == -1", typeof(int))]
-        public void Parse_IntegerLiteral_ReturnsNumberLiteralWithIntValue(string text, Type expectedType)
+        [InlineData("a == 1", "1")]
+        [InlineData("a == -1", "-1")]
+        [InlineData("a == +1", "+1")]
+        [InlineData("a == 3000000000", "3000000000")]
+        [InlineData("a == 99999999999999999999999999999", "99999999999999999999999999999")]
+        [InlineData("a == 1.5", "1.5")]
+        [InlineData("a == .5", ".5")]
+        [InlineData("a == 1e3", "1e3")]
+        [InlineData("a == -1e-3", "-1e-3")]
+        [InlineData("a == 0.1234567890123456789012345678", "0.1234567890123456789012345678")]
+        [InlineData("a == 1e999", "1e999")]
+        public void Parse_NumericLiteral_PreservesLiteralText(string text, string expectedText)
         {
             var number = Assert.IsType<NumberLiteral>(ParseLiteral(text));
-            Assert.IsType(expectedType, number.Value);
-        }
 
-        [Theory]
-        [InlineData("a == 1.5")]
-        [InlineData("a == .5")]
-        [InlineData("a == 1e3")]
-        [InlineData("a == -1e-3")]
-        public void Parse_FloatingPointLiteral_ReturnsNumberLiteralWithDoubleValue(string text)
-        {
-            var number = Assert.IsType<NumberLiteral>(ParseLiteral(text));
-            Assert.IsType<double>(number.Value);
+            Assert.Equal(expectedText, number.Text);
         }
 
         [Fact]
