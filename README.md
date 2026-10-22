@@ -13,6 +13,20 @@ The library focuses on two core capabilities:
 - **Dynamic querying**: string-based filtering via `Where(...)`
 - **Pagination**: offset-based and cursor-based pagination
 
+## Installation
+
+```
+dotnet add package Zift
+```
+
+If you use Entity Framework Core, install the EF Core package instead. It includes Zift and adds the async methods (`ToPageAsync` and `ToCursorPageAsync`):
+
+```
+dotnet add package Zift.EntityFrameworkCore
+```
+
+Zift targets .NET 8, 9 and 10. The EF Core package uses the EF Core version that matches your target framework.
+
 ## Dynamic Querying
 
 Zift allows dynamic filtering using a compact, expressive string syntax that is parsed and translated into LINQ expression trees.
@@ -109,6 +123,17 @@ var products = items.Where("Category.Name == \"Books\"", options);
 | `MaxListItems` | `1000` | List size limit. |
 
 Limits must be at least 1. Keep them bounded when accepting filters from users.
+
+### Security
+
+A filter can reach any public property on the entity, including nested ones. There's no allowlist.
+
+When filters come from users:
+
+- Filter over a projection that only has the properties users are allowed to filter on, not the full entity.
+- Restrict the query to records the user is allowed to access before applying their filter.
+- Remember that filtering reveals values. A user who can't read a property can still probe it with `Email ^= "a"`.
+- Keep the limits above bounded.
 
 ### Errors
 
