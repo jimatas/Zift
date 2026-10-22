@@ -102,13 +102,19 @@ It is enabled by calling `AsCursorQuery()` on the `IQueryable<T>`.
 ```csharp
 var page = context.Products
     .AsCursorQuery()
-    .OrderBy("Name ASC, Price DESC")
+    .OrderBy("Name ASC, Price DESC, Id ASC")
     .ToCursorPage(pageSize: 25);
 ```
 
 > **Note**: Ordering for cursor pagination must be applied *after* calling `AsCursorQuery()`. Any ordering applied before `AsCursorQuery()` is ignored.
 
 Cursor pagination requires at least one ordering clause to be provided; otherwise execution fails.
+
+The combined ordering keys must uniquely identify each row, so end the ordering with a unique key such as `Id`. Rows that tie on every key can be skipped between pages.
+
+Null keys are assumed to sort first when ascending (SQL Server, SQLite, MySQL). For sources that sort nulls last, such as PostgreSQL and Oracle, pass `new CursorQueryOptions { NullOrdering = NullOrdering.NullsCompareHigher }` to `AsCursorQuery()`.
+
+Cursors are URL-safe tokens tied to the ordering that produced them; using one with a different ordering throws `InvalidCursorException`. They are not encrypted or signed.
 
 To continue navigation from a previously retrieved page, use the cursor values exposed by that page as anchors for further traversal.
 

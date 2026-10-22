@@ -2,17 +2,29 @@
 
 public sealed class Page<T> : IPagedResult<T>
 {
-    internal Page(
-        IReadOnlyList<T> items,
-        int pageNumber,
-        int pageSize,
-        int totalItemCount)
+    public Page(IReadOnlyList<T> items, int pageNumber, int pageSize, int totalItemCount)
     {
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentOutOfRangeException.ThrowIfLessThan(pageNumber, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1);
+        ArgumentOutOfRangeException.ThrowIfNegative(totalItemCount);
+
+        if (items.Count > pageSize)
+        {
+            throw new ArgumentException(
+                "A page cannot contain more items than its page size.", nameof(items));
+        }
+
         Items = items;
         PageNumber = pageNumber;
         PageSize = pageSize;
-        PageCount = CalculatePageCount(totalItemCount, pageSize);
         TotalItemCount = totalItemCount;
+        PageCount = (int)(((long)totalItemCount + pageSize - 1) / pageSize);
+    }
+
+    public static Page<T> Empty(int pageSize)
+    {
+        return new Page<T>([], pageNumber: 1, pageSize, totalItemCount: 0);
     }
 
     public IReadOnlyList<T> Items { get; }
@@ -26,6 +38,10 @@ public sealed class Page<T> : IPagedResult<T>
 
     public int TotalItemCount { get; }
 
-    private static int CalculatePageCount(long totalCount, long pageSize) =>
-        (int)((totalCount + pageSize - 1) / pageSize);
+    public Page<TResult> Map<TResult>(Func<T, TResult> selector)
+    {
+        ArgumentNullException.ThrowIfNull(selector);
+
+        return new Page<TResult>(Items.Select(selector).ToList(), PageNumber, PageSize, TotalItemCount);
+    }
 }

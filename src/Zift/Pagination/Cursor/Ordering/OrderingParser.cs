@@ -1,77 +1,53 @@
 ﻿namespace Zift.Pagination.Cursor.Ordering;
 
-using Expressions;
-
-internal sealed class OrderingParser<T>(OrderingOptions options)
+internal static class OrderingParser
 {
-    private readonly OrderingOptions _options = options;
-
-    public IReadOnlyList<OrderingClause<T>> Parse(string orderByClause)
+    public static IReadOnlyList<OrderingClause<T>> Parse<T>(
+        string orderByClause,
+        OrderingOptions options)
     {
         var clauses = new List<OrderingClause<T>>();
 
-        foreach (var clauseText in orderByClause.Split(',', StringSplitOptions.TrimEntries))
+        foreach (var text in orderByClause.Split(',', StringSplitOptions.TrimEntries))
         {
-            if (string.IsNullOrEmpty(clauseText))
+            if (text.Length == 0)
             {
-                throw new FormatException(
-                    "Order-by expression contains an empty clause.");
+                throw new InvalidOrderingClauseException("The order-by clause contains an empty entry.");
             }
 
-            clauses.Add(ParseClause(clauseText));
+            clauses.Add(ParseEntry<T>(text, options));
         }
 
         return clauses;
     }
 
-    private OrderingClause<T> ParseClause(string clauseText)
+    private static OrderingClause<T> ParseEntry<T>(string text, OrderingOptions options)
     {
-        var clauseParts = clauseText.Split(
-            Array.Empty<char>(),
-            StringSplitOptions.RemoveEmptyEntries);
+        var parts = text.Split(Array.Empty<char>(), StringSplitOptions.RemoveEmptyEntries);
 
-        var propertyPath = clauseParts[0];
-
-        var direction = clauseParts.Length switch
+        var direction = parts.Length switch
         {
             1 => OrderingDirection.Ascending,
-            2 => ParseDirection(clauseParts[1]),
-            _ => throw new FormatException(
-                $"Invalid order-by clause '{clauseText}'. Expected format is 'Property [ASC|DESC]'.")
+            2 => ParseDirection(parts[1]),
+            _ => throw new InvalidOrderingClauseException(
+                $"Invalid order-by entry '{text}'. Expected 'Property [ASC|DESC]'.")
         };
 
-        var keySelector = BuildKeySelector(propertyPath);
+        var keySelector = PropertyPathResolver.Resolve<T>(
+            parts[0],
+            options.EnableNullGuards);
 
-        return OrderingClause<T>.Create(keySelector, direction);
+        return new OrderingClause<T>(keySelector, direction);
     }
 
-    private static OrderingDirection ParseDirection(string directionText) =>
-        directionText.ToUpperInvariant() switch
+    private static OrderingDirection ParseDirection(string text)
+    {
+        return text.ToUpperInvariant() switch
         {
             "ASC" => OrderingDirection.Ascending,
             "DESC" => OrderingDirection.Descending,
-            _ => throw new FormatException(
-                $"Invalid order-by direction '{directionText}'. Must be 'ASC' or 'DESC'.")
+            _ => throw new InvalidOrderingClauseException(
+                $"Invalid order-by direction '{text}'. Must be 'ASC' or 'DESC'.")
         };
-
-    private LambdaExpression BuildKeySelector(string propertyPath)
-    {
-        var parameter = Expression.Parameter(
-            typeof(T),
-            ParameterName.FromType<T>());
-
-        var (property, nullGuard) = GuardedPropertyAccessBuilder.Build(
-            parameter,
-            propertyPath.Split('.'),
-            _options.EnableNullGuards);
-
-        var body = nullGuard is not null
-            ? Expression.Condition(
-                nullGuard,
-                property,
-                Expression.Default(property.Type))
-            : property;
-
-        return Expression.Lambda(body, parameter);
     }
 }

@@ -5,31 +5,28 @@ using Pagination.Offset;
 
 public static class QueryableExtensions
 {
-    public static async Task<Page<T>> ToPageAsync<T>(
+    public static Task<Page<T>> ToPageAsync<T>(
         this IQueryable<T> source,
         int pageNumber,
         int pageSize,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(source);
-        ArgumentOutOfRangeException.ThrowIfLessThan(pageNumber, 1);
-        ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1);
+        var offset = OffsetPagination.ComputeOffset(pageNumber, pageSize);
 
-        var totalItemCount = await source
-            .CountAsync(cancellationToken)
-            .ConfigureAwait(false);
+        return ToPageCoreAsync(source, pageNumber, pageSize, offset, cancellationToken);
+    }
 
-        var skip = (pageNumber - 1L) * pageSize;
-        var items = await source
-            .Skip((int)skip)
-            .Take(pageSize)
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
+    private static async Task<Page<T>> ToPageCoreAsync<T>(
+        IQueryable<T> source,
+        int pageNumber,
+        int pageSize,
+        int offset,
+        CancellationToken cancellationToken)
+    {
+        var totalItemCount = await source.CountAsync(cancellationToken).ConfigureAwait(false);
+        var items = await source.Skip(offset).Take(pageSize).ToListAsync(cancellationToken).ConfigureAwait(false);
 
-        return new Page<T>(
-            items,
-            pageNumber,
-            pageSize,
-            totalItemCount);
+        return new Page<T>(items, pageNumber, pageSize, totalItemCount);
     }
 }

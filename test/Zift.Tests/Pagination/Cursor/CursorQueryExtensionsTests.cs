@@ -31,7 +31,7 @@ public sealed class CursorQueryExtensionsTests
 
         var ex = Assert.Throws<InvalidOperationException>(() => query.ToCursorPage(pageSize: 1));
 
-        Assert.Contains("execution state", ex.Message);
+        Assert.Contains("AsCursorQuery", ex.Message);
     }
 
     private sealed class FakeExecutableCursorQuery<T>
