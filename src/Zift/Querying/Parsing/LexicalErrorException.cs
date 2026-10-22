@@ -5,6 +5,8 @@ public sealed class LexicalErrorException(string message, int position)
 {
     internal int Position { get; } = position;
 
-    private static string FormatErrorMessage(string message, int position) =>
-        $"{message}{Environment.NewLine}(Position: {position})";
+    private static string FormatErrorMessage(string message, int position)
+    {
+        return $"{message}{Environment.NewLine}(Position: {position})";
+    }
 }
