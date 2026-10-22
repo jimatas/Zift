@@ -100,6 +100,37 @@ public sealed class ExpressionEndToEndTests
         Assert.False(predicate(new TestClass { StringValue = "other" }));
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void EmptyInListInsideQuantifier_MatchesNothingForNullAndNonNullElements(bool enableNullGuards)
+    {
+        var options = new ExpressionBuilderOptions { EnableNullGuards = enableNullGuards };
+
+        var source = new[]
+        {
+            new TestClass
+            {
+                Int32Value = 1,
+                SubEntities = [new TestClass { NullableInt32Value = null }]
+            },
+            new TestClass
+            {
+                Int32Value = 2,
+                SubEntities = [new TestClass { NullableInt32Value = 5 }, new TestClass { NullableInt32Value = null }]
+            },
+            new TestClass { Int32Value = 3, SubEntities = [] }
+        }.AsQueryable();
+
+        int[] Ids(string filter) =>
+            source.Where(filter, options).Select(t => t.Int32Value).OrderBy(i => i).ToArray();
+
+        Assert.Empty(Ids("SubEntities:any(NullableInt32Value in [])"));
+        Assert.Equal([3], Ids("SubEntities:all(NullableInt32Value in [])"));
+        Assert.Equal([1, 2, 3], Ids("!SubEntities:any(NullableInt32Value in [])"));
+        Assert.Equal([1, 2], Ids("SubEntities:any(NullableInt32Value in [null])"));
+    }
+
     private static Func<TestClass, bool> Compile(string text)
     {
         var tokenizer = new ExpressionTokenizer(text);

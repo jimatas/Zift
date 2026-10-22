@@ -400,7 +400,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
 
         if (nonNullItems.Count == 0)
         {
-            comparison = property.Type.IsNullable()
+            comparison = containsNull
                 ? Expression.Equal(
                     property,
                     Expression.Constant(null, property.Type))
