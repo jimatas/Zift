@@ -81,6 +81,15 @@ var page = await context.Categories
     .ToPageAsync(pageNumber: 1, pageSize: 25);
 ```
 
+`ToPageAsync` is provided by the `Zift.EntityFrameworkCore` package. For other `IQueryable<T>` sources, such as in-memory collections, use the synchronous `ToPage` from the core `Zift` package:
+
+```csharp
+var page = categories
+    .AsQueryable()
+    .OrderBy(c => c.Name)
+    .ToPage(pageNumber: 1, pageSize: 25);
+```
+
 #### Result shape
 
 ```csharp
@@ -100,10 +109,17 @@ Cursor pagination (keyset pagination) is designed for stable and efficient trave
 It is enabled by calling `AsCursorQuery()` on the `IQueryable<T>`.
 
 ```csharp
-var page = context.Products
+var query = context.Products
     .AsCursorQuery()
-    .OrderBy("Name ASC, Price DESC, Id ASC")
-    .ToCursorPage(pageSize: 25);
+    .OrderBy("Name ASC, Price DESC, Id ASC");
+
+var page = query.ToCursorPage(pageSize: 25);
+```
+
+`ToCursorPage` runs synchronously and works with any `IQueryable<T>`. With Entity Framework Core, use `ToCursorPageAsync` from the `Zift.EntityFrameworkCore` package instead:
+
+```csharp
+var page = await query.ToCursorPageAsync(pageSize: 25);
 ```
 
 > **Note**: Ordering for cursor pagination must be applied *after* calling `AsCursorQuery()`. Any ordering applied before `AsCursorQuery()` is ignored.
@@ -116,7 +132,7 @@ Null keys are assumed to sort first when ascending (SQL Server, SQLite, MySQL). 
 
 Cursors are URL-safe tokens tied to the ordering that produced them; using one with a different ordering throws `InvalidCursorException`. They are not encrypted or signed.
 
-To continue navigation from a previously retrieved page, use the cursor values exposed by that page as anchors for further traversal.
+To continue navigation from a previously retrieved page, reuse the same ordered `query` and pass the cursors exposed by that page as anchors for further traversal.
 
 ```csharp
 // Forward traversal
