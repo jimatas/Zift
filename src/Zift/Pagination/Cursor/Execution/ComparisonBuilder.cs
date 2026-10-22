@@ -4,97 +4,145 @@ using Ordering;
 
 internal static class ComparisonBuilder
 {
-    private static readonly Dictionary<Type, MethodInfo> _compareMethods = new()
-    {
-        [typeof(string)] =
-            typeof(string).GetMethod(nameof(string.Compare), [typeof(string), typeof(string)])!,
-
-        [typeof(bool)] =
-            typeof(bool).GetMethod(nameof(bool.CompareTo), [typeof(bool)])!
-    };
+    private static readonly MethodInfo _stringCompare =
+        typeof(string).GetMethod(nameof(string.Compare), [typeof(string), typeof(string)])!;
 
     public static Expression BuildComparison(
-        Expression property,
-        object? value,
-        OrderingDirection direction)
+        Expression key,
+        object? cursorValue,
+        OrderingDirection direction,
+        NullOrdering nullOrdering)
     {
-        var declaredType = property.Type;
+        return BuildComparisonCore(key, cursorValue, direction, nullOrdering, inclusive: false);
+    }
+
+    public static Expression? BuildLeadingKeyBound(
+        Expression key,
+        object? cursorValue,
+        OrderingDirection direction,
+        NullOrdering nullOrdering)
+    {
+        var declaredType = key.Type;
         var underlyingType = Nullable.GetUnderlyingType(declaredType);
         var effectiveType = underlyingType ?? declaredType;
 
-        Expression left;
-        Expression right;
-
-        var isNullable = underlyingType is not null;
-        if (isNullable)
+        if (cursorValue is null || effectiveType == typeof(bool) ||
+            !HasInclusiveOperator(effectiveType, direction))
         {
-            if (value is null)
-            {
-                left = property;
-                right = Expression.Constant(null, declaredType);
-            }
-            else
-            {
-                left = Expression.Property(property, "Value");
-                right = Expression.Constant(value, underlyingType!);
-            }
-        }
-        else
-        {
-            left = property;
-            right = Expression.Constant(value, declaredType);
+            return null;
         }
 
-        if (value is null && isNullable)
+        return BuildComparisonCore(key, cursorValue, direction, nullOrdering, inclusive: true);
+    }
+
+    public static Expression BuildEquality(Expression key, object? cursorValue)
+    {
+        var declaredType = key.Type;
+        var underlyingType = Nullable.GetUnderlyingType(declaredType);
+        var effectiveType = underlyingType ?? declaredType;
+        var isNullable = underlyingType is not null || !declaredType.IsValueType;
+
+        if (cursorValue is null)
         {
-            return BuildNullComparison(property, direction);
+            if (!isNullable)
+            {
+                throw new InvalidCursorException(
+                    "The cursor contains a null for a key that cannot be null.");
+            }
+
+            return IsNull(key);
         }
+
+        var left = underlyingType is null
+            ? key
+            : Expression.Property(key, nameof(Nullable<>.Value));
+
+        var right = CaptureValue(cursorValue, effectiveType);
+
+        var equality = effectiveType switch
+        {
+            var type when type == typeof(string) =>
+                Expression.Equal(Expression.Call(_stringCompare, left, right), Expression.Constant(0)),
+
+            var type when type == typeof(bool) || type.IsEnum || HasComparisonOperators(type) =>
+                Expression.Equal(left, right),
+
+            _ => BuildComparableEquality(left, right, effectiveType)
+        };
+
+        return isNullable
+            ? Expression.AndAlso(IsNotNull(key), equality)
+            : equality;
+    }
+
+    private static Expression BuildComparisonCore(
+        Expression key,
+        object? cursorValue,
+        OrderingDirection direction,
+        NullOrdering nullOrdering,
+        bool inclusive)
+    {
+        var declaredType = key.Type;
+        var underlyingType = Nullable.GetUnderlyingType(declaredType);
+        var effectiveType = underlyingType ?? declaredType;
+        var isNullable = underlyingType is not null || !declaredType.IsValueType;
+
+        if (cursorValue is null)
+        {
+            if (!isNullable)
+            {
+                throw new InvalidCursorException(
+                    "The cursor contains a null for a key that cannot be null.");
+            }
+
+            return BuildNullComparison(key, direction, nullOrdering);
+        }
+
+        var left = underlyingType is null
+            ? key
+            : Expression.Property(key, nameof(Nullable<>.Value));
 
         var comparison = effectiveType switch
         {
             var type when type == typeof(string) =>
-                BuildStringComparison(left, right, direction),
+                BuildStringComparison(left, CaptureValue(cursorValue, type), direction, inclusive),
 
             var type when type == typeof(bool) =>
-                BuildBooleanComparison(left, right, direction),
+                BuildBooleanComparison(left, CaptureValue(cursorValue, type), direction),
 
             var type when type.IsEnum =>
-                BuildEnumComparison(left, right, type, direction),
+                BuildEnumComparison(left, cursorValue, type, direction, inclusive),
 
-            _ => BuildScalarComparison(left, right, direction)
+            var type when HasComparisonOperators(type) =>
+                BuildScalarComparison(left, CaptureValue(cursorValue, type), direction, inclusive),
+
+            _ => BuildComparableComparison(left, CaptureValue(cursorValue, effectiveType), effectiveType, direction, inclusive)
         };
 
         return isNullable
-            ? ApplyNullOrdering(property, comparison, direction)
+            ? ApplyNullOrdering(key, comparison, direction, nullOrdering)
             : comparison;
     }
 
-    public static Expression BuildEquality(Expression property, object? value) =>
-        Expression.Equal(property, Expression.Constant(value, property.Type));
-
     private static Expression BuildNullComparison(
-        Expression property,
-        OrderingDirection direction)
+        Expression key,
+        OrderingDirection direction,
+        NullOrdering nullOrdering)
     {
-        var isNotNull = Expression.NotEqual(
-            property,
-            Expression.Constant(null, property.Type));
-
-        return direction == OrderingDirection.Ascending
-            ? isNotNull
+        return NullsSortFirst(direction, nullOrdering)
+            ? IsNotNull(key)
             : Expression.Constant(false);
     }
 
     private static BinaryExpression BuildStringComparison(
         Expression left,
         Expression right,
-        OrderingDirection direction)
+        OrderingDirection direction,
+        bool inclusive)
     {
-        var compareCall = Expression.Call(_compareMethods[typeof(string)], left, right);
+        var compareCall = Expression.Call(_stringCompare, left, right);
 
-        return direction == OrderingDirection.Ascending
-            ? Expression.GreaterThan(compareCall, Expression.Constant(0))
-            : Expression.LessThan(compareCall, Expression.Constant(0));
+        return BuildScalarComparison(compareCall, Expression.Constant(0), direction, inclusive);
     }
 
     private static BinaryExpression BuildBooleanComparison(
@@ -102,54 +150,129 @@ internal static class ComparisonBuilder
         Expression right,
         OrderingDirection direction)
     {
-        var compareCall = Expression.Call(left, _compareMethods[typeof(bool)], right);
-
         return direction == OrderingDirection.Ascending
-            ? Expression.GreaterThan(compareCall, Expression.Constant(0))
-            : Expression.LessThan(compareCall, Expression.Constant(0));
+            ? Expression.And(left, Expression.Not(right))
+            : Expression.And(Expression.Not(left), right);
     }
 
     private static BinaryExpression BuildEnumComparison(
         Expression left,
-        Expression right,
+        object value,
         Type enumType,
-        OrderingDirection direction)
+        OrderingDirection direction,
+        bool inclusive)
     {
         var underlyingType = Enum.GetUnderlyingType(enumType);
+        var right = CaptureValue(Convert.ChangeType(value, underlyingType), underlyingType);
 
-        return BuildScalarComparison(
-           Expression.Convert(left, underlyingType),
-           Expression.Convert(right, underlyingType),
-           direction);
+        return BuildScalarComparison(Expression.Convert(left, underlyingType), right, direction, inclusive);
     }
 
     private static BinaryExpression BuildScalarComparison(
         Expression left,
         Expression right,
-        OrderingDirection direction)
+        OrderingDirection direction,
+        bool inclusive)
     {
-        return direction == OrderingDirection.Ascending
-            ? Expression.GreaterThan(left, right)
-            : Expression.LessThan(left, right);
+        return (direction, inclusive) switch
+        {
+            (OrderingDirection.Ascending, false) => Expression.GreaterThan(left, right),
+            (OrderingDirection.Ascending, true) => Expression.GreaterThanOrEqual(left, right),
+            (_, false) => Expression.LessThan(left, right),
+            _ => Expression.LessThanOrEqual(left, right)
+        };
+    }
+
+    private static BinaryExpression BuildComparableComparison(
+        Expression left,
+        Expression right,
+        Type type,
+        OrderingDirection direction,
+        bool inclusive)
+    {
+        var compareCall = BuildCompareToCall(left, right, type)
+            ?? throw new NotSupportedException(
+                $"Ordering by '{type.Name}' is not supported for cursor pagination: the type has neither comparison operators nor IComparable<{type.Name}>.");
+
+        return BuildScalarComparison(compareCall, Expression.Constant(0), direction, inclusive);
+    }
+
+    private static BinaryExpression BuildComparableEquality(Expression left, Expression right, Type type)
+    {
+        var compareCall = BuildCompareToCall(left, right, type)
+            ?? throw new NotSupportedException(
+                $"Ordering by '{type.Name}' is not supported for cursor pagination.");
+
+        return Expression.Equal(compareCall, Expression.Constant(0));
     }
 
     private static BinaryExpression ApplyNullOrdering(
-        Expression property,
+        Expression key,
         Expression comparison,
-        OrderingDirection direction)
+        OrderingDirection direction,
+        NullOrdering nullOrdering)
     {
-        var isNull = Expression.Equal(
-            property,
-            Expression.Constant(null, property.Type));
+        var isNull = IsNull(key);
+        var isNotNull = IsNotNull(key);
 
-        var isNotNull = Expression.NotEqual(
-            property,
-            Expression.Constant(null, property.Type));
-
-        return direction == OrderingDirection.Ascending
+        return NullsSortFirst(direction, nullOrdering)
             ? Expression.AndAlso(isNotNull, comparison)
-            : Expression.OrElse(
-                isNull,
-                Expression.AndAlso(isNotNull, comparison));
+            : Expression.OrElse(isNull, Expression.AndAlso(isNotNull, comparison));
+    }
+
+    private static bool NullsSortFirst(OrderingDirection direction, NullOrdering nullOrdering)
+    {
+        return direction == OrderingDirection.Ascending
+            ? nullOrdering == NullOrdering.NullsCompareLower
+            : nullOrdering == NullOrdering.NullsCompareHigher;
+    }
+
+    private static UnaryExpression CaptureValue(object value, Type type)
+    {
+        Expression<Func<object>> accessor = () => value;
+
+        return Expression.Convert(accessor.Body, type);
+    }
+
+    private static MethodCallExpression? BuildCompareToCall(Expression left, Expression right, Type type)
+    {
+        var compareTo = type.GetMethod(nameof(IComparable.CompareTo), [type]);
+        if (compareTo is null || !typeof(IComparable<>).MakeGenericType(type).IsAssignableFrom(type))
+        {
+            return null;
+        }
+
+        return Expression.Call(left, compareTo, right);
+    }
+
+    private static bool HasComparisonOperators(Type type)
+    {
+        return (type.IsPrimitive && type != typeof(bool)) ||
+            type == typeof(decimal) ||
+            type.GetMethod("op_GreaterThan", BindingFlags.Public | BindingFlags.Static, [type, type]) is not null;
+    }
+
+    private static bool HasInclusiveOperator(Type type, OrderingDirection direction)
+    {
+        if (!HasComparisonOperators(type) || type.IsPrimitive || type == typeof(decimal))
+        {
+            return true;
+        }
+
+        var operatorName = direction == OrderingDirection.Ascending
+            ? "op_GreaterThanOrEqual"
+            : "op_LessThanOrEqual";
+
+        return type.GetMethod(operatorName, BindingFlags.Public | BindingFlags.Static, [type, type]) is not null;
+    }
+
+    private static BinaryExpression IsNull(Expression key)
+    {
+        return Expression.Equal(key, Expression.Constant(null, key.Type));
+    }
+
+    private static BinaryExpression IsNotNull(Expression key)
+    {
+        return Expression.NotEqual(key, Expression.Constant(null, key.Type));
     }
 }

@@ -28,11 +28,22 @@ public static class QueryableExtensions
         return source.Where(predicate);
     }
 
-    public static ICursorQuery<T> AsCursorQuery<T>(this IQueryable<T> source)
+    public static ICursorQuery<T> AsCursorQuery<T>(
+        this IQueryable<T> source,
+        CursorQueryOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(source);
 
-        return new CursorQuery<T>(source);
+        var nullOrdering = options?.NullOrdering ?? NullOrdering.NullsCompareLower;
+        if (!Enum.IsDefined(nullOrdering))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(options),
+                nullOrdering,
+                "The null ordering is not a defined value.");
+        }
+
+        return new CursorQuery<T>(source, nullOrdering);
     }
 
     public static Page<T> ToPage<T>(
@@ -41,13 +52,11 @@ public static class QueryableExtensions
         int pageSize)
     {
         ArgumentNullException.ThrowIfNull(source);
-        ArgumentOutOfRangeException.ThrowIfLessThan(pageNumber, 1);
-        ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1);
+        var offset = OffsetPagination.ComputeOffset(pageNumber, pageSize);
 
         var totalItemCount = source.Count();
-        var skip = (pageNumber - 1L) * pageSize;
         var items = source
-            .Skip((int)skip)
+            .Skip(offset)
             .Take(pageSize)
             .ToList();
 

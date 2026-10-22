@@ -1,48 +1,80 @@
 ﻿namespace Zift.Pagination.Cursor.Ordering;
 
-internal abstract class OrderingClause<T>
+using Expressions;
+
+internal sealed class OrderingClause<T>
 {
-    private static readonly ConcurrentDictionary<Type, Func<LambdaExpression, OrderingDirection, OrderingClause<T>>>
-        _typedFactoryCache = [];
-
-    public abstract LambdaExpression KeySelector { get; }
-    public abstract OrderingDirection Direction { get; }
-
-    public abstract OrderingClause<T> Reverse();
-
-    public abstract IOrderedQueryable<T> ApplyTo(IQueryable<T> query);
-    public abstract IOrderedQueryable<T> ApplyTo(IOrderedQueryable<T> orderedQuery);
-
-    public static OrderingClause<T> Create(
-        LambdaExpression keySelector,
-        OrderingDirection direction)
+    public OrderingClause(LambdaExpression keySelector, OrderingDirection direction)
     {
-        var keyType = keySelector.ReturnType;
+        ArgumentNullException.ThrowIfNull(keySelector);
 
-        var factory = _typedFactoryCache.GetOrAdd(
-            keyType,
-            static keyType => CreateTypedFactory(keyType));
+        if (keySelector.Parameters.Count != 1 || keySelector.Parameters[0].Type != typeof(T))
+        {
+            throw new ArgumentException(
+                $"The key selector must take a single {typeof(T).Name} parameter.", nameof(keySelector));
+        }
 
-        return factory(keySelector, direction);
+        if (keySelector.ReturnType == typeof(object))
+        {
+            throw new ArgumentException(
+                "The key selector must return a strongly typed key (not object), so cursor values can be compared.",
+                nameof(keySelector));
+        }
+
+        KeySelector = NullableLifting.LiftNavigationPath(keySelector);
+        Direction = direction;
     }
 
-    private static Func<LambdaExpression, OrderingDirection, OrderingClause<T>> CreateTypedFactory(Type keyType)
+    public LambdaExpression KeySelector { get; }
+
+    public OrderingDirection Direction { get; }
+
+    public Type KeyType => KeySelector.ReturnType;
+
+    public OrderingClause<T> Reverse()
     {
-        var clauseType =
-            typeof(OrderingClause<,>).MakeGenericType(typeof(T), keyType);
+        var reversedDirection = Direction == OrderingDirection.Ascending
+            ? OrderingDirection.Descending
+            : OrderingDirection.Ascending;
 
-        var ctor = clauseType.GetConstructor(
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-            binder: null,
-            types:
-            [
-                typeof(Expression<>).MakeGenericType(
-                    typeof(Func<,>).MakeGenericType(typeof(T), keyType)),
-                typeof(OrderingDirection)
-            ],
-            modifiers: null)!;
+        return new(KeySelector, reversedDirection);
+    }
 
-        return (keySelector, direction) =>
-            (OrderingClause<T>)ctor.Invoke([keySelector, direction])!;
+    public IOrderedQueryable<T> ApplyTo(IQueryable<T> query)
+    {
+        var methodName = Direction == OrderingDirection.Ascending
+            ? nameof(Queryable.OrderBy)
+            : nameof(Queryable.OrderByDescending);
+
+        return Apply(query, methodName);
+    }
+
+    public IOrderedQueryable<T> ApplyTo(IOrderedQueryable<T> query)
+    {
+        var methodName = Direction == OrderingDirection.Ascending
+            ? nameof(Queryable.ThenBy)
+            : nameof(Queryable.ThenByDescending);
+
+        return Apply(query, methodName);
+    }
+
+    public string Describe()
+    {
+        var canonical = Expression.Parameter(typeof(T), ParameterName.Default);
+        var body = KeySelector.Body.ReplaceParameter(KeySelector.Parameters[0], canonical);
+
+        return $"{body}:{Direction}";
+    }
+
+    private IOrderedQueryable<T> Apply(IQueryable<T> query, string method)
+    {
+        var call = Expression.Call(
+            typeof(Queryable),
+            method,
+            [typeof(T), KeyType],
+            query.Expression,
+            Expression.Quote(KeySelector));
+
+        return (IOrderedQueryable<T>)query.Provider.CreateQuery<T>(call);
     }
 }

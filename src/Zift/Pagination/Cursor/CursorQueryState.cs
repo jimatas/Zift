@@ -3,12 +3,13 @@
 using Ordering;
 
 internal sealed record CursorQueryState<T>(
-    Ordering<T> Ordering,
+    IReadOnlyList<OrderingClause<T>> Ordering,
     string? Cursor,
-    CursorDirection Direction)
+    CursorNavigationMode NavigationMode,
+    NullOrdering NullOrdering)
 {
-    public static readonly CursorQueryState<T> Empty = new(
-        Ordering<T>.Empty,
-        Cursor: null,
-        CursorDirection.None);
+    public static CursorQueryState<T> Create(NullOrdering nullOrdering)
+    {
+        return new([], Cursor: null, CursorNavigationMode.None, nullOrdering);
+    }
 }

@@ -5,154 +5,222 @@ using Ordering;
 
 internal static class CursorPaginationExecutor<T>
 {
-    private static readonly ConcurrentDictionary<LambdaExpression, Func<T, object?>>
-        _cursorValueSelectorCache = [];
+    private const int MaxPageSize = int.MaxValue - 1;
 
     public static CursorPage<T> Execute(
-        IQueryable<T> source,
-        CursorQueryState<T> state,
+        IExecutableCursorQuery<T> query,
         int pageSize,
-        Func<IQueryable<T>, int, List<T>> materializeItems)
+        Func<IQueryable<KeyedItem<T>>, List<KeyedItem<T>>> materialize)
     {
-        var query = PrepareQuery(source, state);
-        var items = materializeItems(query, pageSize + 1);
+        var (source, state) = ValidateAndUnwrap(query, pageSize);
+        var preparedQuery = PrepareQuery(source, state, pageSize);
+        var rows = materialize(preparedQuery);
 
-        return BuildPage(items, state, pageSize);
+        return BuildPage(rows, state, pageSize);
     }
 
-    public static async Task<CursorPage<T>> ExecuteAsync(
-        IQueryable<T> source,
-        CursorQueryState<T> state,
+    public static Task<CursorPage<T>> ExecuteAsync(
+        IExecutableCursorQuery<T> query,
         int pageSize,
-        Func<IQueryable<T>, int, CancellationToken, Task<List<T>>> materializeItemsAsync,
-        CancellationToken cancellationToken)
+        Func<IQueryable<KeyedItem<T>>, Task<List<KeyedItem<T>>>> materializeAsync)
     {
-        var query = PrepareQuery(source, state);
-        var items = await materializeItemsAsync(query, pageSize + 1, cancellationToken)
-            .ConfigureAwait(false);
+        var (source, state) = ValidateAndUnwrap(query, pageSize);
+        var preparedQuery = PrepareQuery(source, state, pageSize);
 
-        return BuildPage(items, state, pageSize);
+        return ExecuteCoreAsync(preparedQuery, state, pageSize, materializeAsync);
     }
 
-    private static IQueryable<T> PrepareQuery(
-        IQueryable<T> source,
-        CursorQueryState<T> state)
+    private static async Task<CursorPage<T>> ExecuteCoreAsync(
+        IQueryable<KeyedItem<T>> query,
+        CursorQueryState<T> state,
+        int pageSize,
+        Func<IQueryable<KeyedItem<T>>, Task<List<KeyedItem<T>>>> materializeAsync)
     {
-        var isBackward = state.Direction == CursorDirection.Before;
+        var rows = await materializeAsync(query).ConfigureAwait(false);
 
+        return BuildPage(rows, state, pageSize);
+    }
+
+    private static (IQueryable<T> Source, CursorQueryState<T> State) ValidateAndUnwrap(
+        IExecutableCursorQuery<T> query,
+        int pageSize)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentOutOfRangeException.ThrowIfLessThan(pageSize, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(pageSize, MaxPageSize);
+
+        if (query is not CursorQuery<T> cursorQuery)
+        {
+            throw new InvalidOperationException("The cursor query was not created by AsCursorQuery().");
+        }
+
+        return (cursorQuery.Source, cursorQuery.State);
+    }
+
+    private static IQueryable<KeyedItem<T>> PrepareQuery(
+        IQueryable<T> source,
+        CursorQueryState<T> state,
+        int pageSize)
+    {
+        if (state.Ordering.Count == 0)
+        {
+            throw new InvalidOperationException("Cursor pagination requires at least one ordering clause.");
+        }
+
+        var isBackward = state.NavigationMode == CursorNavigationMode.Before;
         var ordering = isBackward
-            ? state.Ordering.Reverse()
+            ? state.Ordering.Select(clause => clause.Reverse()).ToArray()
             : state.Ordering;
 
-        IQueryable<T> query = ordering.ApplyTo(source);
+        var rootParameter = ordering[0].KeySelector.Parameters[0];
+        var normalizedSelectorBodies = NormalizeSelectorParameters(ordering, rootParameter);
 
-        if (state.Direction != CursorDirection.None)
+        IQueryable<T> query = ApplyOrdering(source, ordering);
+
+        if (state.NavigationMode != CursorNavigationMode.None)
         {
-            var predicate = BuildCursorPredicate(ordering, DecodeCursor(state));
+            var cursorValues = DecodeCursor(state);
+            var predicate = BuildKeysetPredicate(
+                rootParameter,
+                normalizedSelectorBodies,
+                ordering,
+                cursorValues,
+                state.NullOrdering);
+
             query = query.Where(predicate);
+        }
+
+        var projection = BuildKeyedItemProjection(rootParameter, normalizedSelectorBodies);
+
+        return query.Select(projection).Take(pageSize + 1);
+    }
+
+    private static object?[] DecodeCursor(CursorQueryState<T> state)
+    {
+        var fingerprint = ComputeOrderingFingerprint(state);
+        var keyTypes = state.Ordering.Select(clause => clause.KeyType).ToArray();
+
+        return CursorToken.Decode(state.Cursor!, fingerprint, keyTypes);
+    }
+
+    private static IOrderedQueryable<T> ApplyOrdering(
+        IQueryable<T> source,
+        IReadOnlyList<OrderingClause<T>> ordering)
+    {
+        var query = ordering[0].ApplyTo(source);
+        for (var i = 1; i < ordering.Count; i++)
+        {
+            query = ordering[i].ApplyTo(query);
         }
 
         return query;
     }
 
-    private static CursorValues DecodeCursor(CursorQueryState<T> state)
+    private static Expression[] NormalizeSelectorParameters(
+        IReadOnlyList<OrderingClause<T>> ordering,
+        ParameterExpression rootParameter)
     {
-        var cursorValueTypes = state.Ordering.Clauses
-            .Select(c => c.KeySelector.ReturnType)
-            .ToArray();
-
-        return CursorValues.Decode(state.Cursor!, cursorValueTypes);
-    }
-
-    private static Expression<Func<T, bool>> BuildCursorPredicate(
-        Ordering<T> ordering,
-        CursorValues cursor)
-    {
-        var clauses = ordering.Clauses;
-        var selectors = clauses.Select(clause => clause.KeySelector).ToArray();
-
-        var rootParameter = selectors[0].Parameters[0];
-        var normalizedSelectorBodies = selectors
-            .Select(selector =>
-                selector.Body.ReplaceParameter(
-                    selector.Parameters[0],
-                    rootParameter))
-            .ToArray();
-
-        Expression? predicate = null;
-
-        for (var i = 0; i < clauses.Count; i++)
+        var normalizedSelectorBodies = new Expression[ordering.Count];
+        for (var i = 0; i < ordering.Count; i++)
         {
-            var keysetPredicate = BuildKeysetPredicate(i);
+            var selector = ordering[i].KeySelector;
 
-            predicate = predicate is null
-                ? keysetPredicate
-                : Expression.OrElse(predicate, keysetPredicate);
+            normalizedSelectorBodies[i] = selector.Body.ReplaceParameter(selector.Parameters[0], rootParameter);
         }
 
-        return Expression.Lambda<Func<T, bool>>(predicate!, rootParameter);
+        return normalizedSelectorBodies;
+    }
 
-        Expression BuildKeysetPredicate(int index)
+    private static Expression<Func<T, bool>> BuildKeysetPredicate(
+        ParameterExpression rootParameter,
+        Expression[] normalizedSelectorBodies,
+        IReadOnlyList<OrderingClause<T>> ordering,
+        object?[] cursorValues,
+        NullOrdering nullOrdering)
+    {
+        Expression? predicate = null;
+
+        for (var i = 0; i < ordering.Count; i++)
         {
-            var clause = clauses[index];
-            var selectorBody = normalizedSelectorBodies[index];
+            var condition = ComparisonBuilder.BuildComparison(
+                normalizedSelectorBodies[i],
+                cursorValues[i],
+                ordering[i].Direction,
+                nullOrdering);
 
-            var condition =
-                ComparisonBuilder.BuildComparison(
-                    selectorBody,
-                    cursor.Values[index],
-                    clause.Direction);
-
-            for (var j = 0; j < index; j++)
+            for (var j = i - 1; j >= 0; j--)
             {
-                var equality =
-                    ComparisonBuilder.BuildEquality(
-                        normalizedSelectorBodies[j],
-                        cursor.Values[j]);
+                var equality = ComparisonBuilder.BuildEquality(
+                    normalizedSelectorBodies[j],
+                    cursorValues[j]);
 
                 condition = Expression.AndAlso(equality, condition);
             }
 
-            return condition;
+            predicate = predicate is null
+                ? condition
+                : Expression.OrElse(predicate, condition);
         }
+
+        if (ordering.Count > 1 &&
+            ComparisonBuilder.BuildLeadingKeyBound(
+                normalizedSelectorBodies[0],
+                cursorValues[0],
+                ordering[0].Direction,
+                nullOrdering) is { } bound)
+        {
+            predicate = Expression.AndAlso(bound, predicate!);
+        }
+
+        return Expression.Lambda<Func<T, bool>>(predicate!, rootParameter);
+    }
+
+    private static Expression<Func<T, KeyedItem<T>>> BuildKeyedItemProjection(
+        ParameterExpression rootParameter,
+        Expression[] normalizedSelectorBodies)
+    {
+        var keyArray = Expression.NewArrayInit(
+            typeof(object),
+            normalizedSelectorBodies.Select(body => (Expression)Expression.Convert(body, typeof(object))));
+
+        var constructor = typeof(KeyedItem<T>).GetConstructor([typeof(T), typeof(object[])])!;
+        var body = Expression.New(constructor, rootParameter, keyArray);
+
+        return Expression.Lambda<Func<T, KeyedItem<T>>>(body, rootParameter);
     }
 
     private static CursorPage<T> BuildPage(
-        List<T> items,
+        List<KeyedItem<T>> rows,
         CursorQueryState<T> state,
         int pageSize)
     {
-        var hasExtraItem = items.Count > pageSize;
+        var isBackward = state.NavigationMode == CursorNavigationMode.Before;
+        var isExplicitForward = state.NavigationMode == CursorNavigationMode.After;
 
-        var isBackward = state.Direction == CursorDirection.Before;
-        var isExplicitForward = state.Direction == CursorDirection.After;
-
-        if (hasExtraItem)
+        var hasExtraRow = rows.Count > pageSize;
+        if (hasExtraRow)
         {
-            items.RemoveAt(items.Count - 1);
+            rows.RemoveAt(rows.Count - 1);
         }
 
         if (isBackward)
         {
-            items.Reverse();
+            rows.Reverse();
         }
 
-        var hasItems = items.Count > 0;
+        var items = rows.ConvertAll(row => row.Item);
 
-        string? startCursor = null;
-        string? endCursor = null;
-
-        if (hasItems)
+        if (items.Count == 0)
         {
-            startCursor = ExtractCursorValues(items[0], state.Ordering).Encode();
-            endCursor = ExtractCursorValues(items[^1], state.Ordering).Encode();
+            return CursorPage<T>.Empty;
         }
 
-        var hasNextPage = hasItems &&
-            (isBackward || hasExtraItem);
+        var fingerprint = ComputeOrderingFingerprint(state);
+        var startCursor = CursorToken.Encode(fingerprint, rows[0].Keys);
+        var endCursor = CursorToken.Encode(fingerprint, rows[^1].Keys);
 
-        var hasPreviousPage = hasItems &&
-            (isExplicitForward || (isBackward && hasExtraItem));
+        var hasNextPage = isBackward || hasExtraRow;
+        var hasPreviousPage = isExplicitForward || (isBackward && hasExtraRow);
 
         return new CursorPage<T>(
             items,
@@ -162,29 +230,26 @@ internal static class CursorPaginationExecutor<T>
             hasPreviousPage);
     }
 
-    private static CursorValues ExtractCursorValues(T item, Ordering<T> ordering)
+    private static string ComputeOrderingFingerprint(CursorQueryState<T> state)
     {
-        var values = new object?[ordering.Clauses.Count];
+        var segments = state.Ordering
+            .Select(clause => clause.Describe())
+            .Append(DescribeNullOrdering(state.NullOrdering));
 
-        for (var i = 0; i < ordering.Clauses.Count; i++)
-        {
-            var cursorValueSelector = GetOrCreateCursorValueSelector(
-                ordering.Clauses[i].KeySelector);
+        var description = string.Join('|', segments);
+        var descriptionBytes = Encoding.UTF8.GetBytes(description);
+        var hash = SHA256.HashData(descriptionBytes);
 
-            values[i] = cursorValueSelector(item);
-        }
-
-        return new CursorValues(values);
+        return Convert.ToHexString(hash, 0, 4);
     }
 
-    private static Func<T, object?> GetOrCreateCursorValueSelector(LambdaExpression keySelector) =>
-        _cursorValueSelectorCache.GetOrAdd(
-            keySelector,
-            static lambda =>
-            {
-                var parameter = lambda.Parameters[0];
-                var body = Expression.Convert(lambda.Body, typeof(object));
-
-                return Expression.Lambda<Func<T, object?>>(body, parameter).Compile();
-            });
+    private static string DescribeNullOrdering(NullOrdering nullOrdering)
+    {
+        return nullOrdering switch
+        {
+            NullOrdering.NullsCompareLower => "nulls-low",
+            NullOrdering.NullsCompareHigher => "nulls-high",
+            _ => throw new UnreachableException()
+        };
+    }
 }

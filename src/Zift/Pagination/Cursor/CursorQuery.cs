@@ -4,101 +4,88 @@ using Ordering;
 
 internal sealed class CursorQuery<T> :
     ICursorQuery<T>,
-    IOrderedCursorQuery<T>,
-    IExecutableCursorQuery<T>,
-    ICursorQueryState<T>
+    IOrderedCursorQuery<T>
 {
-    internal CursorQuery(IQueryable<T> source)
+    internal CursorQuery(IQueryable<T> source, NullOrdering nullOrdering)
+        : this(source, CursorQueryState<T>.Create(nullOrdering))
     {
-        Source = source;
-        State = CursorQueryState<T>.Empty;
     }
 
-    private CursorQuery(
-        IQueryable<T> source,
-        CursorQueryState<T> state)
+    private CursorQuery(IQueryable<T> source, CursorQueryState<T> state)
     {
         Source = source;
         State = state;
     }
 
     public IQueryable<T> Source { get; }
+
     public CursorQueryState<T> State { get; }
 
-    public IOrderedCursorQuery<T> OrderBy<TKey>(
-        Expression<Func<T, TKey>> keySelector) =>
-        WithOrdering(keySelector, OrderingDirection.Ascending);
+    public IOrderedCursorQuery<T> OrderBy<TKey>(Expression<Func<T, TKey>> keySelector)
+    {
+        return WithOrdering([new(keySelector, OrderingDirection.Ascending)]);
+    }
 
-    public IOrderedCursorQuery<T> OrderByDescending<TKey>(
-        Expression<Func<T, TKey>> keySelector) =>
-        WithOrdering(keySelector, OrderingDirection.Descending);
+    public IOrderedCursorQuery<T> OrderByDescending<TKey>(Expression<Func<T, TKey>> keySelector)
+    {
+        return WithOrdering([new(keySelector, OrderingDirection.Descending)]);
+    }
 
-    public IOrderedCursorQuery<T> OrderBy(
-        string orderByClause,
-        OrderingOptions? options = null)
+    public IOrderedCursorQuery<T> OrderBy(string orderByClause, OrderingOptions? options = null)
+    {
+        return WithOrdering(ParseOrdering(orderByClause, options));
+    }
+
+    public IOrderedCursorQuery<T> ThenBy<TKey>(Expression<Func<T, TKey>> keySelector)
+    {
+        return WithOrdering([new(keySelector, OrderingDirection.Ascending)], append: true);
+    }
+
+    public IOrderedCursorQuery<T> ThenByDescending<TKey>(Expression<Func<T, TKey>> keySelector)
+    {
+        return WithOrdering([new(keySelector, OrderingDirection.Descending)], append: true);
+    }
+
+    public IOrderedCursorQuery<T> ThenBy(string orderByClause, OrderingOptions? options = null)
+    {
+        return WithOrdering(ParseOrdering(orderByClause, options), append: true);
+    }
+
+    public IExecutableCursorQuery<T> After(string? cursor)
+    {
+        return WithCursor(cursor, CursorNavigationMode.After);
+    }
+
+    public IExecutableCursorQuery<T> Before(string? cursor)
+    {
+        return WithCursor(cursor, CursorNavigationMode.Before);
+    }
+
+    private static IReadOnlyList<OrderingClause<T>> ParseOrdering(string orderByClause, OrderingOptions? options)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(orderByClause);
 
-        var ordering = Ordering<T>.Parse(
-            orderByClause,
-            options ?? new OrderingOptions());
-
-        return WithState(State with
-        {
-            Ordering = ordering
-        });
+        return OrderingParser.Parse<T>(orderByClause, options ?? new OrderingOptions());
     }
 
-    public IOrderedCursorQuery<T> ThenBy<TKey>(
-        Expression<Func<T, TKey>> keySelector) =>
-        WithOrdering(keySelector, OrderingDirection.Ascending);
-
-    public IOrderedCursorQuery<T> ThenByDescending<TKey>(
-        Expression<Func<T, TKey>> keySelector) =>
-        WithOrdering(keySelector, OrderingDirection.Descending);
-
-    public IExecutableCursorQuery<T> After(string? cursor) =>
-        WithCursor(cursor, CursorDirection.After);
-
-    public IExecutableCursorQuery<T> Before(string? cursor) =>
-        WithCursor(cursor, CursorDirection.Before);
-
-    private CursorQuery<T> WithOrdering<TKey>(
-        Expression<Func<T, TKey>> keySelector,
-        OrderingDirection direction)
+    private CursorQuery<T> WithOrdering(IReadOnlyList<OrderingClause<T>> clauses, bool append = false)
     {
-        ArgumentNullException.ThrowIfNull(keySelector);
+        var ordering = append
+            ? State.Ordering.Concat(clauses).ToArray()
+            : clauses;
 
-        var clause = new OrderingClause<T, TKey>(keySelector, direction);
-
-        return WithState(
-            State with
-            {
-                Ordering = State.Ordering.Append(clause)
-            });
+        return new(Source, State with { Ordering = ordering });
     }
 
-    private CursorQuery<T> WithCursor(
-        string? cursor,
-        CursorDirection direction)
+    private CursorQuery<T> WithCursor(string? cursor, CursorNavigationMode navigationMode)
     {
         if (cursor is null)
         {
-            direction = CursorDirection.None;
-        }
-        else
-        {
-            ArgumentException.ThrowIfNullOrWhiteSpace(cursor);
+            return new(Source, State with { Cursor = null, NavigationMode = CursorNavigationMode.None });
         }
 
-        return WithState(
-            State with
-            {
-                Cursor = cursor,
-                Direction = direction
-            });
+        ArgumentException.ThrowIfNullOrWhiteSpace(cursor);
+
+        return new(Source, State with { Cursor = cursor, NavigationMode = navigationMode });
     }
-
-    private CursorQuery<T> WithState(CursorQueryState<T> state) =>
-        new(Source, state);
 }

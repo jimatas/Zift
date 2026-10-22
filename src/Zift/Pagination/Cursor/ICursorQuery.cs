@@ -1,7 +1,5 @@
 ﻿namespace Zift.Pagination.Cursor;
 
-using Ordering;
-
 public interface ICursorQuery<T>
 {
     IOrderedCursorQuery<T> OrderBy<TKey>(Expression<Func<T, TKey>> keySelector);
