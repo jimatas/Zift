@@ -1,5 +1,6 @@
 ﻿namespace Zift.Querying.Parsing;
 
+using ExpressionBuilding;
 using Model;
 
 public sealed class ExpressionParserTests
@@ -425,15 +426,109 @@ public sealed class ExpressionParserTests
         }
     }
 
-    private static PredicateNode Parse(string text)
+    public sealed class Limits
+    {
+        [Fact]
+        public void Parse_GroupingAtMaxNestingDepth_Parses()
+        {
+            var options = new ExpressionBuilderOptions { MaxNestingDepth = 3 };
+
+            Assert.IsType<ComparisonNode>(Parse("(((a == 1)))", options));
+        }
+
+        [Fact]
+        public void Parse_GroupingBeyondMaxNestingDepth_ThrowsSyntaxErrorException()
+        {
+            var options = new ExpressionBuilderOptions { MaxNestingDepth = 3 };
+
+            var ex = Assert.Throws<SyntaxErrorException>(() =>
+                Parse("((((a == 1))))", options));
+
+            Assert.Contains("maximum depth of 3", ex.Message);
+        }
+
+        [Fact]
+        public void Parse_NegationBeyondMaxNestingDepth_ThrowsSyntaxErrorException()
+        {
+            var options = new ExpressionBuilderOptions { MaxNestingDepth = 3 };
+
+            Assert.IsType<NotNode>(Parse("!!!a == 1", options));
+            Assert.Throws<SyntaxErrorException>(() =>
+                Parse("!!!!a == 1", options));
+        }
+
+        [Fact]
+        public void Parse_QuantifierPredicateCountsTowardsNestingDepth()
+        {
+            var options = new ExpressionBuilderOptions { MaxNestingDepth = 2 };
+
+            Assert.IsType<QuantifierNode>(Parse("a:any(b:any(c == 1))", options));
+            Assert.Throws<SyntaxErrorException>(() =>
+                Parse("a:any(b:any(c:any(d == 1)))", options));
+        }
+
+        [Fact]
+        public void Parse_DepthIsReleasedAfterEachGroup()
+        {
+            var options = new ExpressionBuilderOptions { MaxNestingDepth = 2 };
+
+            var logical = Assert.IsType<LogicalNode>(
+                Parse("(a == 1) && (b == 2) && !(c == 3)", options));
+
+            Assert.Equal(3, logical.Terms.Count);
+        }
+
+        [Fact]
+        public void Parse_DeepNestingWithDefaultOptions_ThrowsInsteadOfOverflowingStack()
+        {
+            var text = new string('(', 100_000) + "a == 1" + new string(')', 100_000);
+
+            Assert.Throws<SyntaxErrorException>(() => Parse(text));
+        }
+
+        [Fact]
+        public void Parse_ListAtMaxListItems_Parses()
+        {
+            var options = new ExpressionBuilderOptions { MaxListItems = 3 };
+
+            var list = Assert.IsType<ListLiteral>(
+                ParseComparison("a in [1, 2, 3]", options).Right);
+
+            Assert.Equal(3, list.Items.Count);
+        }
+
+        [Fact]
+        public void Parse_ListBeyondMaxListItems_ThrowsSyntaxErrorException()
+        {
+            var options = new ExpressionBuilderOptions { MaxListItems = 3 };
+
+            var ex = Assert.Throws<SyntaxErrorException>(() =>
+                Parse("a in [1, 2, 3, 4]", options));
+
+            Assert.Contains("maximum of 3 items", ex.Message);
+        }
+
+        [Fact]
+        public void Parse_LongFlatConjunction_ProducesSingleLogicalNode()
+        {
+            var text = string.Join(" && ", Enumerable.Repeat("a == 1", 20_000));
+
+            var logical = Assert.IsType<LogicalNode>(Parse(text));
+
+            Assert.Equal(LogicalOperator.And, logical.Operator);
+            Assert.Equal(20_000, logical.Terms.Count);
+        }
+    }
+
+    private static PredicateNode Parse(string text, ExpressionBuilderOptions? options = null)
     {
         var tokenizer = new ExpressionTokenizer(text);
-        var parser = new ExpressionParser(tokenizer);
+        var parser = new ExpressionParser(tokenizer, options);
         return parser.Parse();
     }
 
-    private static ComparisonNode ParseComparison(string text) =>
-        Assert.IsType<ComparisonNode>(Parse(text));
+    private static ComparisonNode ParseComparison(string text, ExpressionBuilderOptions? options = null) =>
+        Assert.IsType<ComparisonNode>(Parse(text, options));
 
     private static LiteralNode ParseLiteral(string text) =>
         ParseComparison(text).Right;
