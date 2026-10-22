@@ -15,14 +15,23 @@ public static class QueryableExtensions
         ArgumentNullException.ThrowIfNull(source);
         ArgumentException.ThrowIfNullOrWhiteSpace(whereExpression);
 
+        options ??= new ExpressionBuilderOptions();
+
+        if (whereExpression.Length > options.MaxExpressionLength)
+        {
+            throw new ArgumentException(
+                $"Expression length {whereExpression.Length} exceeds the maximum of {options.MaxExpressionLength} characters.",
+                nameof(whereExpression));
+        }
+
         var predicateNode =
             new ExpressionParser(
-                new ExpressionTokenizer(whereExpression))
+                new ExpressionTokenizer(whereExpression),
+                options)
             .Parse();
 
         var predicate =
-            new ExpressionBuilder<T>(
-                options ?? new ExpressionBuilderOptions())
+            new ExpressionBuilder<T>(options)
             .Build(predicateNode);
 
         return source.Where(predicate);

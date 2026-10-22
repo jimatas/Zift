@@ -1,15 +1,19 @@
 ﻿namespace Zift.Querying.Parsing;
 
+using ExpressionBuilding;
 using Model;
 
 internal sealed class ExpressionParser
 {
     private readonly ExpressionTokenizer _tokenizer;
+    private readonly ExpressionBuilderOptions _options;
     private SyntaxToken _currentToken;
+    private int _depth;
 
-    public ExpressionParser(ExpressionTokenizer tokenizer)
+    public ExpressionParser(ExpressionTokenizer tokenizer, ExpressionBuilderOptions? options = null)
     {
         _tokenizer = tokenizer;
+        _options = options ?? new ExpressionBuilderOptions();
         _currentToken = _tokenizer.NextToken();
     }
 
@@ -23,48 +27,48 @@ internal sealed class ExpressionParser
 
     private PredicateNode ParseOr()
     {
-        var left = ParseAnd();
-
-        while (_currentToken.Type == SyntaxTokenType.LogicalOr)
-        {
-            Consume();
-            var right = ParseAnd();
-            left = MergeLogical(LogicalOperator.Or, left, right);
-        }
-
-        return left;
+        return ParseLogical(LogicalOperator.Or, SyntaxTokenType.LogicalOr, ParseAnd);
     }
 
     private PredicateNode ParseAnd()
     {
-        var left = ParseUnary();
-
-        while (_currentToken.Type == SyntaxTokenType.LogicalAnd)
-        {
-            Consume();
-            var right = ParseUnary();
-            left = MergeLogical(LogicalOperator.And, left, right);
-        }
-
-        return left;
+        return ParseLogical(LogicalOperator.And, SyntaxTokenType.LogicalAnd, ParseUnary);
     }
 
-    private static LogicalNode MergeLogical(
+    private PredicateNode ParseLogical(
         LogicalOperator op,
-        PredicateNode left,
-        PredicateNode right)
+        SyntaxTokenType operatorType,
+        Func<PredicateNode> parseOperand)
     {
-        if (left is LogicalNode l && l.Operator == op)
+        var first = parseOperand();
+
+        if (_currentToken.Type != operatorType)
         {
-            return new LogicalNode(op, [.. l.Terms, right]);
+            return first;
         }
 
-        if (right is LogicalNode r && r.Operator == op)
+        var terms = new List<PredicateNode>();
+        AddTerm(terms, op, first);
+
+        while (_currentToken.Type == operatorType)
         {
-            return new LogicalNode(op, [left, .. r.Terms]);
+            Consume();
+            AddTerm(terms, op, parseOperand());
         }
 
-        return new LogicalNode(op, [left, right]);
+        return new LogicalNode(op, terms);
+    }
+
+    private static void AddTerm(List<PredicateNode> terms, LogicalOperator op, PredicateNode term)
+    {
+        if (term is LogicalNode logical && logical.Operator == op)
+        {
+            terms.AddRange(logical.Terms);
+        }
+        else
+        {
+            terms.Add(term);
+        }
     }
 
     private PredicateNode ParseUnary()
@@ -72,8 +76,11 @@ internal sealed class ExpressionParser
         if (_currentToken.Type == SyntaxTokenType.LogicalNot)
         {
             Consume();
+            EnterNesting();
+            var operand = ParseUnary();
+            LeaveNesting();
 
-            return new NotNode(ParseUnary());
+            return new NotNode(operand);
         }
 
         return ParsePrimaryPredicate();
@@ -84,7 +91,9 @@ internal sealed class ExpressionParser
         if (_currentToken.Type == SyntaxTokenType.ParenOpen)
         {
             Consume();
+            EnterNesting();
             var expr = ParseOr();
+            LeaveNesting();
             Expect(SyntaxTokenType.ParenClose);
 
             return expr;
@@ -94,9 +103,7 @@ internal sealed class ExpressionParser
 
         if (_currentToken.Type == SyntaxTokenType.Colon)
         {
-            if (_tokenizer.PeekToken().Type is
-                SyntaxTokenType.Any or
-                SyntaxTokenType.All)
+            if (_tokenizer.PeekToken().Type is SyntaxTokenType.Any or SyntaxTokenType.All)
             {
                 return ParseQuantifier(path);
             }
@@ -124,7 +131,9 @@ internal sealed class ExpressionParser
 
         if (_currentToken.Type != SyntaxTokenType.ParenClose)
         {
+            EnterNesting();
             predicate = ParseOr();
+            LeaveNesting();
         }
 
         var closingParenToken = Expect(SyntaxTokenType.ParenClose);
@@ -220,6 +229,13 @@ internal sealed class ExpressionParser
         {
             do
             {
+                if (items.Count >= _options.MaxListItems)
+                {
+                    throw new SyntaxErrorException(
+                        $"List literal exceeds the maximum of {_options.MaxListItems} items.",
+                        _currentToken);
+                }
+
                 items.Add(ParseLiteral());
             }
             while (Match(SyntaxTokenType.Comma));
@@ -245,11 +261,25 @@ internal sealed class ExpressionParser
         };
     }
 
-    private static NumberLiteral ParseNumber(SyntaxToken token) =>
-        token.Text.Contains('.') ||
-        token.Text.Contains('e', StringComparison.OrdinalIgnoreCase)
-            ? new NumberLiteral(double.Parse(token.Text, CultureInfo.InvariantCulture))
-            : new NumberLiteral(int.Parse(token.Text, CultureInfo.InvariantCulture));
+    private static NumberLiteral ParseNumber(SyntaxToken token)
+    {
+        return token.Text.Contains('.') ||
+            token.Text.Contains('e', StringComparison.OrdinalIgnoreCase)
+                ? new NumberLiteral(double.Parse(token.Text, CultureInfo.InvariantCulture))
+                : new NumberLiteral(int.Parse(token.Text, CultureInfo.InvariantCulture));
+    }
+
+    private void EnterNesting()
+    {
+        if (++_depth > _options.MaxNestingDepth)
+        {
+            throw new SyntaxErrorException(
+                $"Expression nesting exceeds the maximum depth of {_options.MaxNestingDepth}.",
+                _currentToken);
+        }
+    }
+
+    private void LeaveNesting() => _depth--;
 
     private SyntaxToken Consume()
     {
