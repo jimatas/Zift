@@ -74,7 +74,7 @@ var categories = context.Categories
 
 Numbers must fit the property's type. For an `int` property, `1.0` and `1e3` are valid; `1.5` and `3000000000` (exceeds `int.MaxValue`) aren't. Fractional values aren't rounded to integers.
 
-### Null and empty lists
+### Null and Empty Lists
 
 Use `== null` or `!= null` to check for null. Other direct comparisons with null aren't supported.
 
@@ -86,7 +86,7 @@ items.Where("Rating in [4, 5, null]");
 
 An empty list matches nothing; negating it matches everything. A list containing only null matches null values.
 
-### Options and limits
+### Options and Limits
 
 Pass options to `Where(...)` to change the defaults:
 
@@ -149,7 +149,7 @@ Use a consistent ordering to avoid skipped or repeated rows between pages. `page
 
 The count and items come from separate queries, so changes between them can leave the count out of sync with the items.
 
-#### Result shape
+#### Result Shape
 
 ```csharp
 page.Items
@@ -237,11 +237,11 @@ if (page.HasPreviousPage)
 
 The page you came from is assumed to still exist: `HasPreviousPage` is assumed `true` after `After(...)`, and `HasNextPage` after `Before(...)`, with no extra query to check. Changes between requests can make them wrong.
 
-#### Page size
+#### Page Size
 
 `pageSize` must be between 1 and `int.MaxValue - 1`. Public APIs should enforce a much smaller maximum of their own.
 
-#### Result shape
+#### Result Shape
 
 ```csharp
 page.Items
