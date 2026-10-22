@@ -221,6 +221,67 @@ public sealed class ExpressionTokenizerTests
 
             Assert.Equal("abc", token.Text);
         }
+
+        [Theory]
+        [InlineData("\"a\\\"b\"", "a\"b")]
+        [InlineData("'a\\'b'", "a'b")]
+        [InlineData("\"a\\\\b\"", "a\\b")]
+        [InlineData("'a\\\\'", "a\\")]
+        [InlineData("\"it's\"", "it's")]
+        [InlineData("'say \"hi\"'", "say \"hi\"")]
+        public void Tokenize_StringLiteralWithEscapes_DecodesEscapes(string input, string expected)
+        {
+            var tokens = Tokenize(input);
+
+            var token = Assert.Single(tokens,
+                t => t.Type == SyntaxTokenType.StringLiteral);
+
+            Assert.Equal(expected, token.Text);
+            Assert.Equal(input.Length, token.Length);
+        }
+
+        [Fact]
+        public void PeekToken_StringLiteralWithEscapes_AdvancesPastSourceLengthOnNextToken()
+        {
+            var tokenizer = new ExpressionTokenizer("'a\\\\b' == 'c\\'d'");
+
+            var peeked = tokenizer.PeekToken();
+            var first = tokenizer.NextToken();
+            var op = tokenizer.NextToken();
+            var second = tokenizer.NextToken();
+
+            Assert.Equal(peeked, first);
+            Assert.Equal("a\\b", first.Text);
+            Assert.Equal(SyntaxTokenType.Equal, op.Type);
+            Assert.Equal("c'd", second.Text);
+            Assert.Equal(SyntaxTokenType.End, tokenizer.NextToken().Type);
+        }
+
+        [Theory]
+        [InlineData("'C:\\temp'", 3)]
+        [InlineData("\"a\\nb\"", 2)]
+        [InlineData("'\\x'", 1)]
+        public void Tokenize_UnsupportedEscapeSequence_ThrowsLexicalErrorException(string input, int position)
+        {
+            var ex = Assert.Throws<LexicalErrorException>(() =>
+                Tokenize(input));
+
+            Assert.Contains("Invalid escape sequence", ex.Message);
+            Assert.Equal(position, ex.Position);
+        }
+
+        [Theory]
+        [InlineData("\"abc\\")]
+        [InlineData("'abc\\'")]
+        [InlineData("\"abc\\\"")]
+        public void Tokenize_EscapeAtEndOfInput_ThrowsUnterminatedStringLiteral(string input)
+        {
+            var ex = Assert.Throws<LexicalErrorException>(() =>
+                Tokenize(input));
+
+            Assert.Contains("Unterminated", ex.Message);
+            Assert.Equal(0, ex.Position);
+        }
     }
 
     public sealed class Operators

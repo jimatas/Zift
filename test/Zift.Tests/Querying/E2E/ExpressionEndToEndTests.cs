@@ -88,6 +88,18 @@ public sealed class ExpressionEndToEndTests
         Assert.False(predicate(new TestClass { StringValue = "Bob" }));
     }
 
+    [Theory]
+    [InlineData("StringValue == \"say \\\"hi\\\"\"", "say \"hi\"")]
+    [InlineData("StringValue == 'it\\'s'", "it's")]
+    [InlineData("StringValue == 'a\\\\b'", "a\\b")]
+    public void StringLiteralWithEscapes_MatchesDecodedValue(string text, string value)
+    {
+        var predicate = Compile(text);
+
+        Assert.True(predicate(new TestClass { StringValue = value }));
+        Assert.False(predicate(new TestClass { StringValue = "other" }));
+    }
+
     private static Func<TestClass, bool> Compile(string text)
     {
         var tokenizer = new ExpressionTokenizer(text);
