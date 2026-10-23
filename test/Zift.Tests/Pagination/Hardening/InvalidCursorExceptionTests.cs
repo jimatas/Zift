@@ -88,7 +88,7 @@ public class InvalidCursorExceptionTests
 
         var error = Assert.Throws<InvalidCursorException>(() =>
             Source.AsCursorQuery().OrderBy(r => r.Name).After(cursor).ToCursorPage(2));
-        Assert.Equal("The cursor was created for a different ordering.", error.Message);
+        Assert.Equal("The cursor was created for a different ordering or entity type.", error.Message);
     }
 
     [Fact]

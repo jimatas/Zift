@@ -10,11 +10,15 @@ public class CursorFingerprintTests
 
     private static readonly Row[] Rows = Enumerable.Range(1, 6).Select(i => new Row(i, "n" + i)).ToArray();
 
-    private const string IdLowerFingerprint = "B0284F5A";
-    private const string IdNameLowerFingerprint = "32292430";
-    private const string IdHigherFingerprint = "37AD89CB";
-    private const string IdNameHigherFingerprint = "92CD61A4";
-    private const string IdLowerAfter3Cursor = "eyJmIjoiQjAyODRGNUEiLCJ2IjpbM119";
+    private sealed record Other(int Id, string Name);
+
+    private static readonly Other[] OtherRows = Enumerable.Range(1, 6).Select(i => new Other(i, "n" + i)).ToArray();
+
+    private const string IdLowerFingerprint = "1BF8189B421E8167";
+    private const string IdNameLowerFingerprint = "DEE54C2A6B1112AC";
+    private const string IdHigherFingerprint = "65EA8D16BE9A9C9F";
+    private const string IdNameHigherFingerprint = "DC1D7679084F7FBE";
+    private const string IdLowerAfter3Cursor = "eyJmIjoiMUJGODE4OUI0MjFFODE2NyIsInYiOlszXX0";
 
     private static CursorQueryOptions Options(NullOrdering nullOrdering) => new() { NullOrdering = nullOrdering };
 
@@ -61,6 +65,44 @@ public class CursorFingerprintTests
     {
         Assert.NotEqual(IdLowerFingerprint, IdHigherFingerprint);
         Assert.NotEqual(IdNameLowerFingerprint, IdNameHigherFingerprint);
+    }
+
+    [Fact]
+    public void Fingerprint_Is64BitsOfHex()
+    {
+        var fingerprint = FingerprintOf(EndCursor(null, composite: false));
+
+        Assert.Equal(16, fingerprint.Length);
+        Assert.All(fingerprint, c => Assert.True(char.IsAsciiHexDigitUpper(c) || char.IsAsciiDigit(c)));
+    }
+
+    [Fact]
+    public void SameOrderingOnDifferentEntityTypes_ProducesDifferentFingerprints()
+    {
+        var rowCursor = Rows.AsQueryable().AsCursorQuery().OrderBy(r => r.Id).ToCursorPage(2).EndCursor;
+        var otherCursor = OtherRows.AsQueryable().AsCursorQuery().OrderBy(o => o.Id).ToCursorPage(2).EndCursor;
+
+        Assert.NotEqual(FingerprintOf(rowCursor), FingerprintOf(otherCursor));
+    }
+
+    [Fact]
+    public void CursorFromAnotherEntityType_IsRejected()
+    {
+        var rowCursor = Rows.AsQueryable().AsCursorQuery().OrderBy(r => r.Id).ToCursorPage(2).EndCursor;
+
+        var error = Assert.Throws<InvalidCursorException>(() =>
+            OtherRows.AsQueryable().AsCursorQuery().OrderBy(o => o.Id).After(rowCursor).ToCursorPage(2));
+
+        Assert.Equal("The cursor was created for a different ordering or entity type.", error.Message);
+    }
+
+    [Fact]
+    public void CursorFromAnotherEntityType_IsRejectedWhenNavigatingBackward()
+    {
+        var rowCursor = Rows.AsQueryable().AsCursorQuery().OrderBy(r => r.Id).ToCursorPage(2).EndCursor;
+
+        Assert.Throws<InvalidCursorException>(() =>
+            OtherRows.AsQueryable().AsCursorQuery().OrderBy(o => o.Id).Before(rowCursor).ToCursorPage(2));
     }
 
     [Fact]

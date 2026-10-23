@@ -234,13 +234,14 @@ internal static class CursorPaginationExecutor<T>
     {
         var segments = state.Ordering
             .Select(clause => clause.Describe())
+            .Prepend(typeof(T).FullName)
             .Append(DescribeNullOrdering(state.NullOrdering));
 
         var description = string.Join('|', segments);
         var descriptionBytes = Encoding.UTF8.GetBytes(description);
         var hash = SHA256.HashData(descriptionBytes);
 
-        return Convert.ToHexString(hash, 0, 4);
+        return Convert.ToHexString(hash, 0, 8);
     }
 
     private static string DescribeNullOrdering(NullOrdering nullOrdering)
