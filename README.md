@@ -238,7 +238,7 @@ Nulls are assumed to sort first when ascending (SQL Server, SQLite, MySQL). If y
 
 #### Navigating
 
-Cursors are URL-safe tokens tied to the ordering that produced them. Using one with a different ordering throws `InvalidCursorException`. They aren't encrypted or signed.
+Cursors are URL-safe tokens tied to the entity type and ordering that produced them. Using one with a different ordering or entity type throws `InvalidCursorException`. They aren't encrypted or signed.
 
 To move between pages, reuse the same ordered `query` and pass in the cursors from the current page. A `null` cursor selects the first page.
 

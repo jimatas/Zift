@@ -21,7 +21,7 @@ internal static class CursorToken
 
         if (fingerprint != expectedFingerprint)
         {
-            throw new InvalidCursorException("The cursor was created for a different ordering.");
+            throw new InvalidCursorException("The cursor was created for a different ordering or entity type.");
         }
 
         if (cursorValues.Length != keyTypes.Count)
