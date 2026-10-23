@@ -116,7 +116,7 @@ internal sealed class ExpressionParser
         return ParseComparison(path);
     }
 
-    private QuantifierNode ParseQuantifier(PropertyNode source)
+    private QuantifierNode ParseQuantifier(PropertyPathNode source)
     {
         Expect(SyntaxTokenType.Colon);
 
@@ -194,7 +194,7 @@ internal sealed class ExpressionParser
         return new PropertyPathNode(segments);
     }
 
-    private ProjectionNode ParseProjection(PropertyNode source)
+    private ProjectionNode ParseProjection(PropertyPathNode source)
     {
         Expect(SyntaxTokenType.Colon);
 

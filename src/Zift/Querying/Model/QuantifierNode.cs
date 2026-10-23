@@ -1,6 +1,6 @@
 ﻿namespace Zift.Querying.Model;
 
 internal sealed record QuantifierNode(
-    PropertyNode Source,
+    PropertyPathNode Source,
     QuantifierKind Kind,
     PredicateNode? Predicate) : PredicateNode;

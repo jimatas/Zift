@@ -194,15 +194,10 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
     }
 
     private (Expression Collection, Expression? Reachable) BuildCollectionAccess(
-        PropertyNode source,
+        PropertyPathNode path,
         ParameterExpression parameter,
         RootNullHandling rootNullHandling)
     {
-        if (source is not PropertyPathNode path)
-        {
-            return (BuildPropertyAccess(source, parameter, rootNullHandling), null);
-        }
-
         var (collection, reachable) = Navigate(path, parameter, rootNullHandling);
 
         return (collection, AndNotNull(reachable, collection));
