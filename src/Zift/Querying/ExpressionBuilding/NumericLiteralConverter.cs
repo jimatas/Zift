@@ -1,5 +1,6 @@
 namespace Zift.Querying.ExpressionBuilding;
 
+using Literals;
 using Types;
 
 internal static class NumericLiteralConverter
@@ -38,13 +39,18 @@ internal static class NumericLiteralConverter
 
     private static object ConvertToIntegral(string text, Type targetType)
     {
-        var value = ParseDecimal(text, targetType);
+        if (!NumberScanner.TryScan(text, out var parts) || parts.Length != text.Length)
+        {
+            throw new FormatException($"The numeric literal '{text}' is not valid.");
+        }
 
-        if (value != decimal.Truncate(value))
+        if (!IsIntegral(parts))
         {
             throw new InvalidOperationException(
                 $"The numeric literal '{text}' is not an integer and cannot be converted to '{targetType.Name}'.");
         }
+
+        var value = ParseDecimal(text, targetType);
 
         try
         {
@@ -54,6 +60,30 @@ internal static class NumericLiteralConverter
         {
             throw OutOfRange(text, targetType);
         }
+    }
+
+    private static bool IsIntegral(NumberParts parts)
+    {
+        var digits = parts.IntegerDigits + parts.FractionDigits;
+        var significant = digits.TrimEnd('0');
+
+        if (significant.Length == 0)
+        {
+            return true;
+        }
+
+        var exponent = parts.ExponentDigits.Length == 0
+            ? BigInteger.Zero
+            : BigInteger.Parse(parts.ExponentDigits, CultureInfo.InvariantCulture);
+
+        if (parts.ExponentIsNegative)
+        {
+            exponent = -exponent;
+        }
+
+        var trailingZeros = digits.Length - significant.Length;
+
+        return exponent - parts.FractionDigits.Length + trailingZeros >= 0;
     }
 
     private static decimal ParseDecimal(string text, Type targetType)
