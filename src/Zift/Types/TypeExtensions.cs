@@ -34,6 +34,11 @@ internal static class TypeExtensions
 
     public static Type? GetCollectionElementType(this Type collectionType)
     {
+        if (collectionType == typeof(string))
+        {
+            return null;
+        }
+
         if (collectionType.IsArray)
         {
             return collectionType.GetElementType();

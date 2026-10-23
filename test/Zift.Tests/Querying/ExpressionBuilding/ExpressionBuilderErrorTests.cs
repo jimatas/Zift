@@ -131,6 +131,34 @@ public sealed class ExpressionBuilderErrorTests
     }
 
     [Fact]
+    public void Build_QuantifierOnStringProperty_ThrowsInvalidOperationException()
+    {
+        var builder = CreateBuilder();
+
+        Assert.Throws<InvalidOperationException>(() =>
+            builder.Build(
+                new QuantifierNode(
+                    new PropertyPathNode([nameof(TestClass.StringValue)]),
+                    QuantifierKind.Any,
+                    Predicate: null)));
+    }
+
+    [Fact]
+    public void Build_ProjectionOnStringProperty_ThrowsInvalidOperationException()
+    {
+        var builder = CreateBuilder();
+
+        Assert.Throws<InvalidOperationException>(() =>
+            builder.Build(
+                new ComparisonNode(
+                    new ProjectionNode(
+                        new PropertyPathNode([nameof(TestClass.StringValue)]),
+                        CollectionProjection.Count),
+                    ComparisonOperator.GreaterThan,
+                    new NumberLiteral(1))));
+    }
+
+    [Fact]
     public void Build_ProjectionWithUnknownProjection_ThrowsNotSupportedException()
     {
         var builder = CreateBuilder();
