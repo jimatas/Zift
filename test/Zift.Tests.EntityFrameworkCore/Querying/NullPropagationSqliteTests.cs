@@ -43,7 +43,9 @@ public sealed class NullPropagationSqliteTests
         ["Reviews:any(Author.Name %= 'o')"],
         ["Reviews:any(Author.Name == null)"],
         ["Reviews:any(Author.Name != 'John Doe')"],
+#if !NET8_0
         ["Reviews:all(Rating >= 4)"],
+#endif
         ["Reviews:all(Rating != 5)"],
         ["Reviews:all(Author.Name != 'John Doe')"],
         ["!Reviews:any(Author.Name == null)"]
@@ -140,5 +142,56 @@ public sealed class NullPropagationSqliteTests
             .ToList();
 
         Assert.Equal(native.Order(), inMemory.Order());
+    }
+
+    [Fact]
+    public async Task Products_AllOverNullableRating_InMemoryTreatsNullRatingAsFailing()
+    {
+        await using var fixture = new SqliteTestFixture();
+        await fixture.SeedAsync(CatalogFixture.Create());
+
+        var loaded = await fixture.Context.Products
+            .Include(p => p.Reviews)
+            .AsNoTracking()
+            .ToListAsync();
+
+        var ids = loaded
+            .AsQueryable()
+            .Where("Reviews:all(Rating >= 4)", GuardsOn)
+            .Select(p => p.Id)
+            .ToList();
+
+        Assert.Equal(
+            new[] { CatalogFixture.Ids.Products.Smartphone, CatalogFixture.Ids.Products.GreatGatsby }.Order(),
+            ids.Order());
+    }
+
+    [Fact]
+    public async Task Products_AllOverNullableRating_OnDatabase_DependsOnEfCoreVersion()
+    {
+        await using var fixture = new SqliteTestFixture();
+        await fixture.SeedAsync(CatalogFixture.Create());
+
+        var ids = await fixture.Context.Products
+            .Where("Reviews:all(Rating >= 4)", GuardsOn)
+            .Select(p => p.Id)
+            .ToListAsync();
+
+#if NET8_0
+        Guid[] expected =
+        [
+            CatalogFixture.Ids.Products.Smartphone,
+            CatalogFixture.Ids.Products.GreatGatsby,
+            CatalogFixture.Ids.Products.NineteenEightyFour
+        ];
+#else
+        Guid[] expected =
+        [
+            CatalogFixture.Ids.Products.Smartphone,
+            CatalogFixture.Ids.Products.GreatGatsby
+        ];
+#endif
+
+        Assert.Equal(expected.Order(), ids.Order());
     }
 }
