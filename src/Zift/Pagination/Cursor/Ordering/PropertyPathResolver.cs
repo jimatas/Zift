@@ -1,6 +1,7 @@
 namespace Zift.Pagination.Cursor.Ordering;
 
 using Expressions;
+using Types;
 
 internal static class PropertyPathResolver
 {
@@ -14,7 +15,7 @@ internal static class PropertyPathResolver
 
         foreach (var segment in propertyPath.Split('.'))
         {
-            if (current != parameter && NullableLifting.IsNullable(current.Type))
+            if (current != parameter && current.Type.IsNullable())
             {
                 hasNullableNavigation = true;
 
@@ -33,7 +34,7 @@ internal static class PropertyPathResolver
             current = ResolveProperty(current, segment);
         }
 
-        if (hasNullableNavigation && !NullableLifting.IsNullable(current.Type))
+        if (hasNullableNavigation && !current.Type.IsNullable())
         {
             current = NullableLifting.ToNullable(current);
         }

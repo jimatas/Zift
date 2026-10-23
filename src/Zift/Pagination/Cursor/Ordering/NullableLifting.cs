@@ -1,10 +1,12 @@
 namespace Zift.Pagination.Cursor.Ordering;
 
+using Types;
+
 internal static class NullableLifting
 {
     public static LambdaExpression LiftNavigationPath(LambdaExpression selector)
     {
-        if (IsNullable(selector.Body.Type) || !HasReferenceNavigation(selector))
+        if (selector.Body.Type.IsNullable() || !HasReferenceNavigation(selector))
         {
             return selector;
         }
@@ -17,11 +19,6 @@ internal static class NullableLifting
         return Expression.Convert(
             valueTypeExpression,
             typeof(Nullable<>).MakeGenericType(valueTypeExpression.Type));
-    }
-
-    public static bool IsNullable(Type type)
-    {
-        return !type.IsValueType || IsNullableValueType(type);
     }
 
     private static bool IsNullableValueType(Type type)
