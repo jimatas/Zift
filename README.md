@@ -100,6 +100,8 @@ items.Where("Rating in [4, 5, null]");
 
 An empty list matches nothing; negating it matches everything. A list containing only null matches null values.
 
+With `EnableNullGuards`, a missing navigation counts as null instead of throwing, and comparisons follow normal C# rules. `Author.Name == null` matches rows without an author, `Author.Name != "Ann"` includes them, and `Rating > 3` doesn't. A null collection counts as empty: `Reviews:count == 0` matches it, `Reviews:any()` doesn't, and `Reviews:all(...)` does. A value type behind an optional navigation (`Category.Rank == null`) can only be compared with null when guards are on.
+
 ### Options and Limits
 
 Pass options to `Where(...)` to change the defaults:
@@ -116,7 +118,7 @@ var products = items.Where("Category.Name == \"Books\"", options);
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `EnableNullGuards` | `false` | Checks for null during property navigation. Useful for in-memory queries. |
+| `EnableNullGuards` | `false` | Treats a null navigation as null instead of throwing. Useful for in-memory queries. |
 | `ParameterizeValues` | `true` | Captures values so providers such as EF Core can parameterize queries and reuse query plans. |
 | `MaxExpressionLength` | `4096` | Filter length limit, in characters. |
 | `MaxNestingDepth` | `64` | Nesting limit for groups, `!` and quantifier predicates. |

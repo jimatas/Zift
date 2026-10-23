@@ -22,7 +22,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
         var body = BuildPredicate(
             node,
             parameter,
-            PropertyAccessContext.PredicateRoot);
+            RootNullHandling.AssumeNonNull);
 
         return Expression.Lambda<Func<T, bool>>(body, parameter);
     }
@@ -30,21 +30,21 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
     private Expression BuildPredicate(
         PredicateNode node,
         ParameterExpression parameter,
-        PropertyAccessContext context)
+        RootNullHandling rootNullHandling)
     {
         return node switch
         {
             LogicalNode logical =>
-                BuildLogical(logical, parameter, context),
+                BuildLogical(logical, parameter, rootNullHandling),
 
             ComparisonNode comparison =>
-                BuildComparison(comparison, parameter, context),
+                BuildComparison(comparison, parameter, rootNullHandling),
 
             QuantifierNode quantifier =>
-                BuildQuantifier(quantifier, parameter, context),
+                BuildQuantifier(quantifier, parameter, rootNullHandling),
 
             NotNode not =>
-                BuildNot(not, parameter, context),
+                BuildNot(not, parameter, rootNullHandling),
 
             _ => throw new NotSupportedException(
                 $"Unsupported predicate node: '{node.GetType().Name}'.")
@@ -54,7 +54,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
     private Expression BuildLogical(
         LogicalNode node,
         ParameterExpression parameter,
-        PropertyAccessContext context)
+        RootNullHandling rootNullHandling)
     {
         if (node.Terms.Count == 0)
         {
@@ -63,7 +63,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
         }
 
         var expressions = node.Terms
-            .Select(term => BuildPredicate(term, parameter, context));
+            .Select(term => BuildPredicate(term, parameter, rootNullHandling));
 
         return node.Operator switch
         {
@@ -81,29 +81,29 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
     private Expression BuildComparison(
         ComparisonNode node,
         ParameterExpression parameter,
-        PropertyAccessContext context)
+        RootNullHandling rootNullHandling)
     {
-        var propertyAccess = BuildPropertyAccess(node.Left, parameter, context);
+        var property = BuildPropertyAccess(node.Left, parameter, rootNullHandling);
 
         if (node.Right is NullLiteral)
         {
-            return BuildNullComparison(propertyAccess, node.Operator);
+            return BuildNullComparison(property, node.Operator);
         }
 
         if (node.Operator == ComparisonOperator.In)
         {
-            return BuildInComparison(propertyAccess, node.Right);
+            return BuildInComparison(property, node.Right);
         }
 
-        return BuildScalarComparison(propertyAccess, node.Operator, node.Right);
+        return BuildScalarComparison(property, node.Operator, node.Right);
     }
 
     private Expression BuildQuantifier(
         QuantifierNode node,
         ParameterExpression parameter,
-        PropertyAccessContext context)
+        RootNullHandling rootNullHandling)
     {
-        var (collection, nullGuard) = BuildPropertyAccess(node.Source, parameter, context);
+        var (collection, reachable) = BuildCollectionAccess(node.Source, parameter, rootNullHandling);
 
         var elementType = collection.Type.GetCollectionElementType()
             ?? throw new InvalidOperationException(
@@ -134,7 +134,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
             var predicateBody = BuildPredicate(
                 node.Predicate,
                 elementParameter,
-                PropertyAccessContext.QuantifierElement);
+                RootNullHandling.GuardIfNullable);
 
             var predicate = Expression.Lambda(predicateBody, elementParameter);
 
@@ -150,105 +150,182 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
                 predicate);
         }
 
-        if (nullGuard is null)
-        {
-            return methodCall;
-        }
-
-        return node.Kind == QuantifierKind.All
-            ? Expression.OrElse(Expression.Not(nullGuard), methodCall)
-            : Expression.AndAlso(nullGuard, methodCall);
+        return WhenReachable(reachable, methodCall, resultWhenUnreachable: node.Kind == QuantifierKind.All);
     }
 
     private UnaryExpression BuildNot(
         NotNode node,
         ParameterExpression parameter,
-        PropertyAccessContext context)
+        RootNullHandling rootNullHandling)
     {
-        var inner = BuildPredicate(node.Inner, parameter, context);
+        var inner = BuildPredicate(node.Inner, parameter, rootNullHandling);
 
         return Expression.Not(inner);
     }
 
-    private GuardedPropertyAccess BuildPropertyAccess(
+    private Expression BuildPropertyAccess(
         PropertyNode property,
         ParameterExpression parameter,
-        PropertyAccessContext context)
+        RootNullHandling rootNullHandling)
     {
         return property switch
         {
             PropertyPathNode path =>
-                BuildPropertyPathAccess(path, parameter, context),
+                BuildPropertyPathAccess(path, parameter, rootNullHandling),
 
             ProjectionNode projection =>
-                BuildProjectionAccess(projection, parameter, context),
+                BuildProjectionAccess(projection, parameter, rootNullHandling),
 
             _ => throw new NotSupportedException(
                 $"Unsupported property node: '{property.GetType().Name}'.")
         };
     }
 
-    private GuardedPropertyAccess BuildPropertyPathAccess(
+    private Expression BuildPropertyPathAccess(
         PropertyPathNode path,
         Expression root,
-        PropertyAccessContext context)
+        RootNullHandling rootNullHandling)
     {
-        return GuardedPropertyAccessBuilder.Build(
-            root,
-            path.Segments,
-            _options.EnableNullGuards,
-            guardRoot: context == PropertyAccessContext.QuantifierElement);
+        var (value, reachable) = Navigate(path, root, rootNullHandling);
+
+        return reachable is null
+            ? value
+            : PropagateNull(reachable, value);
     }
 
-    private GuardedPropertyAccess BuildProjectionAccess(
+    private (Expression Collection, Expression? Reachable) BuildCollectionAccess(
+        PropertyNode source,
+        ParameterExpression parameter,
+        RootNullHandling rootNullHandling)
+    {
+        if (source is not PropertyPathNode path)
+        {
+            return (BuildPropertyAccess(source, parameter, rootNullHandling), null);
+        }
+
+        var (collection, reachable) = Navigate(path, parameter, rootNullHandling);
+
+        return (collection, AndNotNull(reachable, collection));
+    }
+
+    private (Expression Value, Expression? Reachable) Navigate(
+        PropertyPathNode path,
+        Expression root,
+        RootNullHandling rootNullHandling)
+    {
+        Expression current = root;
+        Expression? reachable = null;
+
+        if (rootNullHandling == RootNullHandling.GuardIfNullable)
+        {
+            reachable = AndNotNull(reachable, current);
+        }
+
+        for (var i = 0; i < path.Segments.Count; i++)
+        {
+            if (i > 0)
+            {
+                reachable = AndNotNull(reachable, current);
+            }
+
+            current = Expression.Property(current, path.Segments[i]);
+        }
+
+        return (current, reachable);
+    }
+
+    private Expression? AndNotNull(Expression? reachable, Expression navigation)
+    {
+        if (!_options.EnableNullGuards || !navigation.Type.IsNullable())
+        {
+            return reachable;
+        }
+
+        var notNull = Expression.NotEqual(
+            navigation,
+            Expression.Constant(null, navigation.Type));
+
+        return reachable is null
+            ? notNull
+            : Expression.AndAlso(reachable, notNull);
+    }
+
+    private static ConditionalExpression PropagateNull(Expression reachable, Expression value)
+    {
+        var type = value.Type.IsNullable()
+            ? value.Type
+            : typeof(Nullable<>).MakeGenericType(value.Type);
+
+        return Expression.Condition(
+            reachable,
+            type == value.Type ? value : Expression.Convert(value, type),
+            Expression.Constant(null, type));
+    }
+
+    private static BinaryExpression IsNull(Expression value)
+    {
+        return Expression.Equal(value, Expression.Constant(null, value.Type));
+    }
+
+    private static Expression WhenReachable(Expression? reachable, Expression body, bool resultWhenUnreachable)
+    {
+        if (reachable is null)
+        {
+            return body;
+        }
+
+        return resultWhenUnreachable
+            ? Expression.OrElse(Expression.Not(reachable), body)
+            : Expression.AndAlso(reachable, body);
+    }
+
+    private Expression BuildProjectionAccess(
         ProjectionNode projection,
         ParameterExpression parameter,
-        PropertyAccessContext context)
+        RootNullHandling rootNullHandling)
     {
-        var (collection, nullGuard) = BuildPropertyAccess(projection.Source, parameter, context);
+        var (collection, reachable) = BuildCollectionAccess(projection.Source, parameter, rootNullHandling);
 
-        var projected = projection.Projection switch
+        return projection.Projection switch
         {
             CollectionProjection.Count =>
-                BuildCountProjection(collection),
+                BuildCountProjection(collection, reachable),
 
             _ => throw new NotSupportedException(
                 $"Unsupported projection: '{projection.Projection}'.")
         };
-
-        return new GuardedPropertyAccess(projected, nullGuard);
     }
 
-    private static MethodCallExpression BuildCountProjection(Expression collection)
+    private static Expression BuildCountProjection(Expression collection, Expression? reachable)
     {
         var elementType = collection.Type.GetCollectionElementType()
             ?? throw new InvalidOperationException(
                 "Count projection requires a collection.");
 
-        return Expression.Call(
+        var count = Expression.Call(
             typeof(Enumerable),
             nameof(Enumerable.Count),
             [elementType],
             collection);
+
+        return reachable is null
+            ? count
+            : Expression.Condition(reachable, count, Expression.Constant(0));
     }
 
     private static Expression BuildNullComparison(
-        GuardedPropertyAccess propertyAccess,
+        Expression property,
         ComparisonOperator comparisonOperator)
     {
-        var property = propertyAccess.Value;
-
         if (!property.Type.IsNullable())
         {
             throw new InvalidOperationException(
                 $"Null cannot be used for '{property.Type.Name}'.");
         }
 
-        var isNull = Expression.Equal(
-            property,
-            Expression.Constant(null, property.Type));
+        var isNull = IsNull(property);
 
-        Expression comparison = comparisonOperator switch
+        return comparisonOperator switch
         {
             ComparisonOperator.Equal => isNull,
             ComparisonOperator.NotEqual => Expression.Not(isNull),
@@ -256,23 +333,13 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
             _ => throw new InvalidOperationException(
                 "Only '==' and '!=' operators are supported for null comparisons.")
         };
-
-        if (propertyAccess.NullGuard is not { } nullGuard)
-        {
-            return comparison;
-        }
-
-        return comparisonOperator == ComparisonOperator.Equal
-            ? Expression.OrElse(Expression.Not(nullGuard), comparison)
-            : Expression.AndAlso(nullGuard, comparison);
     }
 
     private Expression BuildScalarComparison(
-        GuardedPropertyAccess propertyAccess,
+        Expression property,
         ComparisonOperator comparisonOperator,
         LiteralNode literal)
     {
-        var property = propertyAccess.Value;
         var propertyType = property.Type.GetEffectiveType();
 
         var comparisonValue = CreateLiteralExpression(literal, property.Type);
@@ -282,6 +349,11 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
         if (propertyType == typeof(string))
         {
             comparison = BuildStringComparison(comparisonOperator, property, comparisonValue);
+
+            if (comparisonOperator is not (ComparisonOperator.Equal or ComparisonOperator.NotEqual))
+            {
+                comparison = WhenReachable(AndNotNull(null, property), comparison, resultWhenUnreachable: false);
+            }
         }
         else
         {
@@ -310,9 +382,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
             };
         }
 
-        return propertyAccess.NullGuard is { } nullGuard
-            ? Expression.AndAlso(nullGuard, comparison)
-            : comparison;
+        return comparison;
     }
 
     private static Expression BuildStringComparison(
@@ -375,15 +445,13 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
     }
 
     private Expression BuildInComparison(
-        GuardedPropertyAccess propertyAccess,
+        Expression property,
         LiteralNode literal)
     {
         if (literal is not ListLiteral list)
         {
             throw new NotSupportedException("The 'in' operator requires a list literal.");
         }
-
-        var property = propertyAccess.Value;
 
         var containsNull = list.Items.Any(i => i is NullLiteral);
         if (containsNull && !property.Type.IsNullable())
@@ -396,47 +464,27 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
             .Where(item => item is not NullLiteral)
             .ToList();
 
-        Expression comparison;
-
         if (nonNullItems.Count == 0)
         {
-            comparison = containsNull
-                ? Expression.Equal(
-                    property,
-                    Expression.Constant(null, property.Type))
+            return containsNull
+                ? IsNull(property)
                 : Expression.Constant(false);
         }
-        else
-        {
-            var candidateValues = CreateListLiteralExpression(
-                new ListLiteral(nonNullItems),
-                property.Type);
 
-            comparison = Expression.Call(
-                typeof(Enumerable),
-                nameof(Enumerable.Contains),
-                [property.Type],
-                candidateValues,
-                property);
+        var candidateValues = CreateListLiteralExpression(
+            new ListLiteral(nonNullItems),
+            property.Type);
 
-            if (containsNull)
-            {
-                comparison = Expression.OrElse(
-                    Expression.Equal(
-                        property,
-                        Expression.Constant(null, property.Type)),
-                    comparison);
-            }
-        }
-
-        if (propertyAccess.NullGuard is not { } nullGuard)
-        {
-            return comparison;
-        }
+        Expression comparison = Expression.Call(
+            typeof(Enumerable),
+            nameof(Enumerable.Contains),
+            [property.Type],
+            candidateValues,
+            property);
 
         return containsNull
-            ? Expression.OrElse(Expression.Not(nullGuard), comparison)
-            : Expression.AndAlso(nullGuard, comparison);
+            ? Expression.OrElse(IsNull(property), comparison)
+            : comparison;
     }
 
     private static object ConvertLiteralValue(LiteralNode literal, Type targetType)
@@ -499,9 +547,9 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
             : Expression.Constant(value, targetType);
     }
 
-    private enum PropertyAccessContext
+    private enum RootNullHandling
     {
-        PredicateRoot,
-        QuantifierElement
+        AssumeNonNull,
+        GuardIfNullable
     }
 }
