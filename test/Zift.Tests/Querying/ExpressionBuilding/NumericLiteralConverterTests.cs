@@ -83,12 +83,53 @@ public sealed class NumericLiteralConverterTests
         [InlineData("0.1")]
         [InlineData("1e-1")]
         [InlineData("2147483647.5")]
+        [InlineData("1.00000000000000000000000000001")]
+        [InlineData("-1.00000000000000000000000000001")]
+        [InlineData("0.00000000000000000000000000001")]
+        [InlineData("1e-100")]
+        [InlineData("1e-99999999999999999999")]
+        [InlineData("12e-1")]
         public void Convert_FractionalValue_ToIntegralType_ThrowsInvalidOperationException(string text)
         {
             var ex = Assert.Throws<InvalidOperationException>(() =>
                 NumericLiteralConverter.Convert(text, typeof(int)));
 
             Assert.Contains("not an integer", ex.Message);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("abc")]
+        [InlineData("1.")]
+        [InlineData("1e")]
+        [InlineData(" 1")]
+        [InlineData("1 ")]
+        [InlineData("1x")]
+        public void Convert_TextThatIsNotANumber_ToIntegralType_ThrowsFormatException(string text)
+        {
+            Assert.Throws<FormatException>(() =>
+                NumericLiteralConverter.Convert(text, typeof(int)));
+        }
+
+        [Fact]
+        public void Convert_LeadingDotFraction_ToIntegralType_IsTreatedAsFractional()
+        {
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+                NumericLiteralConverter.Convert(".5", typeof(int)));
+
+            Assert.Contains("not an integer", ex.Message);
+        }
+
+        [Theory]
+        [InlineData("1.000000000000000000000000000000000000", 1)]
+        [InlineData("120e-1", 12)]
+        [InlineData("0e-100", 0)]
+        [InlineData("0.000e99999999999999999999", 0)]
+        [InlineData("1E3", 1000)]
+        [InlineData("1e+3", 1000)]
+        public void Convert_IntegralValueWrittenWithTrailingZerosOrExponent_ReturnsValue(string text, int expected)
+        {
+            Assert.Equal(expected, NumericLiteralConverter.Convert(text, typeof(int)));
         }
     }
 

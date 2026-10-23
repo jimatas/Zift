@@ -2,6 +2,7 @@
 global using System.Diagnostics.CodeAnalysis;
 global using System.Globalization;
 global using System.Linq.Expressions;
+global using System.Numerics;
 global using System.Reflection;
 global using System.Security.Cryptography;
 global using System.Text;

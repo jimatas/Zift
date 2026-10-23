@@ -1,5 +1,7 @@
 ﻿namespace Zift.Querying.Parsing;
 
+using Literals;
+
 internal sealed class ExpressionTokenizer(string text)
 {
     private readonly string _text = text;
@@ -47,7 +49,7 @@ internal sealed class ExpressionTokenizer(string text)
         switch (currentChar)
         {
             case '.':
-                if (NextCharIs(char.IsAsciiDigit))
+                if (NumberScanner.StartsNumber(_text.AsSpan(_position)))
                 {
                     break;
                 }
@@ -181,7 +183,7 @@ internal sealed class ExpressionTokenizer(string text)
             return ReadStringLiteral(startPosition, currentChar);
         }
 
-        if (IsNumberStart())
+        if (NumberScanner.StartsNumber(_text.AsSpan(_position)))
         {
             if (TryReadNumber(out var number))
             {
@@ -205,11 +207,6 @@ internal sealed class ExpressionTokenizer(string text)
     private bool NextCharIs(char expectedChar)
     {
         return _position + 1 < _text.Length && _text[_position + 1] == expectedChar;
-    }
-
-    private bool NextCharIs(Func<char, bool> predicate)
-    {
-        return _position + 1 < _text.Length && predicate(_text[_position + 1]);
     }
 
     private SyntaxToken ReadStringLiteral(int startPosition, char quoteChar)
@@ -265,117 +262,17 @@ internal sealed class ExpressionTokenizer(string text)
         return escapedChar;
     }
 
-    private bool IsNumberStart()
-    {
-        var c = _text[_position];
-
-        if (char.IsAsciiDigit(c))
-        {
-            return true;
-        }
-
-        if (c == '.' && _position + 1 < _text.Length &&
-            char.IsAsciiDigit(_text[_position + 1]))
-        {
-            return true;
-        }
-
-        if ((c == '+' || c == '-') && _position + 1 < _text.Length)
-        {
-            var nextChar = _text[_position + 1];
-            if (char.IsAsciiDigit(nextChar))
-            {
-                return true;
-            }
-
-            if (nextChar == '.' && _position + 2 < _text.Length)
-            {
-                nextChar = _text[_position + 2];
-                return char.IsAsciiDigit(nextChar);
-            }
-        }
-
-        return false;
-    }
-
     private bool TryReadNumber([NotNullWhen(true)] out string? number)
     {
-        number = default;
-
-        var startPosition = _position;
-        var i = _position;
-
-        var hasDigit = false;
-
-        var hasFraction = false;
-        var hasFractionDigit = false;
-
-        var hasExponent = false;
-        var hasExponentDigit = false;
-
-        if (_text[i] == '+' || _text[i] == '-')
+        if (!NumberScanner.TryScan(_text.AsSpan(_position), out var parts))
         {
-            i++;
-        }
+            number = default;
 
-        while (i < _text.Length)
-        {
-            var c = _text[i];
-
-            if (char.IsAsciiDigit(c))
-            {
-                hasDigit = true;
-
-                if (hasExponent)
-                {
-                    hasExponentDigit = true;
-                }
-                else if (hasFraction)
-                {
-                    hasFractionDigit = true;
-                }
-
-                i++;
-                continue;
-            }
-
-            if (c == '.' && !hasFraction && !hasExponent)
-            {
-                hasFraction = true;
-                hasFractionDigit = false;
-                i++;
-                continue;
-            }
-
-            if ((c == 'e' || c == 'E') && hasDigit && !hasExponent)
-            {
-                if (hasFraction && !hasFractionDigit)
-                {
-                    return false;
-                }
-
-                hasExponent = true;
-                hasExponentDigit = false;
-                i++;
-
-                if (i < _text.Length && (_text[i] == '+' || _text[i] == '-'))
-                {
-                    i++;
-                }
-
-                continue;
-            }
-
-            break;
-        }
-
-        if (!hasDigit || (hasFraction && !hasFractionDigit) || (hasExponent && !hasExponentDigit))
-        {
             return false;
         }
 
-        number = _text[startPosition..i];
-        _position = i;
+        number = _text.Substring(_position, parts.Length);
+        _position += parts.Length;
 
         return true;
     }
