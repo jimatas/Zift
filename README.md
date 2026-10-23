@@ -242,6 +242,8 @@ Nulls are assumed to sort first when ascending (SQL Server, SQLite, MySQL). If y
 
 Cursors are URL-safe tokens tied to the entity type and ordering that produced them. Using one with a different ordering or entity type throws `InvalidCursorException`. They aren't encrypted or signed.
 
+If a key selector uses a captured variable (`p => p.Id * sign`), its value counts as part of the ordering. For custom types, that only works if `ToString()` tells values apart.
+
 To move between pages, reuse the same ordered `query` and pass in the cursors from the current page. A `null` cursor selects the first page.
 
 ```csharp

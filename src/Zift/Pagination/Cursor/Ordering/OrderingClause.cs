@@ -63,7 +63,7 @@ internal sealed class OrderingClause<T>
         var canonical = Expression.Parameter(typeof(T), ParameterName.Default);
         var body = KeySelector.Body.ReplaceParameter(KeySelector.Parameters[0], canonical);
 
-        return $"{body}:{Direction}";
+        return $"{body.Describe()}:{Direction}";
     }
 
     private IOrderedQueryable<T> Apply(IQueryable<T> query, string method)
