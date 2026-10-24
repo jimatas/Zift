@@ -2,6 +2,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Zift.svg?label=Zift)](https://www.nuget.org/packages/Zift)
 [![NuGet](https://img.shields.io/nuget/v/Zift.EntityFrameworkCore.svg?label=Zift.EntityFrameworkCore)](https://www.nuget.org/packages/Zift.EntityFrameworkCore)
+[![CI](https://github.com/jimatas/Zift/actions/workflows/ci.yml/badge.svg)](https://github.com/jimatas/Zift/actions/workflows/ci.yml)
 [![Build & Publish](https://github.com/jimatas/Zift/actions/workflows/nuget-publish.yml/badge.svg)](https://github.com/jimatas/Zift/actions/workflows/nuget-publish.yml)
 
 Zift is a lightweight, composable query library for .NET that adds dynamic filtering and pagination on top of `IQueryable<T>`.
@@ -142,8 +143,9 @@ When filters come from users:
 | Exception | Cause |
 | --- | --- |
 | `SyntaxErrorException`, `LexicalErrorException` | Invalid filter syntax, nesting too deep or too many list items. Both derive from `FormatException`. |
-| `ArgumentException` | Blank or overlong filter, or an invalid enum name. |
-| `InvalidOperationException` | A value can't be converted to the property's type, including out-of-range numbers. |
+| `ArgumentException` | Blank or overlong filter, an invalid enum name or an unknown property. |
+| `InvalidOperationException` | A value can't be converted to the property's type (including out-of-range numbers), or `:any`, `:all` or `:count` is used on something that isn't a collection. |
+| `NotSupportedException` | An operator the property's type doesn't support, such as `>` on a `bool`. |
 | `FormatException` | Invalid GUID, date or time text. |
 
 ## Pagination
