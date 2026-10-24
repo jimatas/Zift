@@ -1,9 +1,17 @@
 ﻿namespace Zift.Querying.Parsing;
 
-public sealed class SyntaxErrorException(string message) : FormatException(message)
+public sealed class SyntaxErrorException : InvalidFilterException
 {
+    internal SyntaxErrorException(string message)
+        : base(message)
+    {
+    }
+
     internal SyntaxErrorException(string message, SyntaxToken token)
-        : this(FormatErrorMessage(message, token)) => Token = token;
+        : base(FormatErrorMessage(message, token), token.Position)
+    {
+        Token = token;
+    }
 
     internal SyntaxToken? Token { get; }
 

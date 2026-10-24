@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Zift.Querying;
 using Zift.Querying.ExpressionBuilding;
 
 namespace Zift.Pagination.Tests.Sqlite;
@@ -111,7 +112,7 @@ public sealed class OptionalNavigationFilterTests : IAsyncDisposable
     [Fact]
     public async Task Products_ValueTypeLeafBehindOptionalNavigation_WithoutGuards_IsStillRejected()
     {
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        await Assert.ThrowsAsync<InvalidFilterException>(async () =>
             await _fixture.Context.Products
                 .Where("Category.Rank == null", GuardsOff)
                 .Select(p => p.Id)

@@ -140,13 +140,22 @@ When filters come from users:
 
 ### Errors
 
-| Exception | Cause |
-| --- | --- |
-| `SyntaxErrorException`, `LexicalErrorException` | Invalid filter syntax, nesting too deep or too many list items. Both derive from `FormatException`. |
-| `ArgumentException` | Blank or overlong filter, an invalid enum name or an unknown property. |
-| `InvalidOperationException` | A value can't be converted to the property's type (including out-of-range numbers), or `:any`, `:all` or `:count` is used on something that isn't a collection. |
-| `NotSupportedException` | An operator the property's type doesn't support, such as `>` on a `bool`. |
-| `FormatException` | Invalid GUID, date or time text. |
+Anything wrong with the filter text throws `InvalidFilterException`, which derives from `FormatException`. That covers bad syntax, unknown properties, values that don't fit the property's type (including out-of-range numbers), unsupported operators, `:any`, `:all` or `:count` on something that isn't a collection, nesting or list limits, and filters over the length limit.
+
+```csharp
+try
+{
+    var products = items.Where(filter);
+}
+catch (InvalidFilterException ex)
+{
+    // Tell the caller what's wrong: ex.Message, and ex.Position when it has one.
+}
+```
+
+`SyntaxErrorException` and `LexicalErrorException` derive from `InvalidFilterException`. `Position` is set for those two and is `null` for the rest. When a .NET parse, conversion or lookup was behind the error, the original exception is in `InnerException`.
+
+A `null` filter throws `ArgumentNullException`. An empty or whitespace-only one throws `ArgumentException`.
 
 ## Pagination
 

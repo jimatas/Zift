@@ -28,7 +28,7 @@ internal static class StringLiteralConverter
 
         if (_parsers.TryGetValue(targetType, out var parser))
         {
-            return parser(value);
+            return Parse(parser, value, targetType);
         }
 
         if (targetType.IsEnum)
@@ -36,8 +36,22 @@ internal static class StringLiteralConverter
             return ParseEnum(value, targetType);
         }
 
-        throw new InvalidOperationException(
+        throw new InvalidFilterException(
             $"String values cannot be converted to '{targetType.Name}'.");
+    }
+
+    private static object Parse(Func<string, object> parser, string value, Type targetType)
+    {
+        try
+        {
+            return parser(value);
+        }
+        catch (FormatException exception)
+        {
+            throw new InvalidFilterException(
+                $"'{value}' is not a valid {targetType.Name}.",
+                exception);
+        }
     }
 
     private static object ParseEnum(string value, Type enumType)
@@ -50,7 +64,7 @@ internal static class StringLiteralConverter
 
         if (!isValid)
         {
-            throw new ArgumentException(
+            throw new InvalidFilterException(
                 $"'{value}' is not a defined value of '{enumType.Name}'.");
         }
 

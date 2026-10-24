@@ -18,23 +18,22 @@ public sealed class ExpressionLimitsTests
     }
 
     [Fact]
-    public void Where_ExpressionBeyondMaxLength_ThrowsArgumentException()
+    public void Where_ExpressionBeyondMaxLength_ThrowsInvalidFilterException()
     {
         var options = new ExpressionBuilderOptions { MaxExpressionLength = 10 };
 
-        var ex = Assert.Throws<ArgumentException>(() =>
+        var ex = Assert.Throws<InvalidFilterException>(() =>
             Source.Where("Int32Value == 1", options));
 
         Assert.Contains("maximum of 10 characters", ex.Message);
-        Assert.Equal("whereExpression", ex.ParamName);
     }
 
     [Fact]
-    public void Where_ExpressionBeyondDefaultMaxLength_ThrowsArgumentException()
+    public void Where_ExpressionBeyondDefaultMaxLength_ThrowsInvalidFilterException()
     {
         var text = "Int32Value == 1" + string.Concat(Enumerable.Repeat(" || Int32Value == 1", 300));
 
-        Assert.Throws<ArgumentException>(() => Source.Where(text));
+        Assert.Throws<InvalidFilterException>(() => Source.Where(text));
     }
 
     [Fact]

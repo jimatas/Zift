@@ -171,11 +171,11 @@ public sealed class ExpressionBuilderBasicComparisonTests
     }
 
     [Fact]
-    public void Build_OrderedComparisonWithEnum_ThrowsNotSupportedException()
+    public void Build_OrderedComparisonWithEnum_ThrowsInvalidFilterException()
     {
         var builder = CreateBuilder();
 
-        var ex = Assert.Throws<NotSupportedException>(() =>
+        var ex = Assert.Throws<InvalidFilterException>(() =>
             builder.Build(
                 new ComparisonNode(
                     new PropertyPathNode([nameof(TestClass.EnumValue)]),
@@ -186,11 +186,11 @@ public sealed class ExpressionBuilderBasicComparisonTests
     }
 
     [Fact]
-    public void Build_OrderedComparisonWithBoolean_ThrowsNotSupportedException()
+    public void Build_OrderedComparisonWithBoolean_ThrowsInvalidFilterException()
     {
         var builder = CreateBuilder();
 
-        var ex = Assert.Throws<NotSupportedException>(() =>
+        var ex = Assert.Throws<InvalidFilterException>(() =>
             builder.Build(
                 new ComparisonNode(
                     new PropertyPathNode([nameof(TestClass.BooleanValue)]),
@@ -201,11 +201,11 @@ public sealed class ExpressionBuilderBasicComparisonTests
     }
 
     [Fact]
-    public void Build_OrderedComparisonWithNullableBoolean_ThrowsNotSupportedException()
+    public void Build_OrderedComparisonWithNullableBoolean_ThrowsInvalidFilterException()
     {
         var builder = CreateBuilder();
 
-        var ex = Assert.Throws<NotSupportedException>(() =>
+        var ex = Assert.Throws<InvalidFilterException>(() =>
             builder.Build(
                 new ComparisonNode(
                     new PropertyPathNode([nameof(TestClass.NullableBooleanValue)]),

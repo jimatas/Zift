@@ -33,7 +33,7 @@ internal static class NumericLiteralConverter
             return ConvertToIntegral(text, targetType);
         }
 
-        throw new InvalidOperationException(
+        throw new InvalidFilterException(
             $"Numeric values cannot be converted to '{targetType.Name}'.");
     }
 
@@ -41,12 +41,12 @@ internal static class NumericLiteralConverter
     {
         if (!NumberScanner.TryScan(text, out var parts) || parts.Length != text.Length)
         {
-            throw new FormatException($"The numeric literal '{text}' is not valid.");
+            throw new InvalidFilterException($"The numeric literal '{text}' is not valid.");
         }
 
         if (!IsIntegral(parts))
         {
-            throw new InvalidOperationException(
+            throw new InvalidFilterException(
                 $"The numeric literal '{text}' is not an integer and cannot be converted to '{targetType.Name}'.");
         }
 
@@ -56,9 +56,9 @@ internal static class NumericLiteralConverter
         {
             return System.Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
         }
-        catch (OverflowException)
+        catch (OverflowException exception)
         {
-            throw OutOfRange(text, targetType);
+            throw OutOfRange(text, targetType, exception);
         }
     }
 
@@ -103,14 +103,14 @@ internal static class NumericLiteralConverter
         {
             return decimal.Parse(text, Style, CultureInfo.InvariantCulture);
         }
-        catch (OverflowException)
+        catch (OverflowException exception)
         {
-            throw OutOfRange(text, targetType);
+            throw OutOfRange(text, targetType, exception);
         }
     }
 
-    private static InvalidOperationException OutOfRange(string text, Type targetType)
+    private static InvalidFilterException OutOfRange(string text, Type targetType, Exception? innerException = null)
     {
-        return new($"The numeric literal '{text}' is out of range for '{targetType.Name}'.");
+        return new($"The numeric literal '{text}' is out of range for '{targetType.Name}'.", innerException);
     }
 }

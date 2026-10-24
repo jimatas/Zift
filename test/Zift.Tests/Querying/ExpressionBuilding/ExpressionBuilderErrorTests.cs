@@ -35,11 +35,11 @@ public sealed class ExpressionBuilderErrorTests
     }
 
     [Fact]
-    public void Build_NullComparisonWithUnsupportedOperator_ThrowsInvalidOperationException()
+    public void Build_NullComparisonWithUnsupportedOperator_ThrowsInvalidFilterException()
     {
         var builder = CreateBuilder();
 
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<InvalidFilterException>(() =>
             builder.Build(
                 new ComparisonNode(
                     new PropertyPathNode([nameof(TestClass.NullableInt32Value)]),
@@ -48,11 +48,11 @@ public sealed class ExpressionBuilderErrorTests
     }
 
     [Fact]
-    public void Build_StringComparisonWithUnsupportedOperator_ThrowsNotSupportedException()
+    public void Build_StringComparisonWithUnsupportedOperator_ThrowsInvalidFilterException()
     {
         var builder = CreateBuilder();
 
-        Assert.Throws<NotSupportedException>(() =>
+        Assert.Throws<InvalidFilterException>(() =>
             builder.Build(
                 new ComparisonNode(
                     new PropertyPathNode([nameof(TestClass.StringValue)]),
@@ -74,11 +74,11 @@ public sealed class ExpressionBuilderErrorTests
     }
 
     [Fact]
-    public void Build_InComparisonWithNonListLiteral_ThrowsNotSupportedException()
+    public void Build_InComparisonWithNonListLiteral_ThrowsInvalidFilterException()
     {
         var builder = CreateBuilder();
 
-        Assert.Throws<NotSupportedException>(() =>
+        Assert.Throws<InvalidFilterException>(() =>
             builder.Build(
                 new ComparisonNode(
                     new PropertyPathNode([nameof(TestClass.Int32Value)]),
@@ -100,11 +100,11 @@ public sealed class ExpressionBuilderErrorTests
     }
 
     [Fact]
-    public void Build_QuantifierOnNonCollectionProperty_ThrowsInvalidOperationException()
+    public void Build_QuantifierOnNonCollectionProperty_ThrowsInvalidFilterException()
     {
         var builder = CreateBuilder();
 
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<InvalidFilterException>(() =>
             builder.Build(
                 new QuantifierNode(
                     new PropertyPathNode([nameof(TestClass.Int32Value)]),
@@ -116,11 +116,11 @@ public sealed class ExpressionBuilderErrorTests
     }
 
     [Fact]
-    public void Build_ProjectionOnNonCollectionProperty_ThrowsInvalidOperationException()
+    public void Build_ProjectionOnNonCollectionProperty_ThrowsInvalidFilterException()
     {
         var builder = CreateBuilder();
 
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<InvalidFilterException>(() =>
             builder.Build(
                 new ComparisonNode(
                     new ProjectionNode(
@@ -131,11 +131,11 @@ public sealed class ExpressionBuilderErrorTests
     }
 
     [Fact]
-    public void Build_QuantifierOnStringProperty_ThrowsInvalidOperationException()
+    public void Build_QuantifierOnStringProperty_ThrowsInvalidFilterException()
     {
         var builder = CreateBuilder();
 
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<InvalidFilterException>(() =>
             builder.Build(
                 new QuantifierNode(
                     new PropertyPathNode([nameof(TestClass.StringValue)]),
@@ -144,11 +144,11 @@ public sealed class ExpressionBuilderErrorTests
     }
 
     [Fact]
-    public void Build_ProjectionOnStringProperty_ThrowsInvalidOperationException()
+    public void Build_ProjectionOnStringProperty_ThrowsInvalidFilterException()
     {
         var builder = CreateBuilder();
 
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<InvalidFilterException>(() =>
             builder.Build(
                 new ComparisonNode(
                     new ProjectionNode(
@@ -209,7 +209,7 @@ public sealed class ExpressionBuilderErrorTests
     }
 
     [Fact]
-    public void Build_PropertyPathWithUnknownSegment_ThrowsArgumentException()
+    public void Build_PropertyPathWithUnknownSegment_ThrowsInvalidFilterException()
     {
         var builder = new ExpressionBuilder<TestClass>(
             new ExpressionBuilderOptions
@@ -217,7 +217,7 @@ public sealed class ExpressionBuilderErrorTests
                 EnableNullGuards = true
             });
 
-        Assert.Throws<ArgumentException>(() =>
+        Assert.Throws<InvalidFilterException>(() =>
             builder.Build(
                 new ComparisonNode(
                     new PropertyPathNode(
