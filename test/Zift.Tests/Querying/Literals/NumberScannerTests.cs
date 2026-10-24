@@ -22,7 +22,7 @@ public sealed class NumberScannerTests
         string integerDigits,
         string fractionDigits,
         string exponentDigits,
-        bool exponentIsNegative)
+        bool isExponentNegative)
     {
         var scanned = NumberScanner.TryScan(text, out var parts);
 
@@ -32,7 +32,7 @@ public sealed class NumberScannerTests
         Assert.Equal(integerDigits, parts.IntegerDigits);
         Assert.Equal(fractionDigits, parts.FractionDigits);
         Assert.Equal(exponentDigits, parts.ExponentDigits);
-        Assert.Equal(exponentIsNegative, parts.ExponentIsNegative);
+        Assert.Equal(isExponentNegative, parts.IsExponentNegative);
     }
 
     [Theory]

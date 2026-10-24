@@ -6,4 +6,4 @@ internal readonly record struct NumberParts(
     string IntegerDigits,
     string FractionDigits,
     string ExponentDigits,
-    bool ExponentIsNegative);
+    bool IsExponentNegative);

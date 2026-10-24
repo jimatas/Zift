@@ -52,7 +52,7 @@ internal static class NumberScanner
         }
 
         var exponentDigits = string.Empty;
-        var exponentIsNegative = false;
+        var isExponentNegative = false;
 
         if (i < text.Length && (text[i] == 'e' || text[i] == 'E'))
         {
@@ -60,7 +60,7 @@ internal static class NumberScanner
 
             if (i < text.Length && (text[i] == '+' || text[i] == '-'))
             {
-                exponentIsNegative = text[i] == '-';
+                isExponentNegative = text[i] == '-';
                 i++;
             }
 
@@ -78,7 +78,7 @@ internal static class NumberScanner
             integerDigits,
             fractionDigits,
             exponentDigits,
-            exponentIsNegative);
+            isExponentNegative);
 
         return true;
     }
