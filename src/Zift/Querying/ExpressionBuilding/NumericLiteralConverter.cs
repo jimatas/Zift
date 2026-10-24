@@ -65,25 +65,36 @@ internal static class NumericLiteralConverter
     private static bool IsIntegral(NumberParts parts)
     {
         var digits = parts.IntegerDigits + parts.FractionDigits;
-        var significant = digits.TrimEnd('0');
+        var significantDigits = digits.TrimEnd('0');
 
-        if (significant.Length == 0)
+        if (significantDigits.Length == 0)
         {
             return true;
         }
 
-        var exponent = parts.ExponentDigits.Length == 0
-            ? BigInteger.Zero
-            : BigInteger.Parse(parts.ExponentDigits, CultureInfo.InvariantCulture);
+        var minimumExponent = parts.FractionDigits.Length
+            - (digits.Length - significantDigits.Length);
 
-        if (parts.ExponentIsNegative)
+        var exponent = 0;
+
+        foreach (var digit in parts.ExponentDigits)
+        {
+            var digitValue = digit - '0';
+
+            if (exponent > (int.MaxValue - digitValue) / 10)
+            {
+                return !parts.IsExponentNegative;
+            }
+
+            exponent = exponent * 10 + digitValue;
+        }
+
+        if (parts.IsExponentNegative)
         {
             exponent = -exponent;
         }
 
-        var trailingZeros = digits.Length - significant.Length;
-
-        return exponent - parts.FractionDigits.Length + trailingZeros >= 0;
+        return exponent >= minimumExponent;
     }
 
     private static decimal ParseDecimal(string text, Type targetType)
