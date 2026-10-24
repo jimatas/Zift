@@ -79,7 +79,7 @@ var categories = context.Categories
 
 - **Strings** use single or double quotes: `"Active"` or `'Active'`. Supported escapes are `\\`, `\"`, and `\'`.
 - **Numbers** include integers, decimals, and exponents: `42`, `-1.5`, `1e3`. A leading `+` or `-` is optional.
-- **Booleans and null** use `true`, `false`, and `null`.
+- **Booleans and `null`** use `true`, `false`, and `null`.
 - **Dates, times, and GUIDs** use quoted strings: `"2024-03-05T10:20:30Z"`, `"2024-03-05"`, or `"10:20:30"`, depending on the property type. All standard GUID formats are supported.
 - **Enums** use quoted, case-sensitive member names: `Status == "Active"`. Numeric strings aren't supported. For `[Flags]` enums, separate names with commas.
 
@@ -87,19 +87,19 @@ Numbers must fit the property's type. For an `int` property, `1.0` and `1e3` are
 
 ### Null and Empty Lists
 
-Use `== null` or `!= null` to check for null. Other direct comparisons with null aren't supported.
+Use `== null` or `!= null` to check for null. Other direct comparisons with `null` aren't supported.
 
-Lists can include null when the property is nullable:
+Lists can include `null` when the property is nullable:
 
 ```csharp
 items.Where("Rating in [4, 5, null]");
 ```
 
-An empty list matches nothing; negating it matches everything. A list containing only null matches null values.
+An empty list matches nothing; negating it matches everything. A list containing only `null` matches null values.
 
 With `EnableNullGuards`, a missing navigation counts as null instead of throwing, and comparisons follow normal C# rules. `Author.Name == null` matches rows without an author, `Author.Name != "Ann"` includes them, and `Author.Rating > 3` doesn't.
 
-A null collection counts as empty: `Reviews:count == 0` matches it, `Reviews:any()` doesn't, and `Reviews:all(...)` does. A value type behind an optional navigation (`Category.Rank == null`) can only be compared with null when guards are on.
+A null collection counts as empty: `Reviews:count == 0` matches it, `Reviews:any()` doesn't, and `Reviews:all(...)` does. A value type behind an optional navigation (`Category.Rank == null`) can only be compared with `null` when guards are on.
 
 ### Options and Limits
 
