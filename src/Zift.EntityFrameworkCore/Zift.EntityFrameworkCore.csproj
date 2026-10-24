@@ -11,8 +11,8 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Version>0.9.0</Version>
     <Authors>Jim Atas</Authors>
-    <Description>Entity Framework Core integration for Zift, enabling async execution and pagination of IQueryable&lt;T&gt;.</Description>
-    <PackageTags>linq queryable dynamic-query filtering sorting pagination cursor-pagination offset-pagination efcore entityframeworkcore</PackageTags>
+    <Description>Entity Framework Core support for Zift, with async pagination methods.</Description>
+    <PackageTags>linq queryable dynamic-query dynamic-filtering filtering sorting pagination cursor-pagination keyset-pagination offset-pagination efcore entityframeworkcore</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>Zift_Logo_128x128.png</PackageIcon>
