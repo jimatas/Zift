@@ -5,13 +5,9 @@
 [![CI](https://github.com/jimatas/Zift/actions/workflows/ci.yml/badge.svg)](https://github.com/jimatas/Zift/actions/workflows/ci.yml)
 [![Build & Publish](https://github.com/jimatas/Zift/actions/workflows/nuget-publish.yml/badge.svg)](https://github.com/jimatas/Zift/actions/workflows/nuget-publish.yml)
 
-Zift is a lightweight, composable query library for .NET that adds dynamic filtering and pagination on top of `IQueryable<T>`.
+Zift adds dynamic filtering and pagination to `IQueryable<T>` using familiar LINQ-style methods.
 
-It builds on existing `IQueryable<T>` queries using familiar LINQ operators such as `Where(...)` and `OrderBy(...)`.
-
-The library focuses on two core capabilities:
-
-- **Dynamic querying**: string-based filtering via `Where(...)`
+- **Dynamic filtering**: string expressions with `Where(...)`
 - **Pagination**: offset-based and cursor-based pagination
 
 ## Installation
@@ -26,11 +22,11 @@ If you use Entity Framework Core, install the EF Core package instead. It includ
 dotnet add package Zift.EntityFrameworkCore
 ```
 
-Zift targets .NET 8, 9 and 10. The EF Core package uses the EF Core version that matches your target framework.
+Zift targets .NET 8, 9, and 10. The EF Core package uses the EF Core major version that matches your target framework.
 
-## Dynamic Querying
+## Dynamic Filtering
 
-Zift allows dynamic filtering using a compact, expressive string syntax that is parsed and translated into LINQ expression trees.
+Filter queries using string expressions. Zift translates them into LINQ expression trees.
 
 ```csharp
 var categories = context.Categories
@@ -81,10 +77,10 @@ var categories = context.Categories
 
 ### Literals
 
-- **Strings** use single or double quotes: `"Active"` or `'Active'`. Supported escapes are `\\`, `\"` and `\'`.
-- **Numbers** include integers, decimals and exponents: `42`, `-1.5`, `1e3`. A leading `+` or `-` is optional.
-- **Booleans and null** use `true`, `false` and `null`.
-- **Dates, times and GUIDs** use quoted strings: `"2024-03-05T10:20:30Z"`, `"2024-03-05"` or `"10:20:30"`, depending on the property type. All standard GUID formats are supported.
+- **Strings** use single or double quotes: `"Active"` or `'Active'`. Supported escapes are `\\`, `\"`, and `\'`.
+- **Numbers** include integers, decimals, and exponents: `42`, `-1.5`, `1e3`. A leading `+` or `-` is optional.
+- **Booleans and null** use `true`, `false`, and `null`.
+- **Dates, times, and GUIDs** use quoted strings: `"2024-03-05T10:20:30Z"`, `"2024-03-05"`, or `"10:20:30"`, depending on the property type. All standard GUID formats are supported.
 - **Enums** use quoted, case-sensitive member names: `Status == "Active"`. Numeric strings aren't supported. For `[Flags]` enums, separate names with commas.
 
 Numbers must fit the property's type. For an `int` property, `1.0` and `1e3` are valid; `1.5` and `3000000000` (exceeds `int.MaxValue`) aren't. Fractional values aren't rounded to integers.
@@ -101,11 +97,13 @@ items.Where("Rating in [4, 5, null]");
 
 An empty list matches nothing; negating it matches everything. A list containing only null matches null values.
 
-With `EnableNullGuards`, a missing navigation counts as null instead of throwing, and comparisons follow normal C# rules. `Author.Name == null` matches rows without an author, `Author.Name != "Ann"` includes them, and `Rating > 3` doesn't. A null collection counts as empty: `Reviews:count == 0` matches it, `Reviews:any()` doesn't, and `Reviews:all(...)` does. A value type behind an optional navigation (`Category.Rank == null`) can only be compared with null when guards are on.
+With `EnableNullGuards`, a missing navigation counts as null instead of throwing, and comparisons follow normal C# rules. `Author.Name == null` matches rows without an author, `Author.Name != "Ann"` includes them, and `Author.Rating > 3` doesn't.
+
+A null collection counts as empty: `Reviews:count == 0` matches it, `Reviews:any()` doesn't, and `Reviews:all(...)` does. A value type behind an optional navigation (`Category.Rank == null`) can only be compared with null when guards are on.
 
 ### Options and Limits
 
-Pass options to `Where(...)` to change the defaults:
+Pass `ExpressionBuilderOptions` to `Where(...)` to change the defaults:
 
 ```csharp
 var options = new ExpressionBuilderOptions
@@ -122,14 +120,14 @@ var products = items.Where("Category.Name == \"Books\"", options);
 | `EnableNullGuards` | `false` | Treats a null navigation as null instead of throwing. Useful for in-memory queries. |
 | `ParameterizeValues` | `true` | Captures values so providers such as EF Core can parameterize queries and reuse query plans. |
 | `MaxExpressionLength` | `4096` | Filter length limit, in characters. |
-| `MaxNestingDepth` | `64` | Nesting limit for groups, `!` and quantifier predicates. |
+| `MaxNestingDepth` | `64` | Nesting limit for groups, `!`, and quantifier predicates. |
 | `MaxListItems` | `1000` | List size limit. |
 
 Limits must be at least 1. Keep them bounded when accepting filters from users.
 
 ### Security
 
-A filter can reach any public property on the entity, including nested ones. There's no allowlist.
+Filters can access any public property, including nested ones. Zift doesn't enforce an allowlist.
 
 When filters come from users:
 
@@ -140,7 +138,7 @@ When filters come from users:
 
 ### Errors
 
-Anything wrong with the filter text throws `InvalidFilterException`, which derives from `FormatException`. That covers bad syntax, unknown properties, values that don't fit the property's type (including out-of-range numbers), unsupported operators, `:any`, `:all` or `:count` on something that isn't a collection, nesting or list limits, and filters over the length limit.
+Invalid filters throw `InvalidFilterException`, which derives from `FormatException`. This includes syntax errors, unknown properties, invalid values, unsupported operators, and exceeded limits.
 
 ```csharp
 try
@@ -153,20 +151,22 @@ catch (InvalidFilterException ex)
 }
 ```
 
-`SyntaxErrorException` and `LexicalErrorException` derive from `InvalidFilterException`. `Position` is set for those two and is `null` for the rest. When a .NET parse, conversion or lookup was behind the error, the original exception is in `InnerException`.
+`SyntaxErrorException` and `LexicalErrorException` derive from `InvalidFilterException`. `Position` is set for those two and is `null` for the rest. When a .NET parse, conversion, or lookup was behind the error, the original exception is in `InnerException`.
 
 A `null` filter throws `ArgumentNullException`. An empty or whitespace-only one throws `ArgumentException`.
 
+> **Note**: Errors the database provider raises when the query runs, such as EF Core not being able to translate a property, aren't wrapped.
+
 ## Pagination
 
-Zift supports two pagination strategies that operate directly on `IQueryable<T>` and can be combined with dynamic querying:
+Zift supports two ways to paginate `IQueryable<T>` queries:
 
 - **Offset-based pagination**
 - **Cursor-based pagination**
 
 ### Offset Pagination
 
-Offset pagination is 1-based and uses `Skip` / `Take` under the hood. It is best suited for small to medium result sets where total counts are required.
+Offset pagination uses 1-based page numbers and LINQ's `Skip` / `Take`. It works best for smaller datasets where you need a total count.
 
 ```csharp
 var page = await context.Categories
@@ -174,7 +174,7 @@ var page = await context.Categories
     .ToPageAsync(pageNumber: 1, pageSize: 25);
 ```
 
-`ToPageAsync` is provided by the `Zift.EntityFrameworkCore` package. For other `IQueryable<T>` sources, such as in-memory collections, use the synchronous `ToPage` from the core `Zift` package:
+Use `ToPageAsync` with Entity Framework Core. For other sources, such as in-memory collections, use `ToPage`:
 
 ```csharp
 var page = categories
@@ -207,9 +207,9 @@ var dtoPage = page.Map(category => new CategoryDto(category));
 
 ### Cursor Pagination
 
-Cursor pagination (keyset pagination) is designed for stable and efficient traversal over ordered data, particularly for large or unbounded result sets.
+Cursor pagination (keyset pagination) uses ordering keys instead of offsets to navigate through results. It performs well even on large datasets.
 
-It is enabled by calling `AsCursorQuery()` on the `IQueryable<T>`.
+Start by calling `AsCursorQuery()` on the `IQueryable<T>`.
 
 ```csharp
 var query = context.Products
@@ -219,7 +219,7 @@ var query = context.Products
 var page = query.ToCursorPage(pageSize: 25);
 ```
 
-`ToCursorPage` runs synchronously and works with any `IQueryable<T>`. With Entity Framework Core, use `ToCursorPageAsync` from the `Zift.EntityFrameworkCore` package instead:
+With Entity Framework Core, use `ToCursorPageAsync` instead:
 
 ```csharp
 var page = await query.ToCursorPageAsync(pageSize: 25);
@@ -227,11 +227,11 @@ var page = await query.ToCursorPageAsync(pageSize: 25);
 
 > **Note**: Ordering for cursor pagination must be applied *after* calling `AsCursorQuery()`. Any ordering applied before `AsCursorQuery()` is ignored.
 
-Cursor pagination requires at least one ordering clause to be provided; otherwise execution fails.
+Cursor pagination needs at least one ordering clause.
 
 #### Ordering
 
-Besides the string syntax, you can order with key selectors. `ThenBy` and `ThenByDescending` add more keys, and `ThenBy(string)` adds the keys from an order-by string:
+You can also use key selectors for ordering. Add more keys with `ThenBy`, `ThenByDescending`, or `ThenBy(string)`:
 
 ```csharp
 var query = context.Products
@@ -243,19 +243,17 @@ var query = context.Products
 
 In the string syntax, use dots for nested paths (`Category.Title`). Names aren't case-sensitive. Each entry is `Property [ASC|DESC]`. A bad entry or unknown property throws `InvalidOrderingClauseException`. For in-memory sources, pass `new OrderingOptions { EnableNullGuards = true }` to guard nested paths against null.
 
-Keys can be strings, numbers, booleans, enums, or any type with comparison operators or `IComparable<T>` (`Guid`, `DateTime`, `DateTimeOffset`). Other types throw `NotSupportedException` when you navigate, not on the first page.
+Ordering keys can be strings, numbers, booleans, enums, or any type with comparison operators or `IComparable<T>` (`Guid`, `DateTime`, `DateTimeOffset`). Unsupported types throw `NotSupportedException` when navigating beyond the first page.
 
 The ordering must uniquely identify each row, so end it with a unique key such as `Id`. Rows that tie on every key can be skipped between pages.
 
-Nulls are assumed to sort first when ascending (SQL Server, SQLite, MySQL). If your database sorts them last (PostgreSQL, Oracle), pass `new CursorQueryOptions { NullOrdering = NullOrdering.NullsCompareHigher }` to `AsCursorQuery()`.
+By default, Zift assumes nulls sort first in ascending order (SQL Server, SQLite, MySQL). For databases that sort them last (PostgreSQL, Oracle), pass `new CursorQueryOptions { NullOrdering = NullOrdering.NullsCompareHigher }` to `AsCursorQuery()`.
 
 #### Navigating
 
 Cursors are URL-safe tokens tied to the entity type and ordering that produced them. Using one with a different ordering or entity type throws `InvalidCursorException`. They aren't encrypted or signed.
 
-If a key selector uses a captured variable (`p => p.Id * sign`), its value counts as part of the ordering. For custom types, that only works if `ToString()` tells values apart.
-
-To move between pages, reuse the same ordered `query` and pass in the cursors from the current page. A `null` cursor selects the first page.
+Reuse the ordered query and pass the current page's cursors to navigate. A `null` cursor selects the first page.
 
 ```csharp
 // Forward traversal
@@ -275,7 +273,7 @@ if (page.HasPreviousPage)
 }
 ```
 
-The page you came from is assumed to still exist: `HasPreviousPage` is assumed `true` after `After(...)`, and `HasNextPage` after `Before(...)`, with no extra query to check. Changes between requests can make them wrong.
+`HasPreviousPage` is assumed `true` after `After(...)`, and `HasNextPage` after `Before(...)`. No extra query is made to verify this, so changes between requests can make these values inaccurate.
 
 #### Page Size
 
