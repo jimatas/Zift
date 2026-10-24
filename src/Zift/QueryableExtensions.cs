@@ -2,6 +2,7 @@
 
 using Pagination.Cursor;
 using Pagination.Offset;
+using Querying;
 using Querying.ExpressionBuilding;
 using Querying.Parsing;
 
@@ -19,9 +20,8 @@ public static class QueryableExtensions
 
         if (whereExpression.Length > options.MaxExpressionLength)
         {
-            throw new ArgumentException(
-                $"Expression length {whereExpression.Length} exceeds the maximum of {options.MaxExpressionLength} characters.",
-                nameof(whereExpression));
+            throw new InvalidFilterException(
+                $"Expression length {whereExpression.Length} exceeds the maximum of {options.MaxExpressionLength} characters.");
         }
 
         var predicateNode =

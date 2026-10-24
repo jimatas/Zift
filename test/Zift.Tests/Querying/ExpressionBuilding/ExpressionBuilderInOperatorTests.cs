@@ -149,11 +149,11 @@ public sealed class ExpressionBuilderInOperatorTests
     }
 
     [Fact]
-    public void Build_InComparisonWithInt32_ListContainsNull_ThrowsInvalidOperationException()
+    public void Build_InComparisonWithInt32_ListContainsNull_ThrowsInvalidFilterException()
     {
         var builder = CreateBuilder();
 
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<InvalidFilterException>(() =>
             builder.Build(
                 new ComparisonNode(
                     new PropertyPathNode([nameof(TestClass.Int32Value)]),

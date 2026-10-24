@@ -72,11 +72,11 @@ public sealed class ExpressionBuilderNullComparisonTests
     }
 
     [Fact]
-    public void Build_NullComparisonWithNonNullableProperty_ThrowsInvalidOperationException()
+    public void Build_NullComparisonWithNonNullableProperty_ThrowsInvalidFilterException()
     {
         var builder = CreateBuilder();
 
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<InvalidFilterException>(() =>
             builder.Build(
                 new ComparisonNode(
                     new PropertyPathNode([nameof(TestClass.Int32Value)]),

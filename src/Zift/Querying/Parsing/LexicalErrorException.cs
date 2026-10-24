@@ -1,9 +1,11 @@
 ﻿namespace Zift.Querying.Parsing;
 
-public sealed class LexicalErrorException(string message, int position)
-    : FormatException(FormatErrorMessage(message, position))
+public sealed class LexicalErrorException : InvalidFilterException
 {
-    internal int Position { get; } = position;
+    internal LexicalErrorException(string message, int position)
+        : base(FormatErrorMessage(message, position), position)
+    {
+    }
 
     private static string FormatErrorMessage(string message, int position)
     {

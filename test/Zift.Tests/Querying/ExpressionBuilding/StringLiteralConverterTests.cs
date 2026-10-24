@@ -28,9 +28,9 @@ public sealed class StringLiteralConverterTests
         [InlineData(typeof(int))]
         [InlineData(typeof(bool))]
         [InlineData(typeof(decimal))]
-        public void Convert_ToUnsupportedType_ThrowsInvalidOperationException(Type type)
+        public void Convert_ToUnsupportedType_ThrowsInvalidFilterException(Type type)
         {
-            var ex = Assert.Throws<InvalidOperationException>(() =>
+            var ex = Assert.Throws<InvalidFilterException>(() =>
                 StringLiteralConverter.Convert("1", type));
 
             Assert.Contains(type.Name, ex.Message);
@@ -53,9 +53,9 @@ public sealed class StringLiteralConverterTests
         [InlineData("")]
         [InlineData("not-a-guid")]
         [InlineData("1234")]
-        public void Convert_ToGuid_WithInvalidText_ThrowsFormatException(string text)
+        public void Convert_ToGuid_WithInvalidText_ThrowsInvalidFilterException(string text)
         {
-            Assert.Throws<FormatException>(() =>
+            Assert.Throws<InvalidFilterException>(() =>
                 StringLiteralConverter.Convert(text, typeof(Guid)));
         }
 
@@ -91,9 +91,9 @@ public sealed class StringLiteralConverterTests
         [InlineData(typeof(DateTimeOffset))]
         [InlineData(typeof(DateOnly))]
         [InlineData(typeof(TimeOnly))]
-        public void Convert_ToDateOrTimeType_WithInvalidText_ThrowsFormatException(Type type)
+        public void Convert_ToDateOrTimeType_WithInvalidText_ThrowsInvalidFilterException(Type type)
         {
-            Assert.Throws<FormatException>(() =>
+            Assert.Throws<InvalidFilterException>(() =>
                 StringLiteralConverter.Convert("not a date", type));
         }
 
@@ -141,9 +141,9 @@ public sealed class StringLiteralConverterTests
         [InlineData("+1")]
         [InlineData("1.0")]
         [InlineData("0x1")]
-        public void Convert_ToEnum_WithNumericText_ThrowsArgumentException(string text)
+        public void Convert_ToEnum_WithNumericText_ThrowsInvalidFilterException(string text)
         {
-            var ex = Assert.Throws<ArgumentException>(() =>
+            var ex = Assert.Throws<InvalidFilterException>(() =>
                 StringLiteralConverter.Convert(text, typeof(TestEnum)));
 
             Assert.Contains("not a defined value", ex.Message);
@@ -160,9 +160,9 @@ public sealed class StringLiteralConverterTests
         [InlineData("A, B")]
         [InlineData("A,")]
         [InlineData(",A")]
-        public void Convert_ToEnum_WithUndefinedWrongCaseOrListText_ThrowsArgumentException(string text)
+        public void Convert_ToEnum_WithUndefinedWrongCaseOrListText_ThrowsInvalidFilterException(string text)
         {
-            Assert.Throws<ArgumentException>(() =>
+            Assert.Throws<InvalidFilterException>(() =>
                 StringLiteralConverter.Convert(text, typeof(TestEnum)));
         }
 
@@ -201,9 +201,9 @@ public sealed class StringLiteralConverterTests
         [InlineData("Read,")]
         [InlineData("read")]
         [InlineData("")]
-        public void Convert_ToFlagsEnum_WithNumericOrUndefinedText_ThrowsArgumentException(string text)
+        public void Convert_ToFlagsEnum_WithNumericOrUndefinedText_ThrowsInvalidFilterException(string text)
         {
-            Assert.Throws<ArgumentException>(() =>
+            Assert.Throws<InvalidFilterException>(() =>
                 StringLiteralConverter.Convert(text, typeof(Permissions)));
         }
     }
@@ -241,15 +241,15 @@ public sealed class StringLiteralConverterTests
         [InlineData("EnumValue in ['A', '99']")]
         [InlineData("NullableEnumValue == '3'")]
         [InlineData("EnumValue == 'A,B'")]
-        public void Where_EnumPropertyWithNumericOrListText_ThrowsArgumentException(string filter)
+        public void Where_EnumPropertyWithNumericOrListText_ThrowsInvalidFilterException(string filter)
         {
-            Assert.Throws<ArgumentException>(() => Ids(filter));
+            Assert.Throws<InvalidFilterException>(() => Ids(filter));
         }
 
         [Fact]
-        public void Where_EnumPropertyWithNumberLiteral_ThrowsInvalidOperationException()
+        public void Where_EnumPropertyWithNumberLiteral_ThrowsInvalidFilterException()
         {
-            Assert.Throws<InvalidOperationException>(() => Ids("EnumValue == 1"));
+            Assert.Throws<InvalidFilterException>(() => Ids("EnumValue == 1"));
         }
     }
 }

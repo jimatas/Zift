@@ -67,14 +67,28 @@ public sealed class NumericLiteralConverterTests
         [InlineData("1e100", typeof(int))]
         [InlineData("-1e100", typeof(long))]
         [InlineData("1e400", typeof(long))]
-        public void Convert_OutOfRangeValue_ThrowsInvalidOperationException(string text, Type type)
+        public void Convert_OutOfRangeValue_ThrowsInvalidFilterException(string text, Type type)
         {
-            var ex = Assert.Throws<InvalidOperationException>(() =>
+            var ex = Assert.Throws<InvalidFilterException>(() =>
                 NumericLiteralConverter.Convert(text, type));
 
             Assert.Contains("out of range", ex.Message);
             Assert.Contains(text, ex.Message);
             Assert.Contains(type.Name, ex.Message);
+        }
+
+        [Theory]
+        [InlineData("2147483648", typeof(int))]
+        [InlineData("-1", typeof(byte))]
+        [InlineData("1e100", typeof(int))]
+        [InlineData("1e400", typeof(long))]
+        [InlineData("18446744073709551616", typeof(ulong))]
+        public void Convert_OutOfRangeValue_KeepsTheOverflowAsInnerException(string text, Type type)
+        {
+            var ex = Assert.Throws<InvalidFilterException>(() =>
+                NumericLiteralConverter.Convert(text, type));
+
+            Assert.IsType<OverflowException>(ex.InnerException);
         }
 
         [Theory]
@@ -89,9 +103,9 @@ public sealed class NumericLiteralConverterTests
         [InlineData("1e-100")]
         [InlineData("1e-99999999999999999999")]
         [InlineData("12e-1")]
-        public void Convert_FractionalValue_ToIntegralType_ThrowsInvalidOperationException(string text)
+        public void Convert_FractionalValue_ToIntegralType_ThrowsInvalidFilterException(string text)
         {
-            var ex = Assert.Throws<InvalidOperationException>(() =>
+            var ex = Assert.Throws<InvalidFilterException>(() =>
                 NumericLiteralConverter.Convert(text, typeof(int)));
 
             Assert.Contains("not an integer", ex.Message);
@@ -105,16 +119,16 @@ public sealed class NumericLiteralConverterTests
         [InlineData(" 1")]
         [InlineData("1 ")]
         [InlineData("1x")]
-        public void Convert_TextThatIsNotANumber_ToIntegralType_ThrowsFormatException(string text)
+        public void Convert_TextThatIsNotANumber_ToIntegralType_ThrowsInvalidFilterException(string text)
         {
-            Assert.Throws<FormatException>(() =>
+            Assert.Throws<InvalidFilterException>(() =>
                 NumericLiteralConverter.Convert(text, typeof(int)));
         }
 
         [Fact]
         public void Convert_LeadingDotFraction_ToIntegralType_IsTreatedAsFractional()
         {
-            var ex = Assert.Throws<InvalidOperationException>(() =>
+            var ex = Assert.Throws<InvalidFilterException>(() =>
                 NumericLiteralConverter.Convert(".5", typeof(int)));
 
             Assert.Contains("not an integer", ex.Message);
@@ -156,9 +170,9 @@ public sealed class NumericLiteralConverterTests
         [InlineData("-1e999", typeof(double))]
         [InlineData("1e39", typeof(float))]
         [InlineData("-1e39", typeof(float))]
-        public void Convert_OverflowingFloatingPointValue_ThrowsInvalidOperationException(string text, Type type)
+        public void Convert_OverflowingFloatingPointValue_ThrowsInvalidFilterException(string text, Type type)
         {
-            var ex = Assert.Throws<InvalidOperationException>(() =>
+            var ex = Assert.Throws<InvalidFilterException>(() =>
                 NumericLiteralConverter.Convert(text, type));
 
             Assert.Contains("out of range", ex.Message);
@@ -200,12 +214,13 @@ public sealed class NumericLiteralConverterTests
         [InlineData("-79228162514264337593543950336")]
         [InlineData("1e29")]
         [InlineData("1e999")]
-        public void Convert_ToDecimal_OutOfRange_ThrowsInvalidOperationException(string text)
+        public void Convert_ToDecimal_OutOfRange_ThrowsInvalidFilterException(string text)
         {
-            var ex = Assert.Throws<InvalidOperationException>(() =>
+            var ex = Assert.Throws<InvalidFilterException>(() =>
                 NumericLiteralConverter.Convert(text, typeof(decimal)));
 
             Assert.Contains("out of range", ex.Message);
+            Assert.IsType<OverflowException>(ex.InnerException);
         }
     }
 
@@ -217,9 +232,9 @@ public sealed class NumericLiteralConverterTests
         [InlineData(typeof(Guid))]
         [InlineData(typeof(DateTime))]
         [InlineData(typeof(TestEnumTarget))]
-        public void Convert_ToNonNumericType_ThrowsInvalidOperationException(Type type)
+        public void Convert_ToNonNumericType_ThrowsInvalidFilterException(Type type)
         {
-            var ex = Assert.Throws<InvalidOperationException>(() =>
+            var ex = Assert.Throws<InvalidFilterException>(() =>
                 NumericLiteralConverter.Convert("1", type));
 
             Assert.Contains(type.Name, ex.Message);
@@ -270,9 +285,9 @@ public sealed class NumericLiteralConverterTests
         }
 
         [Fact]
-        public void Where_Int32Property_WithValueBeyondInt32_ThrowsInvalidOperationException()
+        public void Where_Int32Property_WithValueBeyondInt32_ThrowsInvalidFilterException()
         {
-            var ex = Assert.Throws<InvalidOperationException>(() => Ids("Small == 3000000000"));
+            var ex = Assert.Throws<InvalidFilterException>(() => Ids("Small == 3000000000"));
 
             Assert.Contains("out of range", ex.Message);
         }
@@ -280,9 +295,9 @@ public sealed class NumericLiteralConverterTests
         [Fact]
         public void Where_Int32Property_WithFractionalValue_ThrowsInsteadOfRounding()
         {
-            Assert.Throws<InvalidOperationException>(() => Ids("Small == 1.5"));
-            Assert.Throws<InvalidOperationException>(() => Ids("Small > 1.5"));
-            Assert.Throws<InvalidOperationException>(() => Ids("Small in [1, 1.5]"));
+            Assert.Throws<InvalidFilterException>(() => Ids("Small == 1.5"));
+            Assert.Throws<InvalidFilterException>(() => Ids("Small > 1.5"));
+            Assert.Throws<InvalidFilterException>(() => Ids("Small in [1, 1.5]"));
         }
 
         [Fact]
@@ -303,19 +318,19 @@ public sealed class NumericLiteralConverterTests
         public void Where_UnsignedLongProperty_AcceptsMaxValue()
         {
             Assert.Equal([1], Ids("Unsigned == 18446744073709551615"));
-            Assert.Throws<InvalidOperationException>(() => Ids("Unsigned == -1"));
+            Assert.Throws<InvalidFilterException>(() => Ids("Unsigned == -1"));
         }
 
         [Fact]
-        public void Where_DoubleProperty_WithOverflowingLiteral_ThrowsInvalidOperationException()
+        public void Where_DoubleProperty_WithOverflowingLiteral_ThrowsInvalidFilterException()
         {
-            Assert.Throws<InvalidOperationException>(() => Ids("Ratio < 1e999"));
+            Assert.Throws<InvalidFilterException>(() => Ids("Ratio < 1e999"));
         }
 
         [Fact]
-        public void Where_ListWithOneOutOfRangeItem_ThrowsInvalidOperationException()
+        public void Where_ListWithOneOutOfRangeItem_ThrowsInvalidFilterException()
         {
-            Assert.Throws<InvalidOperationException>(() => Ids("Small in [1, 2, 3000000000]"));
+            Assert.Throws<InvalidFilterException>(() => Ids("Small in [1, 2, 3000000000]"));
         }
 
         private sealed class Item

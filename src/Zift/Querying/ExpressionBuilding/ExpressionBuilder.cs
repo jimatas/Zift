@@ -106,7 +106,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
         var (collection, reachable) = BuildCollectionAccess(node.Source, parameter, rootNullHandling);
 
         var elementType = collection.Type.GetCollectionElementType()
-            ?? throw new InvalidOperationException(
+            ?? throw new InvalidFilterException(
                 "Quantifiers can only be applied to collections.");
 
         MethodCallExpression methodCall;
@@ -223,10 +223,43 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
                 reachable = AndNotNull(reachable, current);
             }
 
-            current = Expression.Property(current, path.Segments[i]);
+            current = GetProperty(current, path.Segments[i]);
         }
 
         return (current, reachable);
+    }
+
+    private static MemberExpression GetProperty(Expression owner, string name)
+    {
+        var property = FindProperty(owner, name);
+
+        if (property.Member is PropertyInfo { CanRead: false })
+        {
+            throw new InvalidFilterException(
+                $"Property '{name}' on type '{owner.Type.Name}' can't be read.");
+        }
+
+        return property;
+    }
+
+    private static MemberExpression FindProperty(Expression owner, string name)
+    {
+        try
+        {
+            return Expression.Property(owner, name);
+        }
+        catch (ArgumentException exception)
+        {
+            throw new InvalidFilterException(
+                $"Type '{owner.Type.Name}' has no property '{name}'.",
+                exception);
+        }
+        catch (AmbiguousMatchException exception)
+        {
+            throw new InvalidFilterException(
+                $"Property '{name}' is ambiguous on type '{owner.Type.Name}'.",
+                exception);
+        }
     }
 
     private Expression? AndNotNull(Expression? reachable, Expression navigation)
@@ -294,7 +327,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
     private static Expression BuildCountProjection(Expression collection, Expression? reachable)
     {
         var elementType = collection.Type.GetCollectionElementType()
-            ?? throw new InvalidOperationException(
+            ?? throw new InvalidFilterException(
                 "Count projection requires a collection.");
 
         var count = Expression.Call(
@@ -314,7 +347,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
     {
         if (!property.Type.IsNullable())
         {
-            throw new InvalidOperationException(
+            throw new InvalidFilterException(
                 $"Null cannot be used for '{property.Type.Name}'.");
         }
 
@@ -325,7 +358,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
             ComparisonOperator.Equal => isNull,
             ComparisonOperator.NotEqual => Expression.Not(isNull),
 
-            _ => throw new InvalidOperationException(
+            _ => throw new InvalidFilterException(
                 "Only '==' and '!=' operators are supported for null comparisons.")
         };
     }
@@ -352,7 +385,21 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
         }
         else
         {
-            comparison = comparisonOperator switch
+            comparison = BuildBinaryComparison(comparisonOperator, property, comparisonValue, propertyType);
+        }
+
+        return comparison;
+    }
+
+    private static BinaryExpression BuildBinaryComparison(
+        ComparisonOperator comparisonOperator,
+        Expression property,
+        Expression comparisonValue,
+        Type propertyType)
+    {
+        try
+        {
+            return comparisonOperator switch
             {
                 ComparisonOperator.Equal =>
                     Expression.Equal(property, comparisonValue),
@@ -372,12 +419,16 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
                 ComparisonOperator.GreaterThanOrEqual when propertyType.IsOrderable() =>
                     Expression.GreaterThanOrEqual(property, comparisonValue),
 
-                _ => throw new NotSupportedException(
+                _ => throw new InvalidFilterException(
                     $"Operator '{comparisonOperator}' is not supported for type '{propertyType.Name}'.")
             };
         }
-
-        return comparison;
+        catch (InvalidOperationException exception)
+        {
+            throw new InvalidFilterException(
+                $"Operator '{comparisonOperator}' is not supported for type '{propertyType.Name}'.",
+                exception);
+        }
     }
 
     private static Expression BuildStringComparison(
@@ -445,13 +496,13 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
     {
         if (literal is not ListLiteral list)
         {
-            throw new NotSupportedException("The 'in' operator requires a list literal.");
+            throw new InvalidFilterException("The 'in' operator requires a list literal.");
         }
 
         var containsNull = list.Items.Any(i => i is NullLiteral);
         if (containsNull && !property.Type.IsNullable())
         {
-            throw new InvalidOperationException(
+            throw new InvalidFilterException(
                 $"Null cannot be used for '{property.Type.Name}'.");
         }
 
@@ -497,6 +548,9 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
             BooleanLiteral boolean =>
                 ConvertBooleanValue(boolean.Value, effectiveType),
 
+            ListLiteral => throw new InvalidFilterException(
+                "A list literal can only be used with the 'in' operator."),
+
             _ => throw new NotSupportedException(
                 $"Unsupported literal: '{literal.GetType().Name}'.")
         };
@@ -506,7 +560,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
     {
         return effectiveType.IsInstanceOfType(value)
             ? value
-            : throw new InvalidOperationException(
+            : throw new InvalidFilterException(
                 $"Cannot convert value of type 'Boolean' to '{effectiveType.Name}'.");
     }
 

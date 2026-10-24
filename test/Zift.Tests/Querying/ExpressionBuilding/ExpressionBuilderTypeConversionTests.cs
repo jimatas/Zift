@@ -57,9 +57,9 @@ public sealed class ExpressionBuilderTypeConversionTests
     }
 
     [Fact]
-    public void Build_StringLiteral_ToGuid_WithInvalidValue_ThrowsFormatException()
+    public void Build_StringLiteral_ToGuid_WithInvalidValue_ThrowsInvalidFilterException()
     {
-        Assert.Throws<FormatException>(() =>
+        Assert.Throws<InvalidFilterException>(() =>
             BuildExpression(
                 nameof(TestClass.GuidValue),
                 new StringLiteral("not-a-guid")));
@@ -78,9 +78,9 @@ public sealed class ExpressionBuilderTypeConversionTests
     }
 
     [Fact]
-    public void Build_StringLiteral_ToEnum_WithInvalidValue_ThrowsArgumentException()
+    public void Build_StringLiteral_ToEnum_WithInvalidValue_ThrowsInvalidFilterException()
     {
-        Assert.Throws<ArgumentException>(() =>
+        Assert.Throws<InvalidFilterException>(() =>
             BuildExpression(
                 nameof(TestClass.EnumValue),
                 new StringLiteral("DoesNotExist")));
@@ -147,9 +147,9 @@ public sealed class ExpressionBuilderTypeConversionTests
     }
 
     [Fact]
-    public void Build_StringLiteral_ToInt32_ThrowsInvalidOperationException()
+    public void Build_StringLiteral_ToInt32_ThrowsInvalidFilterException()
     {
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<InvalidFilterException>(() =>
             BuildExpression(
                 nameof(TestClass.Int32Value),
                 new StringLiteral("123")));
@@ -160,11 +160,11 @@ public sealed class ExpressionBuilderTypeConversionTests
     [InlineData(nameof(TestClass.StringValue), "String")]
     [InlineData(nameof(TestClass.GuidValue), "Guid")]
     [InlineData(nameof(TestClass.EnumValue), "TestEnum")]
-    public void Build_BooleanLiteral_ToNonBooleanProperty_ThrowsInvalidOperationException(
+    public void Build_BooleanLiteral_ToNonBooleanProperty_ThrowsInvalidFilterException(
         string property,
         string expectedTypeName)
     {
-        var ex = Assert.Throws<InvalidOperationException>(() =>
+        var ex = Assert.Throws<InvalidFilterException>(() =>
             BuildExpression(property, new BooleanLiteral(true)));
 
         Assert.Contains("Boolean", ex.Message);
@@ -191,9 +191,9 @@ public sealed class ExpressionBuilderTypeConversionTests
     }
 
     [Fact]
-    public void Build_NumberLiteral_ToEnum_ThrowsInvalidOperationException()
+    public void Build_NumberLiteral_ToEnum_ThrowsInvalidFilterException()
     {
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<InvalidFilterException>(() =>
             BuildExpression(
                 nameof(TestClass.EnumValue),
                 new NumberLiteral(1)));

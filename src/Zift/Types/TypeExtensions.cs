@@ -41,7 +41,9 @@ internal static class TypeExtensions
 
         if (collectionType.IsArray)
         {
-            return collectionType.GetElementType();
+            return collectionType.IsSZArray
+                ? collectionType.GetElementType()
+                : null;
         }
 
         if (collectionType.IsGenericType &&
