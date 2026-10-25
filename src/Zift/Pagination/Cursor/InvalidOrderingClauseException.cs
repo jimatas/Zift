@@ -16,4 +16,9 @@ public sealed class InvalidOrderingClauseException : FormatException
         : base(message, innerException)
     {
     }
+
+    internal static InvalidOrderingClauseException KeyLimitExceeded(int maxOrderingKeys)
+    {
+        return new($"The ordering exceeds the maximum of {maxOrderingKeys} keys.");
+    }
 }

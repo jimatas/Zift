@@ -141,7 +141,7 @@ public class NullableLiftingTests
             _ => Clause(n => n.Text!.Length)
         };
 
-        var parsed = OrderingParser.Parse<Node>(path, new OrderingOptions())[0];
+        var parsed = OrderingParser.Parse<Node>(path, enableNullGuards: false, maxOrderingKeys: 8)[0];
 
         Assert.Equal(parsed.KeyType, typed.KeyType);
         Assert.Equal(parsed.Describe(), typed.Describe());
@@ -158,7 +158,7 @@ public class NullableLiftingTests
     [Fact]
     public void GuardedParsedPath_StillLiftsBeforeGuarding()
     {
-        var clause = OrderingParser.Parse<Node>("Leaf.Value", new OrderingOptions { EnableNullGuards = true })[0];
+        var clause = OrderingParser.Parse<Node>("Leaf.Value", enableNullGuards: true, maxOrderingKeys: 8)[0];
 
         Assert.Equal(typeof(int?), clause.KeyType);
         var conditional = Assert.IsAssignableFrom<ConditionalExpression>(clause.KeySelector.Body);

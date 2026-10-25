@@ -253,6 +253,8 @@ Ordering keys can be strings, numbers, booleans, enums, or any type with compari
 
 The ordering must uniquely identify each row, so end it with a unique key such as `Id`. Rows that tie on every key can be skipped between pages.
 
+An ordering can have up to 16 keys by default, configurable through `CursorQueryOptions.MaxOrderingKeys`. Exceeding this limit throws `InvalidOrderingClauseException`.
+
 By default, Zift assumes nulls sort first in ascending order (SQL Server, SQLite, MySQL). For databases that sort them last (PostgreSQL, Oracle), pass `new CursorQueryOptions { NullOrdering = NullOrdering.NullsCompareHigher }` to `AsCursorQuery()`.
 
 #### Navigating

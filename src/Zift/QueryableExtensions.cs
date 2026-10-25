@@ -52,7 +52,9 @@ public static class QueryableExtensions
                 "The null ordering is not a defined value.");
         }
 
-        return new CursorQuery<T>(source, nullOrdering);
+        var maxOrderingKeys = options?.MaxOrderingKeys ?? CursorQueryOptions.DefaultMaxOrderingKeys;
+
+        return new CursorQuery<T>(source, nullOrdering, maxOrderingKeys);
     }
 
     public static Page<T> ToPage<T>(

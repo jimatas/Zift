@@ -6,8 +6,8 @@ internal sealed class CursorQuery<T> :
     ICursorQuery<T>,
     IOrderedCursorQuery<T>
 {
-    internal CursorQuery(IQueryable<T> source, NullOrdering nullOrdering)
-        : this(source, CursorQueryState<T>.Create(nullOrdering))
+    internal CursorQuery(IQueryable<T> source, NullOrdering nullOrdering, int maxOrderingKeys)
+        : this(source, CursorQueryState<T>.Create(nullOrdering, maxOrderingKeys))
     {
     }
 
@@ -48,7 +48,7 @@ internal sealed class CursorQuery<T> :
 
     public IOrderedCursorQuery<T> ThenBy(string orderByClause, OrderingOptions? options = null)
     {
-        return WithOrdering(ParseOrdering(orderByClause, options), append: true);
+        return WithOrdering(ParseOrdering(orderByClause, options, append: true), append: true);
     }
 
     public IExecutableCursorQuery<T> After(string? cursor)
@@ -61,11 +61,20 @@ internal sealed class CursorQuery<T> :
         return WithCursor(cursor, CursorNavigationMode.Before);
     }
 
-    private static IReadOnlyList<OrderingClause<T>> ParseOrdering(string orderByClause, OrderingOptions? options)
+    private IReadOnlyList<OrderingClause<T>> ParseOrdering(
+        string orderByClause,
+        OrderingOptions? options,
+        bool append = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(orderByClause);
 
-        return OrderingParser.Parse<T>(orderByClause, options ?? new OrderingOptions());
+        var existingOrderingKeys = append ? State.Ordering.Count : 0;
+
+        return OrderingParser.Parse<T>(
+            orderByClause,
+            enableNullGuards: options?.EnableNullGuards ?? false,
+            State.MaxOrderingKeys,
+            existingOrderingKeys);
     }
 
     private CursorQuery<T> WithOrdering(IReadOnlyList<OrderingClause<T>> clauses, bool append = false)
@@ -74,7 +83,17 @@ internal sealed class CursorQuery<T> :
             ? State.Ordering.Concat(clauses).ToArray()
             : clauses;
 
+        EnsureWithinKeyLimit(ordering.Count);
+
         return new(Source, State with { Ordering = ordering });
+    }
+
+    private void EnsureWithinKeyLimit(int keyCount)
+    {
+        if (keyCount > State.MaxOrderingKeys)
+        {
+            throw InvalidOrderingClauseException.KeyLimitExceeded(State.MaxOrderingKeys);
+        }
     }
 
     private CursorQuery<T> WithCursor(string? cursor, CursorNavigationMode navigationMode)
