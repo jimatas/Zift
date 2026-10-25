@@ -266,6 +266,15 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
             Expression.Constant(null, type));
     }
 
+    private static void RequireNullable(Expression value)
+    {
+        if (!value.Type.IsNullable())
+        {
+            throw new InvalidFilterException(
+                $"Null cannot be used for '{value.Type.Name}'.");
+        }
+    }
+
     private static BinaryExpression IsNull(Expression value)
     {
         return Expression.Equal(value, Expression.Constant(null, value.Type));
@@ -321,11 +330,7 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
         Expression property,
         ComparisonOperator comparisonOperator)
     {
-        if (!property.Type.IsNullable())
-        {
-            throw new InvalidFilterException(
-                $"Null cannot be used for '{property.Type.Name}'.");
-        }
+        RequireNullable(property);
 
         var isNull = IsNull(property);
 
@@ -476,10 +481,9 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
         }
 
         var containsNull = list.Items.Any(i => i is NullLiteral);
-        if (containsNull && !property.Type.IsNullable())
+        if (containsNull)
         {
-            throw new InvalidFilterException(
-                $"Null cannot be used for '{property.Type.Name}'.");
+            RequireNullable(property);
         }
 
         var nonNullItems = list.Items
