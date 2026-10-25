@@ -27,11 +27,6 @@ internal static class TypeExtensions
             type == typeof(decimal);
     }
 
-    public static bool IsOrderable(this Type type)
-    {
-        return type != typeof(bool) && !type.IsEnum;
-    }
-
     public static Type? GetCollectionElementType(this Type collectionType)
     {
         if (collectionType == typeof(string))

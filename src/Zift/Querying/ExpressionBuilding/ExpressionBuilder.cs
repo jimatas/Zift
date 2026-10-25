@@ -383,16 +383,16 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
                 ComparisonOperator.NotEqual =>
                     Expression.NotEqual(property, comparisonValue),
 
-                ComparisonOperator.LessThan when propertyType.IsOrderable() =>
+                ComparisonOperator.LessThan =>
                     Expression.LessThan(property, comparisonValue),
 
-                ComparisonOperator.LessThanOrEqual when propertyType.IsOrderable() =>
+                ComparisonOperator.LessThanOrEqual =>
                     Expression.LessThanOrEqual(property, comparisonValue),
 
-                ComparisonOperator.GreaterThan when propertyType.IsOrderable() =>
+                ComparisonOperator.GreaterThan =>
                     Expression.GreaterThan(property, comparisonValue),
 
-                ComparisonOperator.GreaterThanOrEqual when propertyType.IsOrderable() =>
+                ComparisonOperator.GreaterThanOrEqual =>
                     Expression.GreaterThanOrEqual(property, comparisonValue),
 
                 _ => throw new InvalidFilterException(
