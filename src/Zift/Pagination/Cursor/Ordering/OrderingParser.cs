@@ -4,50 +4,66 @@ internal static class OrderingParser
 {
     public static IReadOnlyList<OrderingClause<T>> Parse<T>(
         string orderByClause,
-        OrderingOptions options)
+        bool enableNullGuards,
+        int maxOrderingKeys,
+        int existingOrderingKeys = 0)
     {
         var clauses = new List<OrderingClause<T>>();
+        var remaining = orderByClause.AsSpan();
 
-        foreach (var text in orderByClause.Split(',', StringSplitOptions.TrimEntries))
+        while (true)
         {
-            if (text.Length == 0)
+            var separatorIndex = remaining.IndexOf(',');
+            var entry = (separatorIndex < 0 ? remaining : remaining[..separatorIndex]).Trim();
+
+            if (entry.IsEmpty)
             {
                 throw new InvalidOrderingClauseException("The order-by clause contains an empty entry.");
             }
 
-            clauses.Add(ParseEntry<T>(text, options));
-        }
+            if (existingOrderingKeys + clauses.Count >= maxOrderingKeys)
+            {
+                throw InvalidOrderingClauseException.KeyLimitExceeded(maxOrderingKeys);
+            }
 
-        return clauses;
+            clauses.Add(ParseEntry<T>(entry.ToString(), enableNullGuards));
+
+            if (separatorIndex < 0)
+            {
+                return clauses;
+            }
+
+            remaining = remaining[(separatorIndex + 1)..];
+        }
     }
 
-    private static OrderingClause<T> ParseEntry<T>(string text, OrderingOptions options)
+    private static OrderingClause<T> ParseEntry<T>(string entry, bool enableNullGuards)
     {
-        var parts = text.Split(Array.Empty<char>(), StringSplitOptions.RemoveEmptyEntries);
+        var parts = entry.Split(Array.Empty<char>(), StringSplitOptions.RemoveEmptyEntries);
 
         var direction = parts.Length switch
         {
             1 => OrderingDirection.Ascending,
             2 => ParseDirection(parts[1]),
             _ => throw new InvalidOrderingClauseException(
-                $"Invalid order-by entry '{text}'. Expected 'Property [ASC|DESC]'.")
+                $"Invalid order-by entry '{entry}'. Expected 'Property [ASC|DESC]'.")
         };
 
         var keySelector = PropertyPathResolver.Resolve<T>(
             parts[0],
-            options.EnableNullGuards);
+            enableNullGuards);
 
         return new OrderingClause<T>(keySelector, direction);
     }
 
-    private static OrderingDirection ParseDirection(string text)
+    private static OrderingDirection ParseDirection(string direction)
     {
-        return text.ToUpperInvariant() switch
+        return direction.ToUpperInvariant() switch
         {
             "ASC" => OrderingDirection.Ascending,
             "DESC" => OrderingDirection.Descending,
             _ => throw new InvalidOrderingClauseException(
-                $"Invalid order-by direction '{text}'. Must be 'ASC' or 'DESC'.")
+                $"Invalid order-by direction '{direction}'. Must be 'ASC' or 'DESC'.")
         };
     }
 }
