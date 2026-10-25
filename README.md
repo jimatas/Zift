@@ -39,6 +39,8 @@ var categories = context.Categories
 - **Property navigation**
   `Name`, `Author.Email`
 
+  Names are limited to ASCII letters, digits, and `_`, and can't start with a digit.
+
 - **Logical operators**
   `&&`, `||`, `!`
 
@@ -75,6 +77,8 @@ var categories = context.Categories
 
   Example: `Products:count >= 2`
 
+A comparison is always of the form `property operator literal`, including boolean properties (`IsFeatured == true`). Comparing two properties (`Price > Cost`) and arithmetic (`Price * 2`) aren't supported.
+
 ### Literals
 
 - **Strings** use single or double quotes: `"Active"` or `'Active'`. Supported escapes are `\\`, `\"`, and `\'`.
@@ -84,6 +88,8 @@ var categories = context.Categories
 - **Enums** use quoted, case-sensitive member names: `Status == "Active"`. Numeric strings aren't supported. For `[Flags]` enums, separate names with commas.
 
 Numbers must fit the property's type. For an `int` property, `1.0` and `1e3` are valid; `1.5` and `3000000000` (exceeds `int.MaxValue`) aren't. Fractional values aren't rounded to integers.
+
+Databases compare strings using the column's collation. In-memory sources use the current culture for `^=`, `$=`, `<`, `<=`, `>`, and `>=`, and ordinal comparison for `%=`, `==`, and `!=`.
 
 ### Null and Empty Lists
 
@@ -147,7 +153,7 @@ try
 }
 catch (InvalidFilterException ex)
 {
-    // Tell the caller what's wrong: ex.Message, and ex.Position when it has one.
+    // Handle the invalid filter. ex.Message describes the problem, and ex.Position says where when it has one.
 }
 ```
 
@@ -273,7 +279,7 @@ if (page.HasPreviousPage)
 }
 ```
 
-`HasPreviousPage` is assumed `true` after `After(...)`, and `HasNextPage` after `Before(...)`. No extra query is made to verify this, so changes between requests can make these values inaccurate.
+On a page with items, `HasPreviousPage` is assumed `true` after `After(...)`, and `HasNextPage` after `Before(...)`. No extra query is made to verify this, so changes between requests can make these values inaccurate.
 
 #### Page Size
 
