@@ -353,23 +353,16 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
 
         var comparisonValue = CreateLiteralExpression(literal, property.Type);
 
-        Expression comparison;
-
-        if (propertyType == typeof(string))
+        if (propertyType != typeof(string))
         {
-            comparison = BuildStringComparison(comparisonOperator, property, comparisonValue);
-
-            if (comparisonOperator is not (ComparisonOperator.Equal or ComparisonOperator.NotEqual))
-            {
-                comparison = WhenReachable(AndNotNull(null, property), comparison, resultWhenUnreachable: false);
-            }
-        }
-        else
-        {
-            comparison = BuildBinaryComparison(comparisonOperator, property, comparisonValue, propertyType);
+            return BuildBinaryComparison(comparisonOperator, property, comparisonValue, propertyType);
         }
 
-        return comparison;
+        var comparison = BuildStringComparison(comparisonOperator, property, comparisonValue);
+
+        return comparisonOperator is ComparisonOperator.Equal or ComparisonOperator.NotEqual
+            ? comparison
+            : WhenReachable(AndNotNull(null, property), comparison, resultWhenUnreachable: false);
     }
 
     private static BinaryExpression BuildBinaryComparison(
