@@ -231,35 +231,11 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
 
     private static MemberExpression GetProperty(Expression owner, string name)
     {
-        var property = FindProperty(owner, name);
+        var property = owner.Type.FindReadableProperty(
+            name,
+            static (message, inner) => new InvalidFilterException(message, inner));
 
-        if (property.Member is PropertyInfo { CanRead: false })
-        {
-            throw new InvalidFilterException(
-                $"Property '{name}' on type '{owner.Type.Name}' can't be read.");
-        }
-
-        return property;
-    }
-
-    private static MemberExpression FindProperty(Expression owner, string name)
-    {
-        try
-        {
-            return Expression.Property(owner, name);
-        }
-        catch (ArgumentException exception)
-        {
-            throw new InvalidFilterException(
-                $"Type '{owner.Type.Name}' has no property '{name}'.",
-                exception);
-        }
-        catch (AmbiguousMatchException exception)
-        {
-            throw new InvalidFilterException(
-                $"Property '{name}' is ambiguous on type '{owner.Type.Name}'.",
-                exception);
-        }
+        return Expression.Property(owner, property);
     }
 
     private Expression? AndNotNull(Expression? reachable, Expression navigation)

@@ -31,6 +31,25 @@ public sealed class FilterErrorContractTests
         public List<WriteOnlyHolder> Children { get; set; } = [];
     }
 
+    private class NonPublicMembersHolder
+    {
+        private string PrivateName => "x";
+
+        protected string ProtectedName => "x";
+
+        internal string InternalName => "x";
+
+        public string PrivateGetter { private get; set; } = "x";
+
+        public int this[int index] => index;
+
+        public NonPublicMembersHolder? Child { get; set; }
+
+        public List<NonPublicMembersHolder> Children { get; set; } = [];
+
+        public string Use() => PrivateName + ProtectedName + InternalName;
+    }
+
     private sealed class ArrayHolder
     {
         public int Id { get; set; }
@@ -92,13 +111,13 @@ public sealed class FilterErrorContractTests
     }
 
     [Fact]
-    public void Where_UnknownProperty_NamesTheTypeAndThePropertyAndKeepsTheOriginalError()
+    public void Where_UnknownProperty_NamesTheTypeAndTheProperty()
     {
         var ex = Assert.Throws<InvalidFilterException>(() => Source.Where("NestedEntity.Missing == 1"));
 
         Assert.Contains("TestClass", ex.Message);
         Assert.Contains("Missing", ex.Message);
-        Assert.IsType<ArgumentException>(ex.InnerException);
+        Assert.Null(ex.InnerException);
         Assert.Null(ex.Position);
     }
 
@@ -160,6 +179,43 @@ public sealed class FilterErrorContractTests
 
         Assert.Contains("'WriteOnly'", ex.Message);
         Assert.Contains("can't be read", ex.Message);
+    }
+
+    [Theory]
+    [InlineData("PrivateName == 'x'", "PrivateName")]
+    [InlineData("ProtectedName == 'x'", "ProtectedName")]
+    [InlineData("InternalName == 'x'", "InternalName")]
+    [InlineData("Child.PrivateName == 'x'", "PrivateName")]
+    [InlineData("Child.Child.InternalName == 'x'", "InternalName")]
+    [InlineData("Children:any(ProtectedName == 'x')", "ProtectedName")]
+    [InlineData("Children:all(InternalName == 'x')", "InternalName")]
+    public void Where_NonPublicProperty_ThrowsInvalidFilterException(string filter, string property)
+    {
+        var ex = Assert.Throws<InvalidFilterException>(() =>
+            Array.Empty<NonPublicMembersHolder>().AsQueryable().Where(filter));
+
+        Assert.Equal($"'NonPublicMembersHolder' has no public property '{property}'.", ex.Message);
+    }
+
+    [Theory]
+    [InlineData("PrivateGetter == 'x'")]
+    [InlineData("Child.PrivateGetter == 'x'")]
+    [InlineData("Children:any(PrivateGetter == 'x')")]
+    public void Where_PropertyWithNonPublicGetter_ThrowsInvalidFilterException(string filter)
+    {
+        var ex = Assert.Throws<InvalidFilterException>(() =>
+            Array.Empty<NonPublicMembersHolder>().AsQueryable().Where(filter));
+
+        Assert.Equal("Property 'PrivateGetter' on type 'NonPublicMembersHolder' can't be read.", ex.Message);
+    }
+
+    [Fact]
+    public void Where_IndexedProperty_ThrowsInvalidFilterException()
+    {
+        var ex = Assert.Throws<InvalidFilterException>(() =>
+            Array.Empty<NonPublicMembersHolder>().AsQueryable().Where("Item == 1"));
+
+        Assert.Equal("Indexed property 'Item' on type 'NonPublicMembersHolder' can't be used.", ex.Message);
     }
 
     [Theory]

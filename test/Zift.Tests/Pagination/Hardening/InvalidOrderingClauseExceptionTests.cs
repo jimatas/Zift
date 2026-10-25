@@ -45,7 +45,7 @@ public class InvalidOrderingClauseExceptionTests
 
     [Theory]
     [InlineData("WriteOnly", "Property 'WriteOnly' on type 'OddMembers' can't be read.")]
-    [InlineData("Item", "Indexed property 'Item' on type 'OddMembers' can't be used for ordering.")]
+    [InlineData("Item", "Indexed property 'Item' on type 'OddMembers' can't be used.")]
     [InlineData("Value", "Property 'Value' is ambiguous on type 'OddMembers'.")]
     public void OrderBy_ThrowsForUnusableProperties(string clause, string message)
     {
