@@ -34,6 +34,38 @@ public class InvalidOrderingClauseExceptionTests
         Assert.Throws<InvalidOrderingClauseException>(() => query.ThenBy("Nope"));
     }
 
+    private sealed class OddMembers
+    {
+        public int Id { get; set; }
+        public int Value { get; set; }
+        public int value { get; set; }
+        public int WriteOnly { set { } }
+        public int this[int index] => index;
+    }
+
+    [Theory]
+    [InlineData("WriteOnly", "Property 'WriteOnly' on type 'OddMembers' can't be read.")]
+    [InlineData("Item", "Indexed property 'Item' on type 'OddMembers' can't be used for ordering.")]
+    [InlineData("Value", "Property 'Value' is ambiguous on type 'OddMembers'.")]
+    public void OrderBy_ThrowsForUnusableProperties(string clause, string message)
+    {
+        var source = Array.Empty<OddMembers>().AsQueryable();
+
+        var error = Assert.Throws<InvalidOrderingClauseException>(() => source.AsCursorQuery().OrderBy(clause));
+
+        Assert.Equal(message, error.Message);
+    }
+
+    [Fact]
+    public void OrderBy_KeepsTheOriginalExceptionForAmbiguousProperties()
+    {
+        var source = Array.Empty<OddMembers>().AsQueryable();
+
+        var error = Assert.Throws<InvalidOrderingClauseException>(() => source.AsCursorQuery().OrderBy("value"));
+
+        Assert.IsType<System.Reflection.AmbiguousMatchException>(error.InnerException);
+    }
+
     [Fact]
     public void InvalidCursor_IsNotAnInvalidOrderingClause()
     {
