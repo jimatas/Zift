@@ -183,10 +183,10 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
 
     private Expression BuildPropertyPathAccess(
         PropertyPathNode path,
-        Expression root,
+        ParameterExpression parameter,
         RootNullHandling rootNullHandling)
     {
-        var (value, reachable) = Navigate(path, root, rootNullHandling);
+        var (value, reachable) = Navigate(path, parameter, rootNullHandling);
 
         return reachable is null
             ? value
@@ -205,10 +205,10 @@ internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
 
     private (Expression Value, Expression? Reachable) Navigate(
         PropertyPathNode path,
-        Expression root,
+        ParameterExpression parameter,
         RootNullHandling rootNullHandling)
     {
-        Expression current = root;
+        Expression current = parameter;
         Expression? reachable = null;
 
         if (rootNullHandling == RootNullHandling.GuardIfNullable)
