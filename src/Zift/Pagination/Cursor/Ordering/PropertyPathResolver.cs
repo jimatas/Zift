@@ -51,34 +51,9 @@ internal static class PropertyPathResolver
 
     private static MemberExpression ResolveProperty(Expression instance, string name)
     {
-        PropertyInfo property;
-
-        try
-        {
-            property = instance.Type.GetProperty(
-                name,
-                BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase)
-                ?? throw new InvalidOrderingClauseException(
-                    $"'{instance.Type.Name}' has no public property '{name}'.");
-        }
-        catch (AmbiguousMatchException exception)
-        {
-            throw new InvalidOrderingClauseException(
-                $"Property '{name}' is ambiguous on type '{instance.Type.Name}'.",
-                exception);
-        }
-
-        if (property.GetIndexParameters().Length > 0)
-        {
-            throw new InvalidOrderingClauseException(
-                $"Indexed property '{name}' on type '{instance.Type.Name}' can't be used for ordering.");
-        }
-
-        if (property.GetMethod is not { IsPublic: true })
-        {
-            throw new InvalidOrderingClauseException(
-                $"Property '{name}' on type '{instance.Type.Name}' can't be read.");
-        }
+        var property = instance.Type.FindReadableProperty(
+            name,
+            static (message, inner) => new InvalidOrderingClauseException(message, inner));
 
         return Expression.Property(instance, property);
     }
