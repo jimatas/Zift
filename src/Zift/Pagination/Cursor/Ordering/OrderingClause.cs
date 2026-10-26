@@ -1,7 +1,5 @@
 ﻿namespace Zift.Pagination.Cursor.Ordering;
 
-using Expressions;
-
 internal sealed class OrderingClause<T>
 {
     public OrderingClause(LambdaExpression keySelector, OrderingDirection direction)

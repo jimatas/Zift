@@ -1,8 +1,5 @@
 namespace Zift.Filtering.ExpressionBuilding;
 
-using Literals;
-using Types;
-
 internal static class NumericLiteralConverter
 {
     private const NumberStyles Style = NumberStyles.Float;

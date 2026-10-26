@@ -1,4 +1,4 @@
-namespace Zift.Types;
+namespace Zift;
 
 internal static class PropertyLookup
 {

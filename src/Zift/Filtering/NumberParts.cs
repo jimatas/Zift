@@ -1,4 +1,4 @@
-namespace Zift.Filtering.Literals;
+namespace Zift.Filtering;
 
 internal readonly record struct NumberParts(
     int Length,
