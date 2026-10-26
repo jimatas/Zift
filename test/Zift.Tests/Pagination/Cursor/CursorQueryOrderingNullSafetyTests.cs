@@ -1,7 +1,5 @@
 ﻿namespace Zift.Pagination.Cursor;
 
-using Ordering;
-
 public sealed class CursorQueryOrderingNullSafetyTests
 {
     private readonly OrderingOptions _withNullGuards = new() { EnableNullGuards = true };
