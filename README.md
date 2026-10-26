@@ -29,6 +29,14 @@ Zift targets .NET 8, 9, and 10. The EF Core package uses the EF Core major versi
 Filter queries using string expressions. Zift translates them into LINQ expression trees.
 
 ```csharp
+var products = context.Products
+    .Where("Price < 100 && Category.Name == 'Books'")
+    .ToList();
+```
+
+You can also filter across nested collections:
+
+```csharp
 var categories = context.Categories
     .Where("Products:any(Reviews:any(Rating >= 4))")
     .ToList();
@@ -79,6 +87,8 @@ var categories = context.Categories
 
 A comparison is always of the form `property operator literal`, including boolean properties (`IsFeatured == true`). Comparing two properties (`Price > Cost`) and arithmetic (`Price * 2`) aren't supported.
 
+For strings, databases compare using the column's collation. In-memory sources use the current culture for `^=`, `$=`, `<`, `<=`, `>`, and `>=`, and ordinal comparison for `%=`, `==`, and `!=`.
+
 ### Literals
 
 - **Strings** use single or double quotes: `"Active"` or `'Active'`. Supported escapes are `\\`, `\"`, and `\'`.
@@ -88,8 +98,6 @@ A comparison is always of the form `property operator literal`, including boolea
 - **Enums** use quoted, case-sensitive member names: `Status == "Active"`. Numeric strings aren't supported. For `[Flags]` enums, separate names with commas.
 
 Numbers must fit the property's type. For an `int` property, `1.0` and `1e3` are valid; `1.5` and `3000000000` (exceeds `int.MaxValue`) aren't. Fractional values aren't rounded to integers.
-
-Databases compare strings using the column's collation. In-memory sources use the current culture for `^=`, `$=`, `<`, `<=`, `>`, and `>=`, and ordinal comparison for `%=`, `==`, and `!=`.
 
 ### Null and Empty Lists
 
@@ -118,7 +126,7 @@ var options = new ExpressionBuilderOptions
     MaxExpressionLength = 8192
 };
 
-var products = items.Where("Category.Name == \"Books\"", options);
+var products = items.Where("Category.Name == 'Books'", options);
 ```
 
 | Option | Default | Description |
@@ -157,11 +165,11 @@ catch (InvalidFilterException ex)
 }
 ```
 
-`SyntaxErrorException` and `LexicalErrorException` derive from `InvalidFilterException`. `Position` is set for those two and is `null` for the rest. When a .NET parse, conversion, or lookup was behind the error, the original exception is in `InnerException`.
+`SyntaxErrorException` and `LexicalErrorException` derive from `InvalidFilterException`. `Position` is set for those two and is `null` for the rest. If a .NET exception caused the error, the original exception is available through `InnerException`.
 
 A `null` filter throws `ArgumentNullException`. An empty or whitespace-only one throws `ArgumentException`.
 
-> **Note**: Errors the database provider raises when the query runs, such as EF Core not being able to translate a property, aren't wrapped.
+Errors the database provider raises when the query runs, such as EF Core not being able to translate a property, aren't wrapped.
 
 ## Pagination
 
@@ -205,7 +213,7 @@ page.HasPreviousPage
 page.TotalItemCount
 ```
 
-Use `page.Map(...)` to convert the items while keeping the paging information, and `Page<T>.Empty(pageSize)` for an empty first page:
+Use `page.Map(...)` to convert the items while keeping the paging information:
 
 ```csharp
 var dtoPage = page.Map(category => new CategoryDto(category));
@@ -251,15 +259,17 @@ In the string syntax, use dots for nested paths (`Category.Title`). Names aren't
 
 Ordering keys can be strings, numbers, booleans, enums, or any type with comparison operators or `IComparable<T>` (`Guid`, `DateTime`, `DateTimeOffset`). Unsupported types throw `NotSupportedException` when navigating beyond the first page.
 
-The ordering must uniquely identify each row, so end it with a unique key such as `Id`. Rows that tie on every key can be skipped between pages.
+> **Note**: The ordering must uniquely identify each row, so end it with a unique key such as `Id`. Rows that tie on every key can be skipped between pages.
 
 An ordering can have up to 16 keys by default, configurable through `CursorQueryOptions.MaxOrderingKeys`. Exceeding this limit throws `InvalidOrderingClauseException`.
 
 By default, Zift assumes nulls sort first in ascending order (SQL Server, SQLite, MySQL). For databases that sort them last (PostgreSQL, Oracle), pass `new CursorQueryOptions { NullOrdering = NullOrdering.NullsCompareHigher }` to `AsCursorQuery()`.
 
+> **Note**: If an ordering key can be `null`, set `NullOrdering` to match your database. With the wrong setting, pages can skip or repeat rows.
+
 #### Navigating
 
-Cursors are URL-safe tokens tied to the entity type and ordering that produced them. Using one with a different ordering or entity type throws `InvalidCursorException`. They aren't encrypted or signed.
+Cursors are URL-safe tokens tied to the entity type and ordering that produced them. Using one with a different ordering or entity type throws `InvalidCursorException`. They aren't encrypted or signed, and each contains the ordering key values of its corresponding row.
 
 Reuse the ordered query and pass the current page's cursors to navigate. A `null` cursor selects the first page.
 
@@ -297,4 +307,4 @@ page.HasNextPage
 page.HasPreviousPage
 ```
 
-Use `page.Map(...)` to convert the items and keep the cursors. `CursorPage<T>.Empty` is a page without items.
+Use `page.Map(...)` to convert the items and keep the cursors.
