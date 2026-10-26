@@ -1,4 +1,4 @@
-namespace Zift.Expressions;
+namespace Zift.Pagination.Cursor.Ordering;
 
 internal static class ExpressionDescriber
 {

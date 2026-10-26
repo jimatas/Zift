@@ -1,8 +1,5 @@
 namespace Zift.Pagination.Cursor.Ordering;
 
-using Expressions;
-using Types;
-
 internal static class PropertyPathResolver
 {
     public static LambdaExpression Resolve<T>(string propertyPath, bool nullGuards)

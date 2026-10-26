@@ -1,7 +1,5 @@
 namespace Zift.Pagination.Cursor.Ordering;
 
-using Types;
-
 internal static class NullableLifting
 {
     public static LambdaExpression LiftNavigationPath(LambdaExpression selector)

@@ -1,4 +1,4 @@
-namespace Zift.Filtering.Literals;
+namespace Zift.Filtering;
 
 internal static class NumberScanner
 {
