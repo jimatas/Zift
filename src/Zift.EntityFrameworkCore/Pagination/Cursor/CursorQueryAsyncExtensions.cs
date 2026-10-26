@@ -3,7 +3,7 @@
 using Execution;
 using Microsoft.EntityFrameworkCore;
 
-public static class CursorQueryExtensions
+public static class CursorQueryAsyncExtensions
 {
     public static Task<CursorPage<T>> ToCursorPageAsync<T>(
         this IExecutableCursorQuery<T> query,

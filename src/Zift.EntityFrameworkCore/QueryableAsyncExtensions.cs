@@ -3,7 +3,7 @@
 using Microsoft.EntityFrameworkCore;
 using Pagination.Offset;
 
-public static class QueryableExtensions
+public static class QueryableAsyncExtensions
 {
     public static Task<Page<T>> ToPageAsync<T>(
         this IQueryable<T> source,
