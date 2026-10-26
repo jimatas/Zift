@@ -1,4 +1,3 @@
-using System.Globalization;
 using Zift.Pagination.Cursor;
 
 namespace Zift.Pagination.Tests;

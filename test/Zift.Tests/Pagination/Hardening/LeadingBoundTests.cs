@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Linq.Expressions;
 using Zift.Pagination.Cursor;
 
 namespace Zift.Pagination.Tests;

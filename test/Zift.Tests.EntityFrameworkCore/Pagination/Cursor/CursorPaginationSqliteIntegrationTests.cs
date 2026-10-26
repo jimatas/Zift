@@ -1,7 +1,6 @@
 ﻿namespace Zift.Pagination.Cursor;
 
 using Fixture;
-using Microsoft.EntityFrameworkCore;
 
 public sealed class CursorPaginationSqliteIntegrationTests
 {
