@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Zift.Querying;
-using Zift.Querying.ExpressionBuilding;
+using Zift.Filtering;
+using Zift.Filtering.ExpressionBuilding;
 
 namespace Zift.Pagination.Tests.Sqlite;
 

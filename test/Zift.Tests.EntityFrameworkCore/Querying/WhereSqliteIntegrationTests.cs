@@ -1,4 +1,4 @@
-﻿namespace Zift.Querying;
+﻿namespace Zift.Filtering;
 
 using Fixture;
 using Microsoft.EntityFrameworkCore;
