@@ -2,7 +2,7 @@
 
 using Fixture;
 
-public sealed class CursorQueryExtensionsTests
+public sealed class CursorQueryAsyncExtensionsTests
 {
     [Fact]
     public async Task ToCursorPageAsync_NullQuery_ThrowsArgumentNullException()
