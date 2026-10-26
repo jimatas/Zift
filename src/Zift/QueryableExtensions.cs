@@ -1,10 +1,10 @@
 ﻿namespace Zift;
 
+using Filtering;
+using Filtering.ExpressionBuilding;
+using Filtering.Parsing;
 using Pagination.Cursor;
 using Pagination.Offset;
-using Querying;
-using Querying.ExpressionBuilding;
-using Querying.Parsing;
 
 public static class QueryableExtensions
 {

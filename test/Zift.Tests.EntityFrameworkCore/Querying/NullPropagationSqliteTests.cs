@@ -1,4 +1,4 @@
-namespace Zift.Querying;
+namespace Zift.Filtering;
 
 using ExpressionBuilding;
 using Fixture;
