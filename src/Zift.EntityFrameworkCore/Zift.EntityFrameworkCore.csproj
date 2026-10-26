@@ -9,7 +9,7 @@
     <IsPackable>true</IsPackable>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>0.9.1</Version>
+    <Version>0.10.0</Version>
     <Authors>Jim Atas</Authors>
     <Description>Entity Framework Core support for Zift, with async pagination methods.</Description>
     <PackageTags>linq queryable dynamic-query dynamic-filtering filtering sorting pagination cursor-pagination keyset-pagination offset-pagination efcore entityframeworkcore</PackageTags>
