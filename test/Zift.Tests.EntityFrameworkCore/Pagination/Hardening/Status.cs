@@ -1,3 +1,3 @@
-namespace Zift.Pagination.Tests.Sqlite;
+namespace Zift.Pagination.Hardening;
 
 public enum Status { Draft, Active, Archived }

@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Zift.Pagination.Cursor;
 
-namespace Zift.Pagination.Tests.Sqlite;
+namespace Zift.Pagination.Hardening;
 
 public sealed class TypedNavigationLiftingTests : IAsyncDisposable
 {

@@ -1,6 +1,6 @@
 using Zift.Pagination.Cursor;
 
-namespace Zift.Pagination.Tests;
+namespace Zift.Pagination.Hardening;
 
 public class CursorFingerprintTests
 {
@@ -12,11 +12,11 @@ public class CursorFingerprintTests
 
     private static readonly Other[] OtherRows = Enumerable.Range(1, 6).Select(i => new Other(i, "n" + i)).ToArray();
 
-    private const string IdLowerFingerprint = "1BF8189B421E8167";
-    private const string IdNameLowerFingerprint = "DEE54C2A6B1112AC";
-    private const string IdHigherFingerprint = "65EA8D16BE9A9C9F";
-    private const string IdNameHigherFingerprint = "DC1D7679084F7FBE";
-    private const string IdLowerAfter3Cursor = "eyJmIjoiMUJGODE4OUI0MjFFODE2NyIsInYiOlszXX0";
+    private const string IdLowerFingerprint = "3AA4DD7A9FFB90AE";
+    private const string IdNameLowerFingerprint = "9349572520F87FB5";
+    private const string IdHigherFingerprint = "D55B6143E553321C";
+    private const string IdNameHigherFingerprint = "F44F548F04381BC1";
+    private const string IdLowerAfter3Cursor = "eyJmIjoiM0FBNEREN0E5RkZCOTBBRSIsInYiOlszXX0";
 
     private static CursorQueryOptions Options(NullOrdering nullOrdering) => new() { NullOrdering = nullOrdering };
 

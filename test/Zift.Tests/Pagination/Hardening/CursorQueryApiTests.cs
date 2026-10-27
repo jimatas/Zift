@@ -1,6 +1,6 @@
 using Zift.Pagination.Cursor;
 
-namespace Zift.Pagination.Tests;
+namespace Zift.Pagination.Hardening;
 
 public class CursorQueryApiTests
 {

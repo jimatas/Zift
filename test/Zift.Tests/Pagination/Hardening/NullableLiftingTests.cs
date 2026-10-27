@@ -1,7 +1,7 @@
 using Zift.Pagination.Cursor;
 using Zift.Pagination.Cursor.Ordering;
 
-namespace Zift.Pagination.Tests;
+namespace Zift.Pagination.Hardening;
 
 public class NullableLiftingTests
 {
