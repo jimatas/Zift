@@ -1,6 +1,6 @@
-﻿namespace Zift.Pagination.Cursor;
+﻿using Zift.Pagination.Cursor.Execution;
 
-using Execution;
+namespace Zift.Pagination.Cursor;
 
 public static class CursorQueryExtensions
 {

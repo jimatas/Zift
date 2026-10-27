@@ -1,7 +1,7 @@
-﻿namespace Zift.Filtering.Parsing;
+﻿using Zift.Filtering.ExpressionBuilding;
+using Zift.Filtering.Model;
 
-using ExpressionBuilding;
-using Model;
+namespace Zift.Filtering.Parsing;
 
 internal sealed class ExpressionParser
 {

@@ -1,8 +1,8 @@
-namespace Zift.Filtering;
+using Zift.Filtering.ExpressionBuilding;
+using Zift.Filtering.Parsing;
+using Zift.Fixture;
 
-using ExpressionBuilding;
-using Fixture;
-using Parsing;
+namespace Zift.Filtering;
 
 public sealed class ExpressionLimitsTests
 {

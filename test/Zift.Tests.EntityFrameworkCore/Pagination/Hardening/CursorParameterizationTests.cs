@@ -211,6 +211,7 @@ public sealed class CursorParameterizationTests : IDisposable
     }
 
     private sealed record Command(string Sql, (string Name, object? Value)[] Parameters);
+
     private sealed class Commands : DbCommandInterceptor
     {
         public List<Command> Executed { get; } = [];

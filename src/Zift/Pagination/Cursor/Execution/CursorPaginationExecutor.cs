@@ -1,6 +1,6 @@
-﻿namespace Zift.Pagination.Cursor.Execution;
+﻿using Zift.Pagination.Cursor.Ordering;
 
-using Ordering;
+namespace Zift.Pagination.Cursor.Execution;
 
 internal static class CursorPaginationExecutor<T>
 {

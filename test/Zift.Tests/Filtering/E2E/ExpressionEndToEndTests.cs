@@ -1,8 +1,8 @@
-﻿namespace Zift.Filtering.E2E;
+﻿using Zift.Filtering.ExpressionBuilding;
+using Zift.Filtering.Parsing;
+using Zift.Fixture;
 
-using ExpressionBuilding;
-using Fixture;
-using Parsing;
+namespace Zift.Filtering.E2E;
 
 public sealed class ExpressionEndToEndTests
 {

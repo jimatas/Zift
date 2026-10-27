@@ -1,7 +1,7 @@
-﻿namespace Zift.Pagination.Cursor;
+﻿using Microsoft.EntityFrameworkCore;
+using Zift.Pagination.Cursor.Execution;
 
-using Execution;
-using Microsoft.EntityFrameworkCore;
+namespace Zift.Pagination.Cursor;
 
 public static class CursorQueryAsyncExtensions
 {

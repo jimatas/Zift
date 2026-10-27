@@ -1,6 +1,6 @@
-﻿namespace Zift.Fixture;
+﻿using Microsoft.EntityFrameworkCore;
 
-using Microsoft.EntityFrameworkCore;
+namespace Zift.Fixture;
 
 public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
     : DbContext(options)

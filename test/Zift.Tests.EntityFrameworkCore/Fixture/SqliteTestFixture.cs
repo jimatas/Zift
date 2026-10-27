@@ -1,7 +1,7 @@
-﻿namespace Zift.Fixture;
-
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+
+namespace Zift.Fixture;
 
 public sealed class SqliteTestFixture : IAsyncDisposable
 {

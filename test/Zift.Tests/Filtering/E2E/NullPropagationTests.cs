@@ -1,6 +1,6 @@
-namespace Zift.Filtering.E2E;
+using Zift.Filtering.ExpressionBuilding;
 
-using ExpressionBuilding;
+namespace Zift.Filtering.E2E;
 
 public sealed class NullPropagationTests
 {

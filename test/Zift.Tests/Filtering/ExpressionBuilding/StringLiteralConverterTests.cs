@@ -1,6 +1,6 @@
-namespace Zift.Filtering.ExpressionBuilding;
+using Zift.Fixture;
 
-using Fixture;
+namespace Zift.Filtering.ExpressionBuilding;
 
 public sealed class StringLiteralConverterTests
 {

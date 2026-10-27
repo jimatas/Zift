@@ -1,6 +1,6 @@
-﻿namespace Zift.Pagination.Cursor;
+﻿using Zift.Pagination.Cursor.Ordering;
 
-using Ordering;
+namespace Zift.Pagination.Cursor;
 
 internal sealed class CursorQuery<T> :
     ICursorQuery<T>,
