@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace Zift.Pagination.Tests.Sqlite;
+namespace Zift.Pagination.Hardening;
 
 public sealed class TestDbContext(DbContextOptions<TestDbContext> options) : DbContext(options)
 {

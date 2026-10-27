@@ -1,7 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
-namespace Zift.Pagination.Tests.Sqlite;
+namespace Zift.Pagination.Hardening;
 
 public sealed class SqliteFixture : IAsyncDisposable
 {

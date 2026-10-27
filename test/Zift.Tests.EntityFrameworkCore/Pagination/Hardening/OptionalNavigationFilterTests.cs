@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Zift.Filtering;
 using Zift.Filtering.ExpressionBuilding;
 
-namespace Zift.Pagination.Tests.Sqlite;
+namespace Zift.Pagination.Hardening;
 
 public sealed class OptionalNavigationFilterTests : IAsyncDisposable
 {

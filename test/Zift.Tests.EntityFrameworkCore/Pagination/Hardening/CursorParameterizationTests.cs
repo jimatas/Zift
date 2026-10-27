@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Xunit.Abstractions;
 using Zift.Pagination.Cursor;
 
-namespace Zift.Pagination.Tests.Sqlite;
+namespace Zift.Pagination.Hardening;
 
 public sealed class CursorParameterizationTests : IDisposable
 {

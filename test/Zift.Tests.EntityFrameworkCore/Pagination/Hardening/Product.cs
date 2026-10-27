@@ -1,4 +1,4 @@
-namespace Zift.Pagination.Tests.Sqlite;
+namespace Zift.Pagination.Hardening;
 
 public class Product
 {

@@ -1,6 +1,6 @@
 using Zift.Pagination.Cursor;
 
-namespace Zift.Pagination.Tests.Sqlite;
+namespace Zift.Pagination.Hardening;
 
 public sealed class CursorQueryValidationTests
 {
