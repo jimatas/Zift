@@ -1,7 +1,7 @@
-﻿namespace Zift;
+﻿using Microsoft.EntityFrameworkCore;
+using Zift.Pagination.Offset;
 
-using Microsoft.EntityFrameworkCore;
-using Pagination.Offset;
+namespace Zift;
 
 public static class QueryableAsyncExtensions
 {

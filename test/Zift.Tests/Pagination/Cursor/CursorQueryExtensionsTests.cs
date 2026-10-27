@@ -1,6 +1,6 @@
-﻿namespace Zift.Pagination.Cursor;
+﻿using Zift.Fixture;
 
-using Fixture;
+namespace Zift.Pagination.Cursor;
 
 public sealed class CursorQueryExtensionsTests
 {

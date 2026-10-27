@@ -1,6 +1,6 @@
-namespace Zift.Filtering;
+using Zift.Filtering.Parsing;
 
-using Parsing;
+namespace Zift.Filtering;
 
 public sealed class InvalidFilterExceptionTests
 {

@@ -1,7 +1,7 @@
-﻿namespace Zift.Filtering.ExpressionBuilding;
+﻿using Zift.Fixture;
+using Zift.Filtering.Model;
 
-using Fixture;
-using Model;
+namespace Zift.Filtering.ExpressionBuilding;
 
 public sealed class ExpressionBuilderLogicalTests
 {

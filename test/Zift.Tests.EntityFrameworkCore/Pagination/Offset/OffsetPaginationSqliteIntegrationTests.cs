@@ -1,6 +1,6 @@
-﻿namespace Zift.Pagination.Offset;
+﻿using Zift.Fixture;
 
-using Fixture;
+namespace Zift.Pagination.Offset;
 
 public sealed class OffsetPaginationSqliteIntegrationTests
 {

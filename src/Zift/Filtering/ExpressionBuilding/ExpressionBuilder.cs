@@ -1,6 +1,6 @@
-﻿namespace Zift.Filtering.ExpressionBuilding;
+﻿using Zift.Filtering.Model;
 
-using Model;
+namespace Zift.Filtering.ExpressionBuilding;
 
 internal sealed class ExpressionBuilder<T>(ExpressionBuilderOptions options)
 {

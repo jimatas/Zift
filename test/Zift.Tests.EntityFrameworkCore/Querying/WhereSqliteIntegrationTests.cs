@@ -1,7 +1,7 @@
-﻿namespace Zift.Filtering;
-
-using Fixture;
+﻿using Zift.Fixture;
 using Microsoft.EntityFrameworkCore;
+
+namespace Zift.Filtering;
 
 public sealed class WhereSqliteIntegrationTests
 {

@@ -1,8 +1,8 @@
-namespace Zift.Filtering;
-
-using ExpressionBuilding;
-using Fixture;
+using Zift.Filtering.ExpressionBuilding;
 using Microsoft.EntityFrameworkCore;
+using Zift.Fixture;
+
+namespace Zift.Filtering;
 
 public sealed class NullPropagationSqliteTests
 {

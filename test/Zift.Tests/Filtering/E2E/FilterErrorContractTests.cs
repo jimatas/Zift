@@ -1,6 +1,6 @@
-namespace Zift.Filtering.E2E;
+using Zift.Fixture;
 
-using Fixture;
+namespace Zift.Filtering.E2E;
 
 public sealed class FilterErrorContractTests
 {
