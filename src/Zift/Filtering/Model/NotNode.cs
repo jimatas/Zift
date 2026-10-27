@@ -1,3 +1,3 @@
-﻿namespace Zift.Filtering.Model;
+namespace Zift.Filtering.Model;
 
 internal sealed record NotNode(PredicateNode Inner) : PredicateNode;

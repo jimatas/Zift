@@ -1,4 +1,4 @@
-﻿namespace Zift.Fixture;
+namespace Zift.Fixture;
 
 public sealed class Review
 {

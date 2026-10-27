@@ -1,4 +1,4 @@
-﻿namespace Zift.Filtering.ExpressionBuilding;
+namespace Zift.Filtering.ExpressionBuilding;
 
 public sealed class ExpressionBuilderOptions
 {

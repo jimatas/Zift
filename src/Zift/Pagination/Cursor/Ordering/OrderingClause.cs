@@ -1,4 +1,4 @@
-﻿namespace Zift.Pagination.Cursor.Ordering;
+namespace Zift.Pagination.Cursor.Ordering;
 
 internal sealed class OrderingClause<T>
 {

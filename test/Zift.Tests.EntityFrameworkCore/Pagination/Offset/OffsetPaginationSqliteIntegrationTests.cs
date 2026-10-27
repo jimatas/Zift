@@ -1,4 +1,4 @@
-﻿using Zift.Fixture;
+using Zift.Fixture;
 
 namespace Zift.Pagination.Offset;
 

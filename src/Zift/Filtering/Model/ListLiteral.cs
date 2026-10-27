@@ -1,4 +1,4 @@
-﻿namespace Zift.Filtering.Model;
+namespace Zift.Filtering.Model;
 
 internal sealed record ListLiteral(
     IReadOnlyList<LiteralNode> Items) : LiteralNode;

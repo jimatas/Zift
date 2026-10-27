@@ -1,4 +1,4 @@
-﻿namespace Zift;
+namespace Zift;
 
 internal static class TypeExtensions
 {

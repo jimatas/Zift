@@ -1,4 +1,4 @@
-﻿namespace Zift.Pagination.Offset;
+namespace Zift.Pagination.Offset;
 
 public sealed class Page<T> : IPagedResult<T>
 {
