@@ -5,6 +5,12 @@ end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 charset = utf-8
+indent_style = space
 
 [*.cs]
+indent_size = 4
 csharp_using_directive_placement = outside_namespace:warning
+dotnet_sort_system_directives_first = true
+
+[*.{csproj,slnx,yml}]
+indent_size = 2
