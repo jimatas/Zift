@@ -1,6 +1,5 @@
-using System.Linq.Expressions;
-using Zift.Pagination.Cursor;
 using Microsoft.EntityFrameworkCore;
+using Zift.Pagination.Cursor;
 
 namespace Zift.Pagination.Tests.Sqlite;
 

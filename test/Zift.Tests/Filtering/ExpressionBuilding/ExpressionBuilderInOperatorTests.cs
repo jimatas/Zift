@@ -1,5 +1,5 @@
-using Zift.Fixture;
 using Zift.Filtering.Model;
+using Zift.Fixture;
 
 namespace Zift.Filtering.ExpressionBuilding;
 

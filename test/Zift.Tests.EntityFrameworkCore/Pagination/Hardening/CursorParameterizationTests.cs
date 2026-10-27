@@ -1,10 +1,8 @@
-using System.Data.Common;
-using System.Text.RegularExpressions;
-using Zift.Pagination.Cursor;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Xunit.Abstractions;
+using Zift.Pagination.Cursor;
 
 namespace Zift.Pagination.Tests.Sqlite;
 
