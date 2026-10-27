@@ -3,20 +3,20 @@ name: Publish NuGet Packages
 on:
   release:
     types: [published]
-    
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         ref: ${{ github.event.release.tag_name }}
-        
+
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
@@ -24,19 +24,19 @@ jobs:
           8.0.x
           9.0.x
           10.0.x
-        
+
     - name: Restore dependencies
       run: dotnet restore
-      
+
     - name: Build solution
       run: dotnet build Zift.slnx --configuration Release --no-restore
-      
+
     - name: Run tests
       run: dotnet test Zift.slnx --configuration Release --no-build
 
     - name: Pack solution projects
       run: dotnet pack Zift.slnx --configuration Release --no-build --output ./nupkg
-      
+
     - name: NuGet login (OIDC)
       uses: NuGet/login@v1
       id: login
