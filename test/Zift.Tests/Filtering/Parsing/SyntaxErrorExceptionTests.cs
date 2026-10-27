@@ -6,9 +6,9 @@ public sealed class SyntaxErrorExceptionTests
     public void Initialize_WithMessage_SetsMessage()
     {
         var message = "Syntax error occurred.";
-        
+
         var ex = new SyntaxErrorException(message);
-        
+
         Assert.Equal(message, ex.Message);
         Assert.Null(ex.Token);
     }

@@ -20,7 +20,7 @@ public sealed class CursorPaginationSqliteIntegrationTests
 
         Assert.True(page.HasNextPage);
         Assert.False(page.HasPreviousPage);
-        
+
         Assert.Equal(page.StartCursor, page.EndCursor);
     }
 

@@ -10,7 +10,7 @@ public sealed class CursorPage<T> : IPagedResult<T>
         bool hasPreviousPage)
     {
         ArgumentNullException.ThrowIfNull(items);
-        
+
         if (hasNextPage && endCursor is null)
         {
             throw new ArgumentException("A next page requires an end cursor.", nameof(endCursor));
