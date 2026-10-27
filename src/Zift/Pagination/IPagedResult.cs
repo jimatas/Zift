@@ -1,4 +1,4 @@
-﻿namespace Zift.Pagination;
+namespace Zift.Pagination;
 
 public interface IPagedResult<T>
 {

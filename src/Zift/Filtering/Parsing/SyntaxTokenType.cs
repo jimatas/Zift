@@ -1,4 +1,4 @@
-﻿namespace Zift.Filtering.Parsing;
+namespace Zift.Filtering.Parsing;
 
 internal enum SyntaxTokenType
 {

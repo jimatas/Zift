@@ -1,4 +1,4 @@
-﻿using Zift.Filtering.ExpressionBuilding;
+using Zift.Filtering.ExpressionBuilding;
 using Zift.Filtering.Model;
 
 namespace Zift.Filtering.Parsing;

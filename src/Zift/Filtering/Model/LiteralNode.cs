@@ -1,3 +1,3 @@
-﻿namespace Zift.Filtering.Model;
+namespace Zift.Filtering.Model;
 
 internal abstract record LiteralNode;

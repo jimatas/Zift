@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Zift.Pagination.Cursor.Execution;
 
 namespace Zift.Pagination.Cursor;

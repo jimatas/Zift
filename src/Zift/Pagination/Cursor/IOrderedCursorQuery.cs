@@ -1,4 +1,4 @@
-﻿namespace Zift.Pagination.Cursor;
+namespace Zift.Pagination.Cursor;
 
 public interface IOrderedCursorQuery<T> : IExecutableCursorQuery<T>
 {

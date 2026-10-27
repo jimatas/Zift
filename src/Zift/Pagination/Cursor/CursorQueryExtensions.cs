@@ -1,4 +1,4 @@
-﻿using Zift.Pagination.Cursor.Execution;
+using Zift.Pagination.Cursor.Execution;
 
 namespace Zift.Pagination.Cursor;
 

@@ -1,4 +1,4 @@
-﻿using Zift.Fixture;
+using Zift.Fixture;
 using Microsoft.EntityFrameworkCore;
 
 namespace Zift.Filtering;
