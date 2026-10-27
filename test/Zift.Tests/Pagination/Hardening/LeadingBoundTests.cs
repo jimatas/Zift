@@ -20,7 +20,6 @@ public class LeadingBoundTests
 
     private static CursorQueryOptions Options(NullOrdering nullOrdering) => new() { NullOrdering = nullOrdering };
 
-
     [Fact]
     public void TwoKeys_NonNullCursor_AddsAnInclusiveBound_OutsideTheOrChain()
     {
@@ -309,7 +308,6 @@ public class LeadingBoundTests
                 : base.VisitConstant(node);
         }
     }
-
 
     private sealed record Spec(
         Func<IQueryable<Row>, CursorQueryOptions, IOrderedCursorQuery<Row>> Cursor,
