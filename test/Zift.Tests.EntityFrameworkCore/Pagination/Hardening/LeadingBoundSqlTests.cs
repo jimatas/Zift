@@ -1,8 +1,7 @@
-using System.Data.Common;
-using Zift.Pagination.Cursor;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Zift.Pagination.Cursor;
 
 namespace Zift.Pagination.Tests.Sqlite;
 

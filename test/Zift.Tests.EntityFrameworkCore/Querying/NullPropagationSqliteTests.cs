@@ -1,5 +1,5 @@
-using Zift.Filtering.ExpressionBuilding;
 using Microsoft.EntityFrameworkCore;
+using Zift.Filtering.ExpressionBuilding;
 using Zift.Fixture;
 
 namespace Zift.Filtering;

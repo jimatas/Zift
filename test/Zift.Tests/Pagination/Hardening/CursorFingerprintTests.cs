@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Zift.Pagination.Cursor;
 
 namespace Zift.Pagination.Tests;
