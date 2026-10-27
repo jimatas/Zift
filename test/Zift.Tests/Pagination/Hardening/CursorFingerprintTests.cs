@@ -59,7 +59,7 @@ public class CursorFingerprintTests
     }
 
     [Fact]
-    public void ConventionsProduceDifferentFingerprints()
+    public void LowerAndHigherConventions_ProduceDifferentFingerprints()
     {
         Assert.NotEqual(IdLowerFingerprint, IdHigherFingerprint);
         Assert.NotEqual(IdNameLowerFingerprint, IdNameHigherFingerprint);
