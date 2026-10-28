@@ -6,8 +6,8 @@ internal sealed class CursorQuery<T> :
     ICursorQuery<T>,
     IOrderedCursorQuery<T>
 {
-    internal CursorQuery(IQueryable<T> source, NullOrdering nullOrdering, int maxOrderingKeys)
-        : this(source, CursorQueryState<T>.Create(nullOrdering, maxOrderingKeys))
+    internal CursorQuery(IQueryable<T> source, NullOrdering nullOrdering, bool enableNullGuards, int maxOrderingKeys)
+        : this(source, CursorQueryState<T>.Create(nullOrdering, enableNullGuards, maxOrderingKeys))
     {
     }
 
@@ -72,7 +72,7 @@ internal sealed class CursorQuery<T> :
 
         return OrderingParser.Parse<T>(
             orderByClause,
-            enableNullGuards: options?.EnableNullGuards ?? false,
+            enableNullGuards: State.EnableNullGuards || (options?.EnableNullGuards ?? false),
             State.MaxOrderingKeys,
             existingOrderingKeys);
     }

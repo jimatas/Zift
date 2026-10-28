@@ -81,6 +81,62 @@ public sealed class CursorQueryOrderingNullSafetyTests
             ordered.Items.Select(x => x.L1?.L2?.Value));
     }
 
+    [Fact]
+    public void OrderBy_QueryWideNullGuards_NestedPath_OrdersCorrectly()
+    {
+        var source = new[]
+        {
+            new Root { L1 = null },
+            new Root { L1 = new Level1 { L2 = new Level2 { Value = 2 } } },
+            new Root { L1 = new Level1 { L2 = new Level2 { Value = 1 } } }
+        }.AsQueryable();
+
+        var ordered = source
+            .AsCursorQuery(new CursorQueryOptions { EnableNullGuards = true })
+            .OrderBy("L1.L2.Value")
+            .ToCursorPage(pageSize: 10);
+
+        Assert.Equal(
+            [null, 1, 2],
+            ordered.Items.Select(x => x.L1?.L2?.Value));
+    }
+
+    [Fact]
+    public void ThenBy_QueryWideNullGuards_AppliesToEveryStringOrdering()
+    {
+        var source = new[]
+        {
+            new Root { L1 = null },
+            new Root { L1 = new Level1 { L2 = null, Rank = 2 } },
+            new Root { L1 = new Level1 { L2 = null, Rank = 1 } }
+        }.AsQueryable();
+
+        var ordered = source
+            .AsCursorQuery(new CursorQueryOptions { EnableNullGuards = true })
+            .OrderBy("L1.L2.Value")
+            .ThenBy("L1.Rank")
+            .ToCursorPage(pageSize: 10);
+
+        Assert.Equal(
+            [null, 1, 2],
+            ordered.Items.Select(x => x.L1?.Rank));
+    }
+
+    [Fact]
+    public void OrderBy_NestedPath_WithoutNullGuards_Throws()
+    {
+        var source = new[]
+        {
+            new Root { L1 = null },
+            new Root { L1 = new Level1 { L2 = new Level2 { Value = 1 } } }
+        }.AsQueryable();
+
+        Assert.Throws<NullReferenceException>(() =>
+            source.AsCursorQuery()
+                .OrderBy("L1.L2.Value")
+                .ToCursorPage(pageSize: 10));
+    }
+
     private sealed class Root
     {
         public Level1? L1 { get; set; }
@@ -89,6 +145,8 @@ public sealed class CursorQueryOrderingNullSafetyTests
     private sealed class Level1
     {
         public Level2? L2 { get; set; }
+
+        public int Rank { get; set; }
     }
 
     private sealed class Level2
