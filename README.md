@@ -10,6 +10,8 @@ Zift adds dynamic filtering and pagination to `IQueryable<T>` using familiar LIN
 - **Dynamic filtering**: string expressions with `Where(...)`
 - **Pagination**: offset-based and cursor-based pagination
 
+See the [complete example](#complete-example) for filtering and cursor pagination together.
+
 ## Installation
 
 ```
@@ -29,17 +31,17 @@ Zift targets .NET 8, 9, and 10. The EF Core package uses the EF Core major versi
 Filter queries using string expressions. Zift translates them into LINQ expression trees.
 
 ```csharp
-var products = context.Products
+var products = await context.Products
     .Where("Price < 100 && Category.Name == 'Books'")
-    .ToList();
+    .ToListAsync();
 ```
 
 You can also filter across nested collections:
 
 ```csharp
-var categories = context.Categories
+var categories = await context.Categories
     .Where("Products:any(Reviews:any(Rating >= 4))")
-    .ToList();
+    .ToListAsync();
 ```
 
 ### Supported Syntax
@@ -47,7 +49,7 @@ var categories = context.Categories
 - **Property navigation**
   `Name`, `Author.Email`
 
-  Names are limited to ASCII letters, digits, and `_`, and can't start with a digit.
+  Names are limited to ASCII letters, digits, and `_`, and can't start with a digit. They aren't case-sensitive, so `price` matches `Price`.
 
 - **Logical operators**
   `&&`, `||`, `!`
@@ -161,7 +163,7 @@ try
 }
 catch (InvalidFilterException ex)
 {
-    // Handle the invalid filter. ex.Message describes the problem, and ex.Position says where when it has one.
+    // ex.Message describes the error; ex.Position gives its location when available.
 }
 ```
 
@@ -223,29 +225,7 @@ var dtoPage = page.Map(category => new CategoryDto(category));
 
 Cursor pagination (keyset pagination) uses ordering keys instead of offsets to navigate through results. It performs well even on large datasets.
 
-Start by calling `AsCursorQuery()` on the `IQueryable<T>`.
-
-```csharp
-var query = context.Products
-    .AsCursorQuery()
-    .OrderBy("Name ASC, Price DESC, Id ASC");
-
-var page = query.ToCursorPage(pageSize: 25);
-```
-
-With Entity Framework Core, use `ToCursorPageAsync` instead:
-
-```csharp
-var page = await query.ToCursorPageAsync(pageSize: 25);
-```
-
-> **Note**: Ordering for cursor pagination must be applied *after* calling `AsCursorQuery()`. Any ordering applied before `AsCursorQuery()` is ignored.
-
-Cursor pagination needs at least one ordering clause.
-
-#### Ordering
-
-You can also use key selectors for ordering. Add more keys with `ThenBy`, `ThenByDescending`, or `ThenBy(string)`:
+Start by calling `AsCursorQuery()` on the `IQueryable<T>`:
 
 ```csharp
 var query = context.Products
@@ -253,7 +233,27 @@ var query = context.Products
     .OrderBy(p => p.Name)
     .ThenByDescending(p => p.Price)
     .ThenBy(p => p.Id);
+
+var page = await query.ToCursorPageAsync(pageSize: 25);
 ```
+
+For other `IQueryable<T>` sources, such as in-memory collections, use `ToCursorPage`.
+
+Cursor pagination needs at least one ordering clause.
+
+> **Note**: Ordering for cursor pagination must be applied *after* calling `AsCursorQuery()`. Any ordering applied before `AsCursorQuery()` is ignored.
+
+#### Ordering
+
+You can also specify ordering using a string:
+
+```csharp
+var query = context.Products
+    .AsCursorQuery()
+    .OrderBy("Name ASC, Price DESC, Id ASC");
+```
+
+Use `ThenBy(string)` to append more ordering keys.
 
 In the string syntax, use dots for nested paths (`Category.Title`). Names aren't case-sensitive. Each entry is `Property [ASC|DESC]`. A bad entry or unknown property throws `InvalidOrderingClauseException`. For in-memory sources, pass `new OrderingOptions { EnableNullGuards = true }` to guard nested paths against null.
 
@@ -277,17 +277,17 @@ Reuse the ordered query and pass the current page's cursors to navigate. A `null
 // Forward traversal
 if (page.HasNextPage)
 {
-    var nextPage = query
+    var nextPage = await query
         .After(page.EndCursor)
-        .ToCursorPage(pageSize: 25);
+        .ToCursorPageAsync(pageSize: 25);
 }
 
 // Backward traversal
 if (page.HasPreviousPage)
 {
-    var previousPage = query
+    var previousPage = await query
         .Before(page.StartCursor)
-        .ToCursorPage(pageSize: 25);
+        .ToCursorPageAsync(pageSize: 25);
 }
 ```
 
@@ -308,3 +308,68 @@ page.HasPreviousPage
 ```
 
 Use `page.Map(...)` to convert the items and keep the cursors.
+
+## Complete Example
+
+This example takes a user-supplied filter and cursor in an ASP.NET Core endpoint. It restricts the data before applying the filter, exposes only the properties users may filter on, caps the page size, and returns a 400 for invalid input.
+
+```csharp
+app.MapGet("/products", async (
+    string? filter,
+    string? after,
+    int? pageSize,
+    ShopDbContext db,
+    CancellationToken cancellationToken) =>
+{
+    // Restrict to what the caller may see, then project to the filterable properties.
+    IQueryable<ProductListItem> products = db.Products
+        .Where(p => !p.IsDeleted)
+        .Select(p => new ProductListItem
+        {
+            Id = p.Id,
+            Name = p.Name,
+            Price = p.Price,
+            IsFeatured = p.IsFeatured
+        });
+
+    try
+    {
+        if (!string.IsNullOrWhiteSpace(filter))
+        {
+            products = products.Where(filter);
+        }
+
+        var page = await products
+            .AsCursorQuery()
+            .OrderBy(p => p.Name)
+            .ThenBy(p => p.Id)
+            .After(string.IsNullOrWhiteSpace(after) ? null : after)
+            .ToCursorPageAsync(Math.Clamp(pageSize ?? 25, 1, 100), cancellationToken);
+
+        return Results.Ok(page);
+    }
+    catch (InvalidFilterException ex)
+    {
+        return Results.Problem(
+            detail: ex.Message,
+            statusCode: StatusCodes.Status400BadRequest,
+            extensions: new Dictionary<string, object?> { ["position"] = ex.Position });
+    }
+    catch (InvalidCursorException)
+    {
+        return Results.Problem(
+            detail: "The cursor is invalid.",
+            statusCode: StatusCodes.Status400BadRequest);
+    }
+});
+
+public sealed record ProductListItem
+{
+    public int Id { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public decimal Price { get; init; }
+    public bool IsFeatured { get; init; }
+}
+```
+
+Keep the filter and ordering consistent when navigating between pages.
