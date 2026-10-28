@@ -255,7 +255,7 @@ var query = context.Products
 
 Use `ThenBy(string)` to append more ordering keys.
 
-In the string syntax, use dots for nested paths (`Category.Title`). Names aren't case-sensitive. Each entry is `Property [ASC|DESC]`. A bad entry or unknown property throws `InvalidOrderingClauseException`. For in-memory sources, pass `new OrderingOptions { EnableNullGuards = true }` to guard nested paths against null.
+In the string syntax, use dots for nested paths (`Category.Title`). Names aren't case-sensitive. Each entry is `Property [ASC|DESC]`. A bad entry or unknown property throws `InvalidOrderingClauseException`. For in-memory sources, pass `new CursorQueryOptions { EnableNullGuards = true }` to `AsCursorQuery()` to guard nested paths against null. This only affects string-based ordering; lambda selectors are used as written.
 
 Ordering keys can be strings, numbers, booleans, enums, or any type with comparison operators or `IComparable<T>` (`Guid`, `DateTime`, `DateTimeOffset`). Unsupported types throw `NotSupportedException` when navigating beyond the first page.
 

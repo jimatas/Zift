@@ -43,9 +43,9 @@ public class OrderingParserTests
         {
             new Parent(1, null), new Parent(2, new Item(0, "A")), new Parent(3, new Item(1, "B"))
         }.AsQueryable();
-        var options = new OrderingOptions { EnableNullGuards = true };
-        var canonical = rows.AsCursorQuery().OrderBy("Child.Id, Id", options);
-        var mixedCase = rows.AsCursorQuery().OrderBy("cHiLd.iD aSc, iD", options);
+        var options = new CursorQueryOptions { EnableNullGuards = true };
+        var canonical = rows.AsCursorQuery(options).OrderBy("Child.Id, Id");
+        var mixedCase = rows.AsCursorQuery(options).OrderBy("cHiLd.iD aSc, iD");
         var first = canonical.ToCursorPage(1);
 
         Assert.Equal(first.EndCursor, mixedCase.ToCursorPage(1).EndCursor);

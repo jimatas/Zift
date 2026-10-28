@@ -20,8 +20,8 @@ public sealed class OptionalNavigationTests : IAsyncDisposable
             ? source.OrderByDescending(p => (int?)p.Category!.Id).ThenBy(p => p.Id)
             : source.OrderBy(p => (int?)p.Category!.Id).ThenBy(p => p.Id))
             .Select(p => p.Id).ToListAsync();
-        var order = source.AsCursorQuery().OrderBy(descending ? "Category.Id DESC, Id" : "Category.Id, Id",
-            new OrderingOptions { EnableNullGuards = nullGuards });
+        var order = source.AsCursorQuery(new CursorQueryOptions { EnableNullGuards = nullGuards })
+            .OrderBy(descending ? "Category.Id DESC, Id" : "Category.Id, Id");
         await AssertTraversalAsync(order, expected);
     }
 

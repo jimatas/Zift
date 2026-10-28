@@ -2,7 +2,7 @@ namespace Zift.Pagination.Cursor;
 
 public sealed class CursorQueryOrderingNullSafetyTests
 {
-    private readonly OrderingOptions _withNullGuards = new() { EnableNullGuards = true };
+    private readonly CursorQueryOptions _withNullGuards = new() { EnableNullGuards = true };
 
     [Fact]
     public void OrderBy_NestedPath_NullAtFirstLevel_DoesNotThrow()
@@ -15,8 +15,8 @@ public sealed class CursorQueryOrderingNullSafetyTests
         }.AsQueryable();
 
         var ex = Record.Exception(() =>
-            source.AsCursorQuery()
-                .OrderBy("L1.L2.Value", _withNullGuards)
+            source.AsCursorQuery(_withNullGuards)
+                .OrderBy("L1.L2.Value")
                 .ToCursorPage(pageSize: 10));
 
         Assert.Null(ex);
@@ -33,8 +33,8 @@ public sealed class CursorQueryOrderingNullSafetyTests
         }.AsQueryable();
 
         var ex = Record.Exception(() =>
-            source.AsCursorQuery()
-                .OrderBy("L1.L2.Value", _withNullGuards)
+            source.AsCursorQuery(_withNullGuards)
+                .OrderBy("L1.L2.Value")
                 .ToCursorPage(pageSize: 10));
 
         Assert.Null(ex);
@@ -52,8 +52,8 @@ public sealed class CursorQueryOrderingNullSafetyTests
         }.AsQueryable();
 
         var ordered = source
-            .AsCursorQuery()
-            .OrderBy("L1.L2.Value", _withNullGuards)
+            .AsCursorQuery(_withNullGuards)
+            .OrderBy("L1.L2.Value")
             .ToCursorPage(pageSize: 10);
 
         Assert.Equal(
@@ -72,8 +72,8 @@ public sealed class CursorQueryOrderingNullSafetyTests
         }.AsQueryable();
 
         var ordered = source
-            .AsCursorQuery()
-            .OrderBy("L1.L2.Value DESC", _withNullGuards)
+            .AsCursorQuery(_withNullGuards)
+            .OrderBy("L1.L2.Value DESC")
             .ToCursorPage(pageSize: 10);
 
         Assert.Equal(
@@ -82,27 +82,7 @@ public sealed class CursorQueryOrderingNullSafetyTests
     }
 
     [Fact]
-    public void OrderBy_QueryWideNullGuards_NestedPath_OrdersCorrectly()
-    {
-        var source = new[]
-        {
-            new Root { L1 = null },
-            new Root { L1 = new Level1 { L2 = new Level2 { Value = 2 } } },
-            new Root { L1 = new Level1 { L2 = new Level2 { Value = 1 } } }
-        }.AsQueryable();
-
-        var ordered = source
-            .AsCursorQuery(new CursorQueryOptions { EnableNullGuards = true })
-            .OrderBy("L1.L2.Value")
-            .ToCursorPage(pageSize: 10);
-
-        Assert.Equal(
-            [null, 1, 2],
-            ordered.Items.Select(x => x.L1?.L2?.Value));
-    }
-
-    [Fact]
-    public void ThenBy_QueryWideNullGuards_AppliesToEveryStringOrdering()
+    public void ThenBy_NestedPath_NullAtFirstLevel_OrdersCorrectly()
     {
         var source = new[]
         {
@@ -112,7 +92,7 @@ public sealed class CursorQueryOrderingNullSafetyTests
         }.AsQueryable();
 
         var ordered = source
-            .AsCursorQuery(new CursorQueryOptions { EnableNullGuards = true })
+            .AsCursorQuery(_withNullGuards)
             .OrderBy("L1.L2.Value")
             .ThenBy("L1.Rank")
             .ToCursorPage(pageSize: 10);

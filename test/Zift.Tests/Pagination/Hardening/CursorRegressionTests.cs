@@ -72,8 +72,8 @@ public class CursorRegressionTests
     public void GuardedValuePaths_PreserveMissingNegativeAndZeroKeys(bool descending)
     {
         var rows = new[] { new Parent(1, null), new Parent(2, new(-1)), new Parent(3, new(0)), new Parent(4, null), new Parent(5, new(1)) }.AsQueryable();
-        var order = rows.AsCursorQuery().OrderBy(descending ? "Child.Rank DESC, Id" : "Child.Rank, Id",
-            new OrderingOptions { EnableNullGuards = true });
+        var order = rows.AsCursorQuery(new CursorQueryOptions { EnableNullGuards = true })
+            .OrderBy(descending ? "Child.Rank DESC, Id" : "Child.Rank, Id");
         AssertTraversal(order, r => r.Id, descending ? [5, 3, 2, 1, 4] : [1, 4, 2, 3, 5]);
     }
 
@@ -88,9 +88,8 @@ public class CursorRegressionTests
             new Ancestor(3, new(new(-1))), new Ancestor(4, new(new(0))),
             new Ancestor(5, new(new(1))), new Ancestor(6, null)
         }.AsQueryable();
-        var order = rows.AsCursorQuery().OrderBy(
-            descending ? "Branch.Child.Rank DESC, Id" : "Branch.Child.Rank, Id",
-            new OrderingOptions { EnableNullGuards = true });
+        var order = rows.AsCursorQuery(new CursorQueryOptions { EnableNullGuards = true })
+            .OrderBy(descending ? "Branch.Child.Rank DESC, Id" : "Branch.Child.Rank, Id");
 
         AssertTraversal(order, r => r.Id, descending ? [5, 4, 3, 1, 2, 6] : [1, 2, 6, 3, 4, 5]);
     }

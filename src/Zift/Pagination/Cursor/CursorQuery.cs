@@ -31,9 +31,9 @@ internal sealed class CursorQuery<T> :
         return WithOrdering([new(keySelector, OrderingDirection.Descending)]);
     }
 
-    public IOrderedCursorQuery<T> OrderBy(string orderByClause, OrderingOptions? options = null)
+    public IOrderedCursorQuery<T> OrderBy(string orderByClause)
     {
-        return WithOrdering(ParseOrdering(orderByClause, options));
+        return WithOrdering(ParseOrdering(orderByClause));
     }
 
     public IOrderedCursorQuery<T> ThenBy<TKey>(Expression<Func<T, TKey>> keySelector)
@@ -46,9 +46,9 @@ internal sealed class CursorQuery<T> :
         return WithOrdering([new(keySelector, OrderingDirection.Descending)], append: true);
     }
 
-    public IOrderedCursorQuery<T> ThenBy(string orderByClause, OrderingOptions? options = null)
+    public IOrderedCursorQuery<T> ThenBy(string orderByClause)
     {
-        return WithOrdering(ParseOrdering(orderByClause, options, append: true), append: true);
+        return WithOrdering(ParseOrdering(orderByClause, append: true), append: true);
     }
 
     public IExecutableCursorQuery<T> After(string? cursor)
@@ -63,7 +63,6 @@ internal sealed class CursorQuery<T> :
 
     private IReadOnlyList<OrderingClause<T>> ParseOrdering(
         string orderByClause,
-        OrderingOptions? options,
         bool append = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(orderByClause);
@@ -72,7 +71,7 @@ internal sealed class CursorQuery<T> :
 
         return OrderingParser.Parse<T>(
             orderByClause,
-            enableNullGuards: State.EnableNullGuards || (options?.EnableNullGuards ?? false),
+            enableNullGuards: State.EnableNullGuards,
             State.MaxOrderingKeys,
             existingOrderingKeys);
     }
