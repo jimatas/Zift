@@ -234,12 +234,12 @@ public class NullOrderingTests
     [InlineData(-1)]
     [InlineData(2)]
     [InlineData(99)]
-    public void AsCursorQuery_UndefinedNullOrdering_IsRejected(int value)
+    public void CursorQueryOptions_UndefinedNullOrdering_IsRejected(int value)
     {
         var error = Assert.Throws<ArgumentOutOfRangeException>(
-            () => Items.AsQueryable().AsCursorQuery(Options((NullOrdering)value)));
+            () => new CursorQueryOptions { NullOrdering = (NullOrdering)value });
 
-        Assert.Equal("options", error.ParamName);
+        Assert.Equal("value", error.ParamName);
     }
 
     [Fact]
