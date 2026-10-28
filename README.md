@@ -169,7 +169,7 @@ catch (InvalidFilterException ex)
 
 `SyntaxErrorException` and `LexicalErrorException` derive from `InvalidFilterException`. `Position` is set for those two and is `null` for the rest. If a .NET exception caused the error, the original exception is available through `InnerException`.
 
-A `null` filter throws `ArgumentNullException`. An empty or whitespace-only one throws `ArgumentException`.
+A null filter throws `ArgumentNullException`. An empty or whitespace-only one throws `ArgumentException`.
 
 Errors the database provider raises when the query runs, such as EF Core not being able to translate a property, aren't wrapped.
 
@@ -265,13 +265,13 @@ An ordering can have up to 16 keys by default, configurable through `CursorQuery
 
 By default, Zift assumes nulls sort first in ascending order (SQL Server, SQLite, MySQL). For databases that sort them last (PostgreSQL, Oracle), pass `new CursorQueryOptions { NullOrdering = NullOrdering.NullsCompareHigher }` to `AsCursorQuery()`.
 
-> **Note**: If an ordering key can be `null`, set `NullOrdering` to match your database. With the wrong setting, pages can skip or repeat rows.
+> **Note**: If an ordering key can be null, set `NullOrdering` to match your database. With the wrong setting, pages can skip or repeat rows.
 
 #### Navigating
 
 Cursors are URL-safe tokens tied to the entity type and ordering that produced them. Using one with a different ordering or entity type throws `InvalidCursorException`. They aren't encrypted or signed, and each contains the ordering key values of its corresponding row.
 
-Reuse the ordered query and pass the current page's cursors to navigate. A `null` cursor selects the first page.
+Reuse the ordered query and pass the current page's cursors to navigate. A null cursor selects the first page.
 
 ```csharp
 // Forward traversal
