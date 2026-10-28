@@ -43,19 +43,9 @@ public static class QueryableExtensions
     {
         ArgumentNullException.ThrowIfNull(source);
 
-        var nullOrdering = options?.NullOrdering ?? NullOrdering.NullsCompareLower;
-        if (!Enum.IsDefined(nullOrdering))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(options),
-                nullOrdering,
-                "The null ordering is not a defined value.");
-        }
+        options ??= new CursorQueryOptions();
 
-        var enableNullGuards = options?.EnableNullGuards ?? false;
-        var maxOrderingKeys = options?.MaxOrderingKeys ?? CursorQueryOptions.DefaultMaxOrderingKeys;
-
-        return new CursorQuery<T>(source, nullOrdering, enableNullGuards, maxOrderingKeys);
+        return new CursorQuery<T>(source, options.NullOrdering, options.EnableNullGuards, options.MaxOrderingKeys);
     }
 
     public static Page<T> ToPage<T>(
