@@ -7,10 +7,11 @@ internal sealed record CursorQueryState<T>(
     string? Cursor,
     CursorNavigationMode NavigationMode,
     NullOrdering NullOrdering,
+    bool EnableNullGuards,
     int MaxOrderingKeys)
 {
-    public static CursorQueryState<T> Create(NullOrdering nullOrdering, int maxOrderingKeys)
+    public static CursorQueryState<T> Create(NullOrdering nullOrdering, bool enableNullGuards, int maxOrderingKeys)
     {
-        return new([], Cursor: null, CursorNavigationMode.None, nullOrdering, maxOrderingKeys);
+        return new([], Cursor: null, CursorNavigationMode.None, nullOrdering, enableNullGuards, maxOrderingKeys);
     }
 }

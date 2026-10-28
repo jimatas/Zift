@@ -6,6 +6,8 @@ public sealed class CursorQueryOptions
 
     public NullOrdering NullOrdering { get; set; } = NullOrdering.NullsCompareLower;
 
+    public bool EnableNullGuards { get; set; } = false;
+
     public int MaxOrderingKeys
     {
         get;
