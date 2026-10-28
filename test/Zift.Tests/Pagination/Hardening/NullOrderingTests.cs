@@ -133,8 +133,8 @@ public class NullOrderingTests
             ? nodes.OrderByDescending(LeafValue, comparer).ThenBy(n => n.Id)
             : nodes.OrderBy(LeafValue, comparer).ThenBy(n => n.Id)).Select(n => n.Id).ToList();
 
-        var order = NullOrderedSource.Create(nodes, nullOrdering).AsCursorQuery(Options(nullOrdering))
-            .OrderBy(descending ? "Leaf.Value DESC, Id" : "Leaf.Value, Id", new OrderingOptions { EnableNullGuards = true });
+        var order = NullOrderedSource.Create(nodes, nullOrdering).AsCursorQuery(new CursorQueryOptions { NullOrdering = nullOrdering, EnableNullGuards = true })
+            .OrderBy(descending ? "Leaf.Value DESC, Id" : "Leaf.Value, Id");
 
         AssertTraversal(order, expected, 1, n => n.Id);
     }

@@ -352,8 +352,8 @@ public class CursorPaginationTests
             new Parent(3, new Child("a"))
         }.AsQueryable();
 
-        var options = new OrderingOptions { EnableNullGuards = true };
-        var page = source.AsCursorQuery().OrderBy("child.name, id", options).ToCursorPage(10);
+        var options = new CursorQueryOptions { EnableNullGuards = true };
+        var page = source.AsCursorQuery(options).OrderBy("child.name, id").ToCursorPage(10);
 
         Assert.Equal([2, 3, 1], page.Items.Select(p => p.Id));
     }
