@@ -8,7 +8,7 @@
     <IsPackable>true</IsPackable>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>0.10.0</Version>
+    <Version>0.11.0</Version>
     <Authors>Jim Atas</Authors>
     <Description>Dynamic string filtering and offset and cursor pagination for IQueryable&lt;T&gt;.</Description>
     <PackageTags>linq queryable dynamic-query dynamic-filtering filtering sorting pagination cursor-pagination keyset-pagination offset-pagination</PackageTags>
