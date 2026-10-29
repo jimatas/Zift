@@ -49,7 +49,7 @@ var categories = await context.Categories
 - **Property navigation**
   `Name`, `Author.Email`
 
-  Names are limited to ASCII letters, digits, and `_`, and can't start with a digit. They aren't case-sensitive, so `price` matches `Price`.
+  Property names are limited to ASCII letters, digits, and `_`, and can't start with a digit. They aren't case-sensitive, so `price` matches `Price`.
 
 - **Logical operators**
   `&&`, `||`, `!`
@@ -113,9 +113,9 @@ items.Where("Rating in [4, 5, null]");
 
 An empty list matches nothing; negating it matches everything. A list containing only `null` matches null values.
 
-With `EnableNullGuards`, a missing navigation counts as null instead of throwing, and comparisons follow normal C# rules. `Author.Name == null` matches rows without an author, `Author.Name != "Ann"` includes them, and `Author.Rating > 3` doesn't.
+When `EnableNullGuards` is on, missing navigations evaluate to null instead of throwing. Comparisons then behave as they do in C#: `Author.Name == null` matches rows without an author, as does `Author.Name != "Ann"`, while `Author.Rating > 3` doesn't.
 
-A null collection counts as empty: `Reviews:count == 0` matches it, `Reviews:any()` doesn't, and `Reviews:all(...)` does. A value type behind an optional navigation (`Category.Rank == null`) can only be compared with `null` when guards are on.
+A null collection behaves like an empty one: `Reviews:count == 0` matches it, `Reviews:any()` doesn't, and `Reviews:all(...)` does. You can only compare a value type behind an optional navigation with `null` when guards are on (`Category.Rank == null`).
 
 ### Options and Limits
 
@@ -149,8 +149,7 @@ When filters come from users:
 
 - Filter over a projection that only has the properties users are allowed to filter on, not the full entity.
 - Restrict the query to records the user is allowed to access before applying their filter.
-- Remember that filtering reveals values. A user who can't read a property can still probe it with `Email ^= "a"`.
-- Keep the limits above bounded.
+- Filtering can reveal property values indirectly. A user who can't read a property can still probe it with `Email ^= "a"`.
 
 ### Errors
 
@@ -167,11 +166,11 @@ catch (InvalidFilterException ex)
 }
 ```
 
-`SyntaxErrorException` and `LexicalErrorException` derive from `InvalidFilterException`. `Position` is set for those two and is `null` for the rest. If a .NET exception caused the error, the original exception is available through `InnerException`.
+`SyntaxErrorException` and `LexicalErrorException` derive from `InvalidFilterException` and set `Position`. Other errors leave it `null`. When available, the underlying .NET exception is in `InnerException`.
 
 A null filter throws `ArgumentNullException`. An empty or whitespace-only one throws `ArgumentException`.
 
-Errors the database provider raises when the query runs, such as EF Core not being able to translate a property, aren't wrapped.
+Database provider errors, such as EF Core translation failures, aren't wrapped.
 
 ## Pagination
 
@@ -201,7 +200,7 @@ var page = categories
 
 Use a consistent ordering to avoid skipped or repeated rows between pages. `pageNumber` and `pageSize` must be at least 1. An offset greater than `int.MaxValue` throws `ArgumentOutOfRangeException`.
 
-The count and items come from separate queries, so changes between them can leave the count out of sync with the items.
+The count and items are fetched separately, so concurrent changes can leave the count out of sync with the items.
 
 #### Result Shape
 
@@ -223,9 +222,9 @@ var dtoPage = page.Map(category => new CategoryDto(category));
 
 ### Cursor Pagination
 
-Cursor pagination (keyset pagination) uses ordering keys instead of offsets to navigate through results. It performs well even on large datasets.
+Cursor (or keyset) pagination uses ordering keys instead of offsets to navigate through results. It performs well even on large datasets.
 
-Start by calling `AsCursorQuery()` on the `IQueryable<T>`:
+Start by calling `AsCursorQuery()` on the `IQueryable<T>`, then specify at least one ordering key:
 
 ```csharp
 var query = context.Products
@@ -239,9 +238,7 @@ var page = await query.ToCursorPageAsync(pageSize: 25);
 
 For other `IQueryable<T>` sources, such as in-memory collections, use `ToCursorPage`.
 
-Cursor pagination needs at least one ordering clause.
-
-> **Note**: Ordering for cursor pagination must be applied *after* calling `AsCursorQuery()`. Any ordering applied before `AsCursorQuery()` is ignored.
+> **Note**: Ordering for cursor pagination must be applied *after* calling `AsCursorQuery()`. Any earlier ordering is ignored.
 
 #### Ordering
 
@@ -255,13 +252,15 @@ var query = context.Products
 
 Use `ThenBy(string)` to append more ordering keys.
 
-In the string syntax, use dots for nested paths (`Category.Title`). Names aren't case-sensitive. Each entry is `Property [ASC|DESC]`. A bad entry or unknown property throws `InvalidOrderingClauseException`. For in-memory sources, pass `new CursorQueryOptions { EnableNullGuards = true }` to `AsCursorQuery()` to guard nested paths against null. This only affects string-based ordering; lambda selectors are used as written.
+String ordering supports nested paths (`Category.Title`) and case-insensitive property names. Each entry is `Property [ASC|DESC]`. A malformed entry or unknown property throws `InvalidOrderingClauseException`.
+
+For in-memory sources, pass `new CursorQueryOptions { EnableNullGuards = true }` to `AsCursorQuery()` to guard nested paths against null. This only affects string-based ordering; lambda selectors are used as written.
 
 Ordering keys can be strings, numbers, booleans, enums, or any type with comparison operators or `IComparable<T>` (`Guid`, `DateTime`, `DateTimeOffset`). Unsupported types throw `NotSupportedException` when navigating beyond the first page.
 
 > **Note**: The ordering must uniquely identify each row, so end it with a unique key such as `Id`. Rows that tie on every key can be skipped between pages.
 
-An ordering can have up to 16 keys by default, configurable through `CursorQueryOptions.MaxOrderingKeys`. Exceeding this limit throws `InvalidOrderingClauseException`.
+Ordering allows up to 16 keys by default, configurable through `CursorQueryOptions.MaxOrderingKeys`. Exceeding this limit throws `InvalidOrderingClauseException`.
 
 By default, Zift assumes nulls sort first in ascending order (SQL Server, SQLite, MySQL). For databases that sort them last (PostgreSQL, Oracle), pass `new CursorQueryOptions { NullOrdering = NullOrdering.NullsCompareHigher }` to `AsCursorQuery()`.
 
@@ -291,11 +290,11 @@ if (page.HasPreviousPage)
 }
 ```
 
-On a page with items, `HasPreviousPage` is assumed `true` after `After(...)`, and `HasNextPage` after `Before(...)`. No extra query is made to verify this, so changes between requests can make these values inaccurate.
+For nonempty pages, `After(...)` assumes `HasPreviousPage` is `true`, while `Before(...)` assumes `HasNextPage` is `true`. These values aren't verified and may be inaccurate if the data changes between requests.
 
 #### Page Size
 
-`pageSize` must be between 1 and `int.MaxValue - 1`. Public APIs should enforce a much smaller maximum of their own.
+`pageSize` must be between 1 and `int.MaxValue - 1`. Public APIs should enforce a much lower limit.
 
 #### Result Shape
 
@@ -323,7 +322,7 @@ app.MapGet("/products", async (
 {
     // Restrict to what the caller may see, then project to the filterable properties.
     IQueryable<ProductListItem> products = db.Products
-        .Where(p => !p.IsDeleted)
+        .Where(p => !p.IsDeleted && p.IsPublished)
         .Select(p => new ProductListItem
         {
             Id = p.Id,
